@@ -1,0 +1,18 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';
+import {mkdtemp,rm} from 'node:fs/promises';import os from 'node:os';import path from 'node:path';
+test('context preserves uncovered history, validates summary signatures, and rejects late/deleted results',async()=>{
+ const dir=await mkdtemp(path.join(os.tmpdir(),'shiguang-context-'));process.env.DATA_DIR=dir;process.env.SEED_DEMO='false';process.env.WORKER_MODE='true';
+ const {save,get,db,getSetting}=await import('../server/store.mjs');const {threadContext,assembleThreadContext,updateThreadContext}=await import('../server/thread-context.mjs');
+ try{
+  const thread=save('thread',{status:'active'}),turns=[];for(let i=0;i<15;i++)turns.push(save('conversation',{threadId:thread.id,query:'用户约束'+i,body:'助手建议'+i,references:[],sources:[],createdAt:new Date(1700000000000+i*1000).toISOString()}));
+  assert.equal(threadContext(thread.id).uncoveredCount,9);assert.equal(assembleThreadContext(thread.id).history.length,15,'no silent six-turn gap');
+  let input;const summarize=async(_system,user)=>{input=JSON.parse(user);return '用户已确认目标：整理资料。助手建议尚未确认。';};
+  await updateThreadContext(thread.id,{enabled:()=>true,generate:summarize});assert.equal(input.turns.length,8);assert.match(input.turns[0].query,/约束0/);assert.equal(threadContext(thread.id).covered.length,8);const assembled=assembleThreadContext(thread.id);assert.equal(assembled.history.length,7);assert.equal(new Set([...assembled.usage.coveredIds,...assembled.usage.historyIds]).size,15);
+  const original=get(turns[0].id,'conversation');save('conversation',{...original,query:'用户更正了最早约束'},original.revision);assert.equal(threadContext(thread.id).status,'stale');assert.equal(threadContext(thread.id).text,'');assert.equal(assembleThreadContext(thread.id).history.length,15);
+  let release,started;const signal=new Promise(r=>started=r),gate=new Promise(r=>release=r);const pending=updateThreadContext(thread.id,{enabled:()=>true,generate:async()=>{started();await gate;return '迟到摘要';}});await signal;const changed=get(turns[1].id,'conversation');save('conversation',{...changed,body:'修订助手内容'},changed.revision);release();await assert.rejects(pending,/迟到结果/);assert.notEqual(getSetting('thread-context:'+thread.id).text,'迟到摘要');assert.equal(threadContext(thread.id).text,'');
+  await updateThreadContext(thread.id,{enabled:()=>true,generate:summarize});assert.equal(threadContext(thread.id).status,'pending');assert.equal(threadContext(thread.id).version,2);assert.throws(()=>assembleThreadContext(thread.id,{maxChars:10}),/超出本轮预算/);
+  await updateThreadContext(thread.id,{enabled:()=>true,generate:summarize});assert.equal(threadContext(thread.id).uncoveredCount,0);assert.equal(assembleThreadContext(thread.id).history.length,6);
+  const large=save('thread',{status:'active'});for(let i=0;i<7;i++)save('conversation',{threadId:large.id,query:'原始约束',body:i===0?'长'.repeat(25000):'短回答',createdAt:new Date(1710000000000+i*1000).toISOString()});const partial=await updateThreadContext(large.id,{enabled:()=>true,generate:summarize});assert.match(partial.notice,/尚未合并/);assert.equal(partial.covered.length,0);assert.equal(partial.budgetExceeded,true);await updateThreadContext(large.id,{enabled:()=>true,generate:summarize});assert.equal(threadContext(large.id).covered.length,1);assert.ok(assembleThreadContext(large.id).usage.chars<18000);
+  save('thread',{...get(thread.id,'thread'),status:'deleted'},get(thread.id,'thread').revision);assert.equal(threadContext(thread.id).text,'');assert.throws(()=>assembleThreadContext(thread.id),/已删除/);await assert.rejects(updateThreadContext(thread.id,{enabled:()=>true,generate:summarize}),/已删除/);
+ }finally{db.close();await rm(dir,{recursive:true,force:true});}
+});

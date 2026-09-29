@@ -1,0 +1,11 @@
+import {test,expect} from '@playwright/test';
+test('lost create and activation responses survive reload and reuse the exact operation',async({page})=>{
+ let memory:any=null;const creates:any[]=[],activations:any[]=[];
+ await page.route('**/api/bootstrap',async route=>{const response=await route.fetch();const data=await response.json();return route.fulfill({json:{...data,memories:memory?[memory]:[],pendingMemoryBatches:[]}});});
+ await page.route('**/api/projects',route=>route.fulfill({json:{items:[]}}));await page.route('**/api/threads?**',route=>route.fulfill({json:{items:[],total:0,nextCursor:null}}));
+ await page.route('**/api/memories',route=>{creates.push(route.request().postDataJSON());if(creates.length===1){memory={...creates[0],id:'retry-memory',revision:1,status:'candidate'};return route.abort('connectionfailed');}return route.fulfill({json:memory});});
+ await page.route('**/api/memories/retry-memory',route=>{activations.push(route.request().postDataJSON());if(activations.length===1){memory={...memory,status:'active',revision:2};return route.abort('connectionfailed');}return route.fulfill({json:memory});});
+ await page.goto('/');await page.getByRole('button',{name:'进入演示空间'}).click();await page.goto('/#memories');await page.getByRole('button',{name:'添加记忆',exact:true}).click();await page.getByLabel('记忆内容').fill('我喜欢短句');await page.getByRole('button',{name:'保存记忆',exact:true}).click();await expect(page.getByRole('dialog').getByRole('alert')).toContainText('连接暂时中断');
+ await page.reload();await page.getByRole('button',{name:'重试未确认操作',exact:true}).click();await expect(page.getByRole('button',{name:'重试未确认操作',exact:true})).toHaveCount(0);expect(creates.length).toBe(2);expect(creates[1]).toEqual(creates[0]);expect(creates[0].opId).toMatch(/^[a-f0-9]{32}$/);await expect(page.locator('.memory-card')).toHaveCount(1);
+ await page.getByRole('button',{name:'确认记住',exact:true}).click();await expect(page.getByRole('alert')).toContainText('连接暂时中断');await page.reload();await page.getByRole('button',{name:'重试未确认操作',exact:true}).click();await expect(page.getByRole('button',{name:'重试未确认操作',exact:true})).toHaveCount(0);expect(activations[1]).toEqual(activations[0]);expect(activations[0].opId).not.toBe(creates[0].opId);await expect(page.locator('.memory-card.active')).toHaveCount(1);
+});

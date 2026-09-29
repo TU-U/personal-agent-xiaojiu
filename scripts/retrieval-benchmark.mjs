@@ -1,0 +1,8 @@
+import {mkdtempSync,rmSync,writeFileSync} from 'node:fs';import os from 'node:os';import path from 'node:path';
+const dir=mkdtempSync(path.join(os.tmpdir(),'shiguang-bench-'));process.env.DATA_DIR=dir;process.env.SEED_DEMO='false';
+const {searchNotes}=await import('../server/engine.mjs');const {db}=await import('../server/store.mjs');
+const topics=['支付回调','用户访谈','手机录音','数据库备份','文档解析','周报写作','旅行计划','运动习惯','阅读摘记','接口测试'];
+const notes=Array.from({length:1000},(_,i)=>({id:String(i),title:`${topics[i%10]} 项目记录 ${i}`,content:`编号 SG-${i}。关于${topics[i%10]}：本次完成了第一轮验证，下一步记录待解决的问题。负责人为模拟用户${i}，不要把计划当作完成。`,project:'项目'+i%10,tags:[topics[i%10]],createdAt:'2026-09-22T00:00:00Z',pinned:false}));
+const cases=[];for(let i=0;i<50;i++){const id=(i*19)%1000;cases.push({query:`SG-${id}`,expected:String(id)});}for(let i=0;i<10;i++)cases.push({query:topics[i],expectedTopic:topics[i]});
+let hits=0;const times=[];const failures=[];for(const c of cases){const t=performance.now();const results=searchNotes(c.query,{},notes);times.push(performance.now()-t);const hit=c.expected?results.slice(0,10).some(n=>n.id===c.expected):results.slice(0,10).some(n=>n.title.includes(c.expectedTopic));if(hit)hits++;else failures.push(c);}
+times.sort((a,b)=>a-b);const report={testedAt:new Date().toISOString(),dataset:'1000 generated notes; 50 exact identifiers + 10 topic keywords. Synthetic, not a semantic reasoning benchmark.',questions:cases.length,recallAt10:hits/cases.length,p50Ms:times[Math.floor(times.length*.5)],p95Ms:times[Math.floor(times.length*.95)],failures};writeFileSync('artifacts/retrieval-benchmark.json',JSON.stringify(report,null,2));console.log(report);db.close();rmSync(dir,{recursive:true,force:true});

@@ -1,0 +1,59 @@
+<svg viewBox="0 0 680 578" width="100%" xmlns="http://www.w3.org/2000/svg" role="img">
+  <title>小九 · 三层结构与功能定位</title>
+  <desc>小九由表现层、交互层、服务层构成：前端心情状态机、聊天与提醒交互、服务端监督与提醒聚合引擎</desc>
+  <style>
+    .th{font:14px sans-serif;font-weight:500;fill:#2C2C2A}
+    .ts{font:12px sans-serif;fill:#5F5E5A}
+    text{font-family:sans-serif}
+  </style>
+  <rect width="680" height="578" fill="#FFFFFF"/>
+  <text class="th" x="340" y="30" text-anchor="middle">小九 · 三层结构与功能定位</text>
+
+  <rect x="40" y="44" width="600" height="122" rx="16" fill="#FBEAF0" stroke="#F4C0D1" stroke-width="0.5"/>
+  <text class="ts" x="52" y="62" fill="#993556">表现层 · PetBuddy.tsx（纯前端 · 轻量 · 复杂度 2/5）</text>
+  <rect x="56" y="72" width="180" height="78" rx="8" fill="#FFFFFF" stroke="#D4537E" stroke-width="0.5"/>
+  <text class="th" x="146" y="90" text-anchor="middle" dominant-baseline="central" fill="#72243E" font-size="13">10 种心情表情</text>
+  <text class="ts" x="146" y="112" text-anchor="middle" dominant-baseline="central" font-size="11">安心·好奇·局促·开心·嘻嘻</text>
+  <text class="ts" x="146" y="132" text-anchor="middle" dominant-baseline="central" font-size="11">思考·打理·不嘻嘻·力竭·打盹</text>
+  <rect x="248" y="72" width="180" height="78" rx="8" fill="#FFFFFF" stroke="#D4537E" stroke-width="0.5"/>
+  <text class="th" x="338" y="90" text-anchor="middle" dominant-baseline="central" fill="#72243E" font-size="13">事件驱动转换</text>
+  <text class="ts" x="338" y="112" text-anchor="middle" dominant-baseline="central" font-size="11">HOVER·PET·CHAT·NAP</text>
+  <text class="ts" x="338" y="132" text-anchor="middle" dominant-baseline="central" font-size="11">TIMEOUT·过度互动</text>
+  <rect x="440" y="72" width="180" height="78" rx="8" fill="#FFFFFF" stroke="#D4537E" stroke-width="0.5"/>
+  <text class="th" x="530" y="90" text-anchor="middle" dominant-baseline="central" fill="#72243E" font-size="13">轻交互细节</text>
+  <text class="ts" x="530" y="112" text-anchor="middle" dominant-baseline="central" font-size="11">拖拽·贴贴·Q 弹动画</text>
+  <text class="ts" x="530" y="132" text-anchor="middle" dominant-baseline="central" font-size="11">闲置 2 分钟自动打盹</text>
+
+  <rect x="40" y="186" width="600" height="122" rx="16" fill="#E6F1FB" stroke="#85B7EB" stroke-width="0.5"/>
+  <text class="ts" x="52" y="204" fill="#185FA5">交互层 · 她与用户的接触面</text>
+  <rect x="56" y="214" width="180" height="78" rx="8" fill="#FFFFFF" stroke="#185FA5" stroke-width="0.5"/>
+  <text class="th" x="146" y="232" text-anchor="middle" dominant-baseline="central" fill="#0C447C" font-size="13">陪伴聊天</text>
+  <text class="ts" x="146" y="254" text-anchor="middle" dominant-baseline="central" font-size="11">接口 /api/pet/chat</text>
+  <text class="ts" x="146" y="274" text-anchor="middle" dominant-baseline="central" font-size="11">带记忆上下文回答</text>
+  <rect x="248" y="214" width="180" height="78" rx="8" fill="#FFFFFF" stroke="#185FA5" stroke-width="0.5"/>
+  <text class="th" x="338" y="232" text-anchor="middle" dominant-baseline="central" fill="#0C447C" font-size="13">提醒面板</text>
+  <text class="ts" x="338" y="254" text-anchor="middle" dominant-baseline="central" font-size="11">角标 + 待处理清单</text>
+  <text class="ts" x="338" y="274" text-anchor="middle" dominant-baseline="central" font-size="11">同源版本快照，不错报</text>
+  <rect x="440" y="214" width="180" height="78" rx="8" fill="#FFFFFF" stroke="#185FA5" stroke-width="0.5"/>
+  <text class="th" x="530" y="232" text-anchor="middle" dominant-baseline="central" fill="#0C447C" font-size="13">引导直达</text>
+  <text class="ts" x="530" y="254" text-anchor="middle" dominant-baseline="central" font-size="11">点击直达对应页面</text>
+  <text class="ts" x="530" y="274" text-anchor="middle" dominant-baseline="central" font-size="11">actionTarget 页面跳转</text>
+
+  <rect x="40" y="328" width="600" height="150" rx="16" fill="#FAEEDA" stroke="#FAC775" stroke-width="0.5"/>
+  <text class="ts" x="52" y="346" fill="#854F0B">服务层 · 她背后真正重的引擎（约 10 个服务端模块 · 复杂度 4.5/5）</text>
+  <rect x="56" y="356" width="280" height="84" rx="8" fill="#FFFFFF" stroke="#854F0B" stroke-width="0.5"/>
+  <text class="th" x="196" y="374" text-anchor="middle" dominant-baseline="central" fill="#633806" font-size="13">提醒聚合 · pet-reminders</text>
+  <text class="ts" x="196" y="396" text-anchor="middle" dominant-baseline="central" font-size="11">要事检查 · 今日待办 · 记忆确认 · 监督逾期</text>
+  <text class="ts" x="196" y="416" text-anchor="middle" dominant-baseline="central" font-size="11">免打扰时段 · 按来源去重 · 只显示最新</text>
+  <text class="ts" x="196" y="434" text-anchor="middle" dominant-baseline="central" font-size="11">四类事项统一聚合，一个入口待办</text>
+  <rect x="344" y="356" width="280" height="84" rx="8" fill="#FFFFFF" stroke="#854F0B" stroke-width="0.5"/>
+  <text class="th" x="484" y="374" text-anchor="middle" dominant-baseline="central" fill="#633806" font-size="13">任务监督 · supervision 系统</text>
+  <text class="ts" x="484" y="396" text-anchor="middle" dominant-baseline="central" font-size="11">计划模板 workTask → 每日执行 workRun</text>
+  <text class="ts" x="484" y="416" text-anchor="middle" dominant-baseline="central" font-size="11">条件快照 · 计时器 · 证据 · 复盘 recap</text>
+  <text class="ts" x="484" y="434" text-anchor="middle" dominant-baseline="central" font-size="11">模板改动不影响已约定的历史，可审计</text>
+  <text x="56" y="462" font-size="11" fill="#633806">复杂度集中在数据与一致性，不在形象本身——拟人化 UI 保持轻量，是正确的架构方向</text>
+
+  <rect x="40" y="498" width="600" height="60" rx="12" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="0.5"/>
+  <text x="340" y="522" text-anchor="middle" font-size="11.5" fill="#5F5E5A">原型是现实中真实存在的宠物（朋友的宠物），素材为真实照片——有故事、可信、非虚拟 IP</text>
+  <text x="340" y="542" text-anchor="middle" font-size="11.5" fill="#5F5E5A">定位类似《魔法少女樱》里的小可：陪伴 · 守护 · 引导，是这个系统唯一的「主动交互界面」</text>
+</svg>

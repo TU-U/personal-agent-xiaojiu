@@ -1,0 +1,15 @@
+import {test,expect} from '@playwright/test';
+test('editing a conversation proposal preserves failed draft and requires separate final confirmation',async({page})=>{
+ let turn:any={id:'editable-turn',threadId:'editable-thread',threadTitle:'候选编辑测试',revision:1,query:'我需要周报简洁',body:'收到。',sources:[],mode:'model',createdAt:'2026-09-29T00:00:00Z',memoryReview:'pending',memoryProposals:[{content:'周报偏好'}]};let edits=0,reviews=0;
+ await page.route('**/api/bootstrap',async route=>{const response=await route.fetch();const data=await response.json();return route.fulfill({json:{...data,conversations:[turn],pendingMemoryBatches:[]}});});
+ await page.route('**/api/threads?**',route=>route.fulfill({json:{items:[turn],total:1,nextCursor:null}}));
+ await page.route('**/api/threads/editable-thread/turns?**',route=>route.fulfill({json:{items:[turn],nextCursor:null}}));
+ await page.route('**/api/threads/editable-thread/context',route=>route.fulfill({json:{text:''}}));
+ await page.route('**/api/projects',route=>route.fulfill({json:{items:[{id:'proposal-project',name:'项目'}]}}));
+ await page.route('**/api/conversations/editable-turn/memory-proposals/0',route=>{edits++;const body=route.request().postDataJSON();expect(body).toEqual({revision:1,content:'项目周报先写结论',scope:'周报',scopeKind:'project',scopeId:'proposal-project'});if(edits===1)return route.fulfill({status:503,json:{error:'临时保存失败，请重试'}});turn={...turn,revision:2,memoryProposals:[{content:body.content,scope:body.scope,scopeKind:body.scopeKind,scopeId:body.scopeId}]};return route.fulfill({json:turn});});
+ await page.route('**/api/conversations/editable-turn/memory-review',route=>{reviews++;expect(route.request().postDataJSON()).toEqual({revision:2,selected:[{index:0,keep:'new'}]});turn={...turn,revision:3,memoryReview:'reviewed',memoryProposals:[],memoryNotice:'已按项目范围确认'};return route.fulfill({json:turn});});
+ await page.goto('/');await page.getByRole('button',{name:'进入演示空间'}).click();await page.goto('/#assistant');await page.getByRole('button',{name:/^候选编辑测试.*继续聊/}).click();
+ const review=page.locator('.memory-review');await review.getByRole('button',{name:'编辑摘要和范围',exact:true}).click();const editor=review.getByRole('form',{name:'编辑记忆候选'});await editor.getByLabel('候选摘要').fill('项目周报先写结论');await editor.getByLabel('范围类型').selectOption('project');await editor.getByLabel('所属项目').selectOption('proposal-project');await editor.getByLabel('用途限制').selectOption('周报');await expect(review.getByRole('button',{name:'全部丢弃',exact:true})).toBeDisabled();
+ await editor.getByRole('button',{name:'保存候选修改',exact:true}).click();await expect(editor.getByRole('alert')).toContainText('临时保存失败');await expect(editor.getByLabel('候选摘要')).toHaveValue('项目周报先写结论');await editor.getByRole('button',{name:'保存候选修改',exact:true}).click();await expect(editor).toHaveCount(0);await expect(review).toContainText('指定项目');expect(reviews).toBe(0);
+ await review.getByRole('checkbox').check();await review.getByRole('button',{name:'确认所选，丢弃其余',exact:true}).click();await expect(page.getByText('已按项目范围确认',{exact:true})).toBeVisible();expect(reviews).toBe(1);
+});

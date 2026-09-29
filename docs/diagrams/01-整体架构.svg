@@ -1,0 +1,109 @@
+<svg viewBox="0 0 680 818" width="100%" xmlns="http://www.w3.org/2000/svg" role="img">
+  <title>拾光 PersonalAgent 整体架构</title>
+  <desc>五层架构：客户端层、Express 服务端单体、本地数据层、Worker 进程、模型与外部服务</desc>
+  <style>
+    .t{font:14px sans-serif;fill:#2C2C2A}
+    .ts{font:12px sans-serif;fill:#5F5E5A}
+    .th{font:14px sans-serif;font-weight:500;fill:#2C2C2A}
+    text{font-family:sans-serif}
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect width="680" height="818" fill="#FFFFFF"/>
+  <text class="th" x="340" y="30" text-anchor="middle">拾光 PersonalAgent · 整体架构</text>
+
+  <rect x="40" y="44" width="600" height="92" rx="16" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="0.5"/>
+  <text class="ts" x="52" y="62" fill="#5F5E5A">客户端层</text>
+  <rect x="56" y="72" width="276" height="52" rx="8" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="0.5"/>
+  <text class="th" x="194" y="92" text-anchor="middle" dominant-baseline="central" fill="#444441">浏览器 · 电脑与手机</text>
+  <text class="ts" x="194" y="112" text-anchor="middle" dominant-baseline="central">React 19 + Vite · 响应式 Web UI</text>
+  <rect x="344" y="72" width="276" height="52" rx="8" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="0.5"/>
+  <text class="th" x="482" y="92" text-anchor="middle" dominant-baseline="central" fill="#444441">Android 原生 App</text>
+  <text class="ts" x="482" y="112" text-anchor="middle" dominant-baseline="central">独立 Kotlin 工程 · 复用同一套 API</text>
+
+  <line x1="340" y1="136" x2="340" y2="168" stroke="#888780" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="350" y="156" font-size="11" fill="#888780">HTTPS :4317 · Cookie 与设备令牌 · 来源校验</text>
+
+  <rect x="40" y="168" width="600" height="234" rx="16" fill="#E6F1FB" stroke="#85B7EB" stroke-width="0.5"/>
+  <text class="ts" x="52" y="186" fill="#185FA5">服务端 · Express 5 模块化单体（server/ 78 个模块，index.mjs 组装）</text>
+  <rect x="56" y="196" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#185FA5" stroke-width="0.5"/>
+  <text class="th" x="122" y="216" text-anchor="middle" dominant-baseline="central" fill="#0C447C">记录·待办·要事</text>
+  <text class="ts" x="122" y="238" text-anchor="middle" dominant-baseline="central">版本与生命周期</text>
+  <rect x="196" y="196" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#185FA5" stroke-width="0.5"/>
+  <text class="th" x="262" y="216" text-anchor="middle" dominant-baseline="central" fill="#0C447C">资料库·解析</text>
+  <text class="ts" x="262" y="238" text-anchor="middle" dominant-baseline="central">导入·筛选·副本</text>
+  <rect x="336" y="196" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#185FA5" stroke-width="0.5"/>
+  <text class="th" x="402" y="216" text-anchor="middle" dominant-baseline="central" fill="#0C447C">搭子会话</text>
+  <text class="ts" x="402" y="238" text-anchor="middle" dominant-baseline="central">话题·摘要压缩</text>
+  <rect x="476" y="196" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#185FA5" stroke-width="0.5"/>
+  <text class="th" x="542" y="216" text-anchor="middle" dominant-baseline="central" fill="#0C447C">记忆系统</text>
+  <text class="ts" x="542" y="238" text-anchor="middle" dominant-baseline="central">候选→确认生效</text>
+  <rect x="56" y="262" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#185FA5" stroke-width="0.5"/>
+  <text class="th" x="122" y="282" text-anchor="middle" dominant-baseline="central" fill="#0C447C">混合检索</text>
+  <text class="ts" x="122" y="304" text-anchor="middle" dominant-baseline="central">向量+词项 RRF</text>
+  <rect x="196" y="262" width="132" height="54" rx="8" fill="#FBEAF0" stroke="#D4537E" stroke-width="0.5"/>
+  <text class="th" x="262" y="282" text-anchor="middle" dominant-baseline="central" fill="#72243E">小九·监督提醒</text>
+  <text class="ts" x="262" y="304" text-anchor="middle" dominant-baseline="central">计划·证据·回顾</text>
+  <rect x="336" y="262" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#185FA5" stroke-width="0.5"/>
+  <text class="th" x="402" y="282" text-anchor="middle" dominant-baseline="central" fill="#0C447C">成果导出</text>
+  <text class="ts" x="402" y="304" text-anchor="middle" dominant-baseline="central">周报·Markdown</text>
+  <rect x="476" y="262" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#185FA5" stroke-width="0.5"/>
+  <text class="th" x="542" y="282" text-anchor="middle" dominant-baseline="central" fill="#0C447C">记账</text>
+  <text class="ts" x="542" y="304" text-anchor="middle" dominant-baseline="central">微信导入·OCR</text>
+  <text x="56" y="340" font-size="11" fill="#0C447C">基础设施：备份恢复 · 设备认证 · 能力探测 · AI 调用日志 · 分类纠错表 · 草稿与会话恢复</text>
+  <text x="56" y="360" font-size="11" font-weight="500" fill="#0C447C">一致性基座：revision 版本号 · opId 幂等重试 · changes 增量游标 · 事务写入 · 迟到结果核对</text>
+
+  <line x1="340" y1="402" x2="340" y2="434" stroke="#888780" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="350" y="422" font-size="11" fill="#888780">SQL 事务 · changes 增量游标</text>
+
+  <rect x="40" y="434" width="600" height="100" rx="16" fill="#E1F5EE" stroke="#9FE1CB" stroke-width="0.5"/>
+  <text class="ts" x="52" y="452" fill="#0F6E56">数据层（全部本地 .data/ · 不上云）</text>
+  <rect x="56" y="462" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#0F6E56" stroke-width="0.5"/>
+  <text class="th" x="122" y="482" text-anchor="middle" dominant-baseline="central" fill="#085041">SQLite</text>
+  <text class="ts" x="122" y="504" text-anchor="middle" dominant-baseline="central">权威数据·revision</text>
+  <rect x="196" y="462" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#0F6E56" stroke-width="0.5"/>
+  <text class="th" x="262" y="482" text-anchor="middle" dominant-baseline="central" fill="#085041">文件原件</text>
+  <text class="ts" x="262" y="504" text-anchor="middle" dominant-baseline="central">上传·资料副本</text>
+  <rect x="336" y="462" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#0F6E56" stroke-width="0.5"/>
+  <text class="th" x="402" y="482" text-anchor="middle" dominant-baseline="central" fill="#085041">Qdrant</text>
+  <text class="ts" x="402" y="504" text-anchor="middle" dominant-baseline="central">dense+sparse 索引</text>
+  <rect x="476" y="462" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#0F6E56" stroke-width="0.5"/>
+  <text class="th" x="542" y="482" text-anchor="middle" dominant-baseline="central" fill="#085041">Redis·BullMQ</text>
+  <text class="ts" x="542" y="504" text-anchor="middle" dominant-baseline="central">后台任务队列</text>
+
+  <line x1="542" y1="534" x2="542" y2="566" stroke="#888780" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="552" y="554" font-size="11" fill="#888780">消费任务</text>
+
+  <rect x="40" y="566" width="600" height="100" rx="16" fill="#FAEEDA" stroke="#FAC775" stroke-width="0.5"/>
+  <text class="ts" x="52" y="584" fill="#854F0B">独立 Worker 进程（fork · 队列驱动 · 超时与取消保护）</text>
+  <rect x="56" y="594" width="180" height="54" rx="8" fill="#FFFFFF" stroke="#854F0B" stroke-width="0.5"/>
+  <text class="th" x="146" y="614" text-anchor="middle" dominant-baseline="central" fill="#633806">文件解析 Worker</text>
+  <text class="ts" x="146" y="636" text-anchor="middle" dominant-baseline="central">PDF·DOCX·编码</text>
+  <rect x="248" y="594" width="180" height="54" rx="8" fill="#FFFFFF" stroke="#854F0B" stroke-width="0.5"/>
+  <text class="th" x="338" y="614" text-anchor="middle" dominant-baseline="central" fill="#633806">ASR 转写</text>
+  <text class="ts" x="338" y="636" text-anchor="middle" dominant-baseline="central">独立进程·可取消</text>
+  <rect x="440" y="594" width="180" height="54" rx="8" fill="#FFFFFF" stroke="#854F0B" stroke-width="0.5"/>
+  <text class="th" x="530" y="614" text-anchor="middle" dominant-baseline="central" fill="#633806">向量索引器</text>
+  <text class="ts" x="530" y="636" text-anchor="middle" dominant-baseline="central">后台补索引·校验</text>
+
+  <line x1="340" y1="666" x2="340" y2="698" stroke="#888780" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="350" y="686" font-size="11" fill="#888780">模型调用（服务端与 Worker 都直连）</text>
+
+  <rect x="40" y="698" width="600" height="100" rx="16" fill="#EEEDFE" stroke="#CECBF6" stroke-width="0.5"/>
+  <text class="ts" x="52" y="716" fill="#534AB7">模型与外部服务（接口兼容 · 可替换 · 不绑定供应商）</text>
+  <rect x="56" y="726" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#534AB7" stroke-width="0.5"/>
+  <text class="th" x="122" y="746" text-anchor="middle" dominant-baseline="central" fill="#3C3489">DeepSeek 兼容</text>
+  <text class="ts" x="122" y="768" text-anchor="middle" dominant-baseline="central">chat·vision</text>
+  <rect x="196" y="726" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#534AB7" stroke-width="0.5"/>
+  <text class="th" x="262" y="746" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#3C3489">Qwen3-Embedding</text>
+  <text class="ts" x="262" y="768" text-anchor="middle" dominant-baseline="central">1024 维·Q8_0</text>
+  <rect x="336" y="726" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#534AB7" stroke-width="0.5"/>
+  <text class="th" x="402" y="746" text-anchor="middle" dominant-baseline="central" fill="#3C3489">Whisper ASR</text>
+  <text class="ts" x="402" y="768" text-anchor="middle" dominant-baseline="central">large-v3-turbo</text>
+  <rect x="476" y="726" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#534AB7" stroke-width="0.5"/>
+  <text class="th" x="542" y="746" text-anchor="middle" dominant-baseline="central" fill="#3C3489">Brave Search</text>
+  <text class="ts" x="542" y="768" text-anchor="middle" dominant-baseline="central">联网摘要·来源</text>
+</svg>

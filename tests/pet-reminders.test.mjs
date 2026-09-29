@@ -1,0 +1,67 @@
+import {test,after} from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,rm} from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+const root=await mkdtemp(path.join(os.tmpdir(),'pet-reminders-'));
+Object.assign(process.env,{DATA_DIR:root,SEED_DEMO:'false',WORKER_MODE:'true'});
+const {db,save,get,remove,setSetting}=await import('../server/store.mjs');
+const {petReminders}=await import('../server/pet-reminders.mjs');
+const at=Date.parse('2026-09-29T04:00:00Z');
+const read=(time=at)=>petReminders({clock:()=>time});
+const change=(kind,value,patch)=>save(kind,{...get(value.id,kind),...patch},get(value.id,kind).revision);
+const clear=()=>{db.exec('DELETE FROM entities; DELETE FROM changes; DELETE FROM search_outbox;');};
+test('complete readonly snapshot includes all sources, stable identities and no first-page truncation',()=>{
+ clear();
+ for(let i=0;i<65;i++)save('todo',{title:'待办'+i,day:'2026-09-29',done:false});
+ save('todo',{title:'昨天',day:'2026-09-28',done:false});save('todo',{title:'完成',day:'2026-09-29',done:true});
+ const turn=save('conversation',{threadId:'thread',threadTitle:'话题',memoryReview:'pending',memoryProposals:[{content:'A'},{content:'B'}],expiresAfterTurn:6});
+ save('memory',{title:'手动候选',status:'candidate'});
+ const task=save('workTask',{title:'任务',status:'running',time:'11:00'});
+ save('workRun',{taskId:task.id,day:'2026-09-29',status:'open',reminded:true,reminders:[{kind:'start',at:'2026-09-29T01:00:00Z'},{kind:'due',at:'2026-09-29T03:00:00Z'}]});
+ const before=db.prepare('SELECT total_changes() n').get().n;
+ const first=read(),second=read(at+1000);
+ assert.equal(first.total,68);assert.equal(first.total,first.items.length);assert.equal(new Set(first.items.map(x=>x.id)).size,68);
+ assert.equal(first.items.find(x=>x.sourceId===turn.id).count,2);assert.equal(first.items.filter(x=>x.sourceKind==='workRun').length,1);
+ assert.equal(first.snapshot,second.snapshot);assert.equal(db.prepare('SELECT total_changes() n').get().n,before);
+ assert.equal(read(Date.parse('2026-09-29T16:00:00Z')).items.filter(x=>x.sourceKind==='todo').length,0);
+});
+test('event occurrence governs due, snooze, confirm and deletion; high priority does not bypass confirmation',()=>{
+ clear();
+ const event=save('event',{title:'要事',priority:'high',lifecycleStatus:'ongoing',currentOccurrenceId:'check'});
+ let check=save('eventOccurrence',{id:'check',eventId:event.id,status:'pending',dueAt:'2026-09-29T03:00:00Z'});
+ const first=read();assert.equal(first.total,1);assert.equal(first.items[0].occurrenceKey,'check');assert.match(first.items[0].message,/未就绪/);
+ check=change('eventOccurrence',check,{dueAt:'2026-09-30T03:00:00Z'});assert.equal(read().total,0);
+ check=change('eventOccurrence',check,{dueAt:'2026-09-29T03:00:00Z',reviewedDueAt:'2026-09-29T03:00:00Z',reviewNotice:'模型失败'});
+ assert.equal(read().total,1);assert.match(read().items[0].message,/重新检查/);
+ check=change('eventOccurrence',check,{status:'confirmed'});assert.equal(read().total,0);
+ check=change('eventOccurrence',check,{status:'pending'});remove(event.id,'event',event.revision);assert.equal(read().total,0);
+});
+test('five-round expiry excludes candidates without mutating review state',()=>{
+ clear();setSetting('memory-turn-count:expiry-thread',5);
+ const turn=save('conversation',{threadId:'expiry-thread',memoryReview:'pending',memoryProposals:[{content:'A'}],expiresAfterTurn:6});
+ assert.equal(read().total,1);setSetting('memory-turn-count:expiry-thread',6);assert.equal(read().total,0);
+ assert.equal(get(turn.id,'conversation').memoryReview,'pending');assert.equal(get(turn.id,'conversation').revision,1);
+});
+test('supervision respects issued facts, snooze, quiet, handled runs and missing parents',()=>{
+ clear();setSetting('taskReminders',{quietStart:22,quietEnd:8});
+ const task=save('workTask',{title:'任务',status:'running',time:'11:00'});
+ let run=save('workRun',{taskId:task.id,day:'2026-09-29',status:'open',reminded:false,reminders:[]});
+ assert.equal(read().total,0);
+ run=change('workRun',run,{reminded:true,reminders:[{kind:'due',at:'2026-09-29T03:00:00Z'}]});assert.equal(read().total,1);
+ assert.equal(read(Date.parse('2026-09-29T15:00:00Z')).total,0);
+ run=change('workRun',run,{snoozedUntil:'2026-09-29T05:00:00Z'});assert.equal(read().total,0);
+ run=change('workRun',run,{snoozedUntil:null,status:'completed'});assert.equal(read().total,0);
+ run=change('workRun',run,{status:'review'});assert.equal(read().total,1);
+ change('workTask',task,{status:'review'});assert.equal(read().total,1);assert.equal(read().items[0].sourceKind,'workTask');
+ remove(task.id,'workTask',get(task.id,'workTask').revision);assert.equal(read().total,0);
+});
+test('multiple overdue runs are grouped per task, without grouping current or snoozed records',()=>{
+ clear();setSetting('taskReminders',{quietStart:0,quietEnd:0});
+ const task=save('workTask',{title:'每日阅读',status:'running',supervisionStatus:'active'});
+ for(const day of ['2026-09-26','2026-09-27'])save('workRun',{taskId:task.id,day,status:'open',scheduledDueAt:day+'T12:00:00+08:00',reminded:true,reminders:[{kind:'due',at:day+'T12:00:00+08:00'}]});
+ const current=save('workRun',{taskId:task.id,day:'2026-09-29',status:'review',scheduledDueAt:'2026-09-29T12:00:00+08:00'});
+ save('workRun',{taskId:task.id,day:'2026-09-25',status:'open',scheduledDueAt:'2026-09-30T12:00:00+08:00',snoozedUntil:'2026-09-30T12:00:00+08:00',reminded:true,reminders:[{kind:'due',at:'2026-09-25T12:00:00+08:00'}]});
+ const result=read(),group=result.items.find(item=>item.occurrenceKey==='overdue');assert.equal(group.count,2);assert.equal(group.actionTarget.history,true);assert.equal(group.sourceId,task.id);assert.equal(result.items.filter(item=>item.sourceKind==='workRun').length,1);assert.equal(result.items.find(item=>item.sourceKind==='workRun').sourceId,current.id);
+});
+after(async()=>{db.close();await rm(root,{recursive:true,force:true});});

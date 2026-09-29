@@ -1,0 +1,23 @@
+import {test,expect} from '@playwright/test';
+test('opens long document at exact hit, preserves Markdown reading, and refuses stale or mismatched positions',async({page})=>{
+ const prefix='前文记录\n'.repeat(1700),hit='这里是需要定位的尾部关键段落',content=prefix+hit+'\n# 后续内容';
+ let revision=4,body=content;
+ await page.route('**/api/library/files?**',route=>route.fulfill({json:{items:[],total:0,nextCursor:null}}));
+ await page.route('**/api/library/search?**',route=>route.fulfill({json:{mode:'hybrid',results:[{id:'location',title:'长文资料',revision:4,sourcePath:'项目/长文.md',start:prefix.length,end:prefix.length+hit.length,text:hit}]}}));
+ await page.route('**/api/library/location',route=>route.fulfill({json:{id:'location',title:'长文资料',revision,sourcePath:'项目/长文.md',status:'ready',copyName:'local.md',content:body}}));
+ await page.goto('/');await page.getByRole('button',{name:'进入演示空间'}).click();await page.getByRole('button',{name:'资料库',exact:true}).click();
+ const library=page.getByRole('dialog',{name:'个人资料库'});
+ await library.getByLabel('搜索资料正文').fill('尾部关键');await library.getByRole('button',{name:'检索',exact:true}).click();
+ await library.getByRole('button',{name:'长文资料',exact:true}).click();
+ let detail=page.getByRole('dialog',{name:'长文资料',exact:true});
+ const mark=detail.locator('mark');await expect(mark).toHaveText(hit);await expect(mark).toBeFocused();
+ const box=await mark.boundingBox(),viewport=page.viewportSize()!;expect(box!.y).toBeGreaterThan(0);expect(box!.y+box!.height).toBeLessThan(viewport.height);
+ await detail.getByRole('button',{name:'切换 Markdown 阅读',exact:true}).click();await expect(detail.getByRole('heading',{name:'后续内容',exact:true})).toHaveCount(1);
+ await detail.getByRole('button',{name:'查看提取原文',exact:true}).click();await expect(mark).toBeFocused();
+ await page.keyboard.press('Escape');revision=5;body='已经修改的当前正文';
+ await library.getByRole('button',{name:'长文资料',exact:true}).click();detail=page.getByRole('dialog',{name:'长文资料',exact:true});
+ await expect(detail.getByRole('alert')).toContainText('资料版本已变化');await expect(detail.locator('mark')).toHaveCount(0);await expect(detail.getByText(body,{exact:true})).toBeVisible();
+ await page.keyboard.press('Escape');revision=4;body=content.replace(hit,'不同的正文但版本字段相同');
+ await library.getByRole('button',{name:'长文资料',exact:true}).click();detail=page.getByRole('dialog',{name:'长文资料',exact:true});
+ await expect(detail.getByRole('alert')).toContainText('命中片段与当前正文不一致');await expect(detail.locator('mark')).toHaveCount(0);
+});

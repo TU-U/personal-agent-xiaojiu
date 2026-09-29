@@ -1,0 +1,61 @@
+<svg viewBox="0 0 680 620" width="680" xmlns="http://www.w3.org/2000/svg" role="img">
+  <title>拾光 Agent 架构</title>
+  <desc>Agent 链路：话题会话与上下文组装、混合检索取证、证据包、模型生成、引用校验、候选记忆回流确认</desc>
+  <style>.th{font:14px sans-serif;font-weight:500;fill:#2C2C2A}.ts{font:11px sans-serif;fill:#5F5E5A}.cap{font:11.5px sans-serif;fill:#5F5E5A}text{font-family:sans-serif}</style>
+  <defs>
+    <marker id="aa" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect width="680" height="620" fill="#FFFFFF"/>
+  <text class="th" x="340" y="30" text-anchor="middle">拾光 Agent 架构 · 上下文与证据驱动</text>
+
+  <rect x="40" y="48" width="280" height="60" rx="10" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+  <text class="th" x="180" y="70" text-anchor="middle" dominant-baseline="central" fill="#0C447C" font-size="13">用户提问（分话题会话）</text>
+  <text class="ts" x="180" y="92" text-anchor="middle" dominant-baseline="central">话题上下文摘要 + 预算内最近原文</text>
+
+  <rect x="360" y="48" width="280" height="60" rx="10" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+  <text class="th" x="500" y="70" text-anchor="middle" dominant-baseline="central" fill="#085041" font-size="13">上下文组装 thread-context</text>
+  <text class="ts" x="500" y="92" text-anchor="middle" dominant-baseline="central">有效摘要 + 未摘要轮次 · 超预算分段压缩</text>
+  <line x1="320" y1="78" x2="358" y2="78" stroke="#888780" stroke-width="1.5" marker-end="url(#aa)"/>
+
+  <rect x="360" y="140" width="280" height="88" rx="10" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+  <text class="th" x="500" y="162" text-anchor="middle" dominant-baseline="central" fill="#085041" font-size="13">混合检索取证（服务端强制范围）</text>
+  <text class="ts" x="500" y="182" text-anchor="middle" dominant-baseline="central">dense 向量 + sparse 词项，RRF 融合</text>
+  <text class="ts" x="500" y="200" text-anchor="middle" dominant-baseline="central">候选回查 SQLite 当前版本 · 单次上限 1000</text>
+  <text class="ts" x="500" y="218" text-anchor="middle" dominant-baseline="central">global / project / thread 三级范围过滤</text>
+  <line x1="500" y1="108" x2="500" y2="138" stroke="#888780" stroke-width="1.5" marker-end="url(#aa)"/>
+
+  <rect x="40" y="140" width="280" height="88" rx="10" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+  <text class="th" x="180" y="162" text-anchor="middle" dominant-baseline="central" fill="#085041" font-size="13">证据包组装</text>
+  <text class="ts" x="180" y="182" text-anchor="middle" dominant-baseline="central">原文片段 · 已确认长期记忆 · 不确定信息</text>
+  <text class="ts" x="180" y="200" text-anchor="middle" dominant-baseline="central">标明来源、事件日期、版本</text>
+  <text class="ts" x="180" y="218" text-anchor="middle" dominant-baseline="central">token 上限内裁剪</text>
+  <line x1="358" y1="184" x2="322" y2="184" stroke="#888780" stroke-width="1.5" marker-end="url(#aa)"/>
+
+  <rect x="40" y="260" width="600" height="60" rx="10" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+  <text class="th" x="340" y="282" text-anchor="middle" dominant-baseline="central" fill="#3C3489" font-size="13">模型生成（DeepSeek 兼容 · 接口可替换 · chat / vision）</text>
+  <text class="ts" x="340" y="304" text-anchor="middle" dominant-baseline="central">周报 · 主题整理 · 问答 · 小九陪伴对话 —— 共用同一证据链</text>
+  <line x1="180" y1="228" x2="180" y2="258" stroke="#888780" stroke-width="1.5" marker-end="url(#aa)"/>
+
+  <rect x="40" y="352" width="600" height="60" rx="10" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
+  <text class="th" x="340" y="374" text-anchor="middle" dominant-baseline="central" fill="#633806" font-size="13">引用校验（citation 检查）</text>
+  <text class="ts" x="340" y="396" text-anchor="middle" dominant-baseline="central">引用须存在、归属正确、仍可访问 · 重复检查 · 不合格退回原文整理</text>
+  <line x1="340" y1="320" x2="340" y2="350" stroke="#888780" stroke-width="1.5" marker-end="url(#aa)"/>
+
+  <rect x="40" y="444" width="280" height="72" rx="10" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+  <text class="th" x="180" y="466" text-anchor="middle" dominant-baseline="central" fill="#0C447C" font-size="13">回答 + 候选记忆</text>
+  <text class="ts" x="180" y="486" text-anchor="middle" dominant-baseline="central">模型只能「提出」，不能悄悄记住</text>
+  <text class="ts" x="180" y="504" text-anchor="middle" dominant-baseline="central">候选等待用户确认</text>
+  <line x1="340" y1="412" x2="200" y2="442" stroke="#888780" stroke-width="1.5" marker-end="url(#aa)"/>
+
+  <rect x="360" y="444" width="280" height="72" rx="10" fill="#FBEAF0" stroke="#D4537E" stroke-width="0.5"/>
+  <text class="th" x="500" y="466" text-anchor="middle" dominant-baseline="central" fill="#72243E" font-size="13">人确认 → 长期记忆生效</text>
+  <text class="ts" x="500" y="486" text-anchor="middle" dominant-baseline="central">候选→确认/暂停/删除 · 冲突并列展示</text>
+  <text class="ts" x="500" y="504" text-anchor="middle" dominant-baseline="central">来源变化重新确认 · 纳入后续检索</text>
+  <line x1="320" y1="480" x2="358" y2="480" stroke="#888780" stroke-width="1.5" marker-end="url(#aa)"/>
+
+  <path d="M500 516 C 500 560, 640 560, 640 300 C 640 150, 560 130, 530 110" fill="none" stroke="#D4537E" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#aa)"/>
+  <text class="cap" x="352" y="570" fill="#993556">生效记忆进入下一次检索的候选集——Agent 的能力随使</text>
+  <text class="cap" x="352" y="590" fill="#993556">用积累而增长，但每一条都经过人的确认</text>
+</svg>

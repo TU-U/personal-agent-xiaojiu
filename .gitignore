@@ -1,0 +1,33 @@
+node_modules/
+dist/
+.data/
+.env
+.env.*
+!.env.example
+test-results/
+playwright-report/
+*.tsbuildinfo
+artifacts/*.log
+.local-model/
+server/provider.local.mjs
+mobile/.expo/
+mobile/android/
+mobile/ios/
+mobile/*.apk
+*.keystore
+
+.android-tools/
+
+artifacts/mobile/*.apk
+
+# Python helpers
+__pycache__/
+
+# --- 上 GitHub 补充排除 ---
+.local-runtime/
+.qdrant-initialized
+.workbuddy/
+snapshots/
+UI设计参考图/
+artifacts/*.json
+docs/22-resume-project.md

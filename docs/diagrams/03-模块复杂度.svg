@@ -1,0 +1,58 @@
+<svg viewBox="0 0 680 600" width="100%" xmlns="http://www.w3.org/2000/svg" role="img">
+  <title>各模块工程复杂度评估</title>
+  <desc>横向条形图，12 个模块按综合复杂度 1 到 5 打分，从低到高排列</desc>
+  <style>
+    .th{font:14px sans-serif;font-weight:500;fill:#2C2C2A}
+    .ts{font:12px sans-serif;fill:#5F5E5A}
+    .lbl{font:12px sans-serif;fill:#444441}
+    .val{font:12px sans-serif;font-weight:500;fill:#444441}
+    text{font-family:sans-serif}
+  </style>
+  <rect width="680" height="600" fill="#FFFFFF"/>
+  <text class="th" x="40" y="30">各模块工程复杂度评估</text>
+  <text class="ts" x="40" y="48">按「读懂 + 改对 + 出错后能否恢复」综合难度打分（1–5）</text>
+
+  <g font-size="12">
+    <rect x="260" y="60" width="10" height="10" rx="2" fill="#1D9E75"/><text class="lbl" x="276" y="69">低（2–2.5）</text>
+    <rect x="350" y="60" width="10" height="10" rx="2" fill="#378ADD"/><text class="lbl" x="366" y="69">中（3–3.5）</text>
+    <rect x="440" y="60" width="10" height="10" rx="2" fill="#BA7517"/><text class="lbl" x="456" y="69">中高（4）</text>
+    <rect x="530" y="60" width="10" height="10" rx="2" fill="#E24B4A"/><text class="lbl" x="546" y="69">高（4.5–5）</text>
+  </g>
+
+  <g>
+    <text class="lbl" x="248" y="97" text-anchor="end">小九表现层（心情状态机）</text>
+    <rect x="260" y="84" width="152" height="26" rx="3" fill="#1D9E75"/><text class="val" x="420" y="101">2</text>
+    <text class="lbl" x="248" y="137" text-anchor="end">记账（微信导入+OCR）</text>
+    <rect x="260" y="124" width="190" height="26" rx="3" fill="#1D9E75"/><text class="val" x="458" y="141">2.5</text>
+    <text class="lbl" x="248" y="177" text-anchor="end">备份与恢复</text>
+    <rect x="260" y="164" width="228" height="26" rx="3" fill="#378ADD"/><text class="val" x="496" y="181">3</text>
+    <text class="lbl" x="248" y="217" text-anchor="end">解析与转写管线</text>
+    <rect x="260" y="204" width="266" height="26" rx="3" fill="#378ADD"/><text class="val" x="534" y="221">3.5</text>
+    <text class="lbl" x="248" y="257" text-anchor="end">前端 Web 界面（63 组件）</text>
+    <rect x="260" y="244" width="266" height="26" rx="3" fill="#378ADD"/><text class="val" x="534" y="261">3.5</text>
+    <text class="lbl" x="248" y="297" text-anchor="end">要事生命周期与复核</text>
+    <rect x="260" y="284" width="266" height="26" rx="3" fill="#378ADD"/><text class="val" x="534" y="301">3.5</text>
+    <text class="lbl" x="248" y="337" text-anchor="end">Android 原生端（并行维护）</text>
+    <rect x="260" y="324" width="304" height="26" rx="3" fill="#BA7517"/><text class="val" x="572" y="341">4</text>
+    <text class="lbl" x="248" y="377" text-anchor="end">记忆生命周期与冲突</text>
+    <rect x="260" y="364" width="304" height="26" rx="3" fill="#BA7517"/><text class="val" x="572" y="381">4</text>
+    <text class="lbl" x="248" y="417" text-anchor="end">会话上下文与摘要压缩</text>
+    <rect x="260" y="404" width="304" height="26" rx="3" fill="#BA7517"/><text class="val" x="572" y="421">4</text>
+    <text class="lbl" x="248" y="457" text-anchor="end">小九监督系统（服务端约10模块）</text>
+    <rect x="260" y="444" width="342" height="26" rx="3" fill="#E24B4A"/><text class="val" x="610" y="461">4.5</text>
+    <text class="lbl" x="248" y="497" text-anchor="end">混合检索（Qdrant+RRF+范围过滤）</text>
+    <rect x="260" y="484" width="342" height="26" rx="3" fill="#E24B4A"/><text class="val" x="610" y="501">4.5</text>
+    <text class="lbl" x="248" y="537" text-anchor="end" font-weight="500">数据一致性基座（revision/opId/游标）</text>
+    <rect x="260" y="524" width="380" height="26" rx="3" fill="#A32D2D"/><text x="632" y="541" text-anchor="end" font-size="12" font-weight="500" fill="#FFFFFF">5</text>
+  </g>
+
+  <line x1="260" y1="560" x2="640" y2="560" stroke="#B4B2A9" stroke-width="0.5"/>
+  <g class="ts" text-anchor="middle">
+    <text x="260" y="578">0</text>
+    <text x="336" y="578">1</text>
+    <text x="412" y="578">2</text>
+    <text x="488" y="578">3</text>
+    <text x="564" y="578">4</text>
+    <text x="640" y="578">5</text>
+  </g>
+</svg>

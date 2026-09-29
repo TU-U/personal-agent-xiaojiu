@@ -1,0 +1,22 @@
+import {test,expect} from '@playwright/test';
+test('home, source pages and pet reuse the same prompt and remove it together after snooze',async({page})=>{
+ const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+ const task={id:'shared-task',revision:1,title:'统一监督测试',goal:'学习',status:'running',minutes:0,repeat:'daily',time:'12:00',requirement:'证据',plan:{goal:'学习',conditions:'证据',steps:[],deliverable:'总结'},logs:[],outputs:[]};
+ let run={id:'shared-run',taskId:task.id,day:today,status:'open',seconds:0,timerAt:null,evidence:'',artifactId:'',reminded:true,notice:'过期的独立催促',snoozedUntil:''};
+ const event={id:'shared-event',revision:1,title:'统一要事测试',summary:'测试',tags:[],project:'',priority:'normal',eventType:'one_off',lifecycleStatus:'ongoing',status:'open',dueAt:'2020-01-01T00:00:00Z',currentOccurrenceId:'check',createdAt:'2020-01-01T00:00:00Z',images:[],relatedEventIds:[]};
+ const prompts=[{id:'event:shared-event:check',sourceKind:'event',sourceId:event.id,title:event.title,message:'统一要事检查消息',count:1,actionTarget:{page:'events',id:event.id,occurrenceId:'check'}},{id:'workRun:shared-run:due',sourceKind:'workRun',sourceId:run.id,title:task.title,message:'统一任务检查消息',count:1,actionTarget:{page:'workTasks',id:task.id,runId:run.id}}];
+ await page.route('**/api/bootstrap',async route=>{const response=await route.fetch();return route.fulfill({json:{...await response.json(),events:[event]}});});
+ await page.route('**/api/work-tasks',route=>route.fulfill({json:{tasks:[task],runs:[run]}}));
+ await page.route('**/api/pet/reminders',route=>{const items=run.snoozedUntil?prompts.slice(0,1):prompts;return route.fulfill({json:{snapshot:run.snoozedUntil||'first',cursor:1,total:items.length,items}});});
+ await page.route('**/api/work-runs/shared-run/action',route=>{const body=route.request().postDataJSON();expect(body.action).toBe('snooze');run={...run,snoozedUntil:body.until,reminded:false,notice:'已安排稍后检查'};return route.fulfill({json:run});});
+ await page.goto('/');await page.getByRole('button',{name:'进入演示空间'}).click();await expect(page.locator('.app-shell')).toBeVisible();
+ const home=page.getByLabel('小九的要事提示'),todayTasks=page.getByRole('region',{name:'今日任务'}),pet=page.getByRole('button',{name:/小九现在/});
+ await expect(home).toContainText('小九：统一要事检查消息');await expect(todayTasks).toContainText('小九：统一任务检查消息');await expect(page.getByText('过期的独立催促',{exact:true})).toHaveCount(0);
+ await pet.hover();const table=page.getByLabel('小九提示表');await expect(table.locator('[data-pet-reminder-id="event:shared-event:check"]')).toContainText('小九：统一要事检查消息');
+ await page.getByLabel('收起小九面板').click();await home.getByRole('button').click();await expect(page.locator('#event-shared-event')).toBeFocused();await expect(page.locator('#event-shared-event')).toContainText('小九：统一要事检查消息');
+ await pet.hover();await table.getByRole('button',{name:'查看：统一监督测试',exact:true}).click();
+ await expect(page.getByRole('dialog')).toHaveCount(1);await expect(page.getByRole('dialog')).toContainText('本次执行证据');
+ await page.getByLabel('稍后检查时间',{exact:true}).fill('2099-01-01T12:00');await page.getByRole('button',{name:'安排稍后检查',exact:true}).click();await expect(page.getByRole('dialog')).toHaveCount(0);
+ await expect(page.getByLabel('1 项待处理提示')).toBeVisible();await expect(page.locator('[data-pet-reminder-id="workRun:shared-run:due"]')).toHaveCount(0);await expect(page.getByText('过期的独立催促',{exact:true})).toHaveCount(0);
+ await page.getByRole('navigation',{name:'主导航'}).getByRole('button',{name:'记录'}).click();await expect(todayTasks).toContainText(task.title);await expect(todayTasks).not.toContainText('统一任务检查消息');
+});

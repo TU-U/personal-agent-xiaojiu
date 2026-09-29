@@ -1,0 +1,20 @@
+import {test,expect} from '@playwright/test';
+test('real local transcription is visible, editable and keeps the original audio',async({page})=>{
+ test.setTimeout(90000);
+ await page.goto('/');await page.getByRole('button',{name:'进入演示空间'}).click();await expect(page.locator('.app-shell')).toBeVisible();
+ await page.getByLabel('选择导入文件').setInputFiles('.local-runtime/asr-models/1-two-speakers-en.wav');
+ await page.getByRole('button',{name:'保存并导入',exact:true}).click();
+ const panel=page.getByLabel('录音转写');await expect(panel).toBeVisible();
+ await panel.getByLabel('识别语言').selectOption('en');await panel.getByRole('button',{name:'开始转写',exact:true}).click();
+ await expect(panel.getByText('转写任务已结束',{exact:true})).toBeVisible({timeout:60000});
+ await expect.poll(async()=>await panel.locator('.transcript-segment p').allTextContents().then(parts=>parts.join(''))).toContain('A pencil with black lead writes best.');
+ await expect(page.locator('.note-detail audio')).toBeVisible();
+ await panel.getByRole('button',{name:'修订转写与说话人'}).click();
+ await panel.getByLabel('第 1 段说话人',{exact:true}).selectOption('speaker_2');
+ await panel.getByLabel('第 1 段转写',{exact:true}).fill('人工核对后的第一段。');await panel.getByRole('button',{name:'保存转写修订'}).click();
+ await expect(panel).toContainText('人工核对后的第一段。');await expect(panel).toContainText('人工修订');
+ const response=await page.request.get('/api/bootstrap');const data=await response.json();const note=data.notes.find((n:{title:string})=>n.title==='1-two-speakers-en.wav');
+ expect(note.transcript.transcriptRevision).toBe(2);expect(note.transcript.segments[0].speakerId).toBe('speaker_2');expect(note.transcriptOriginal.segments[0].speakerId).toBeNull();expect(note.transcriptOriginal.segments[0].text).not.toBe('人工核对后的第一段。');expect(note.attachments).toHaveLength(1);
+ const stale=await page.request.patch(`/api/notes/${note.id}/transcript`,{data:{revision:note.revision-1,transcriptRevision:1,texts:['过期修订']}});expect(stale.status()).toBe(409);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+});

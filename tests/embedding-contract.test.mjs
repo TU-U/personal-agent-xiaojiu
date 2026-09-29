@@ -1,0 +1,21 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import {qwenModel,qwenProfile,indexDescriptor,indexCollection,embeddingInput,checkedVector} from '../server/embedding-contract.mjs';
+test('Qwen has a pinned distinct index, instructed queries, untouched documents and finite 1024-dimensional normalized vectors',()=>{
+ const c={model:'qwen3-embedding-0.6b',indexProfile:qwenProfile};
+ assert.equal(embeddingInput('上海读书活动',c,'query'),`Instruct: ${qwenModel.queryInstruction}\nQuery:上海读书活动`);
+ assert.equal(embeddingInput('原始资料\n保持格式',c,'document'),'原始资料\n保持格式');
+ assert.equal(indexDescriptor(c).sha256,qwenModel.sha256);
+ assert.equal(indexDescriptor(c).pooling,'last');
+ assert.notEqual(indexCollection(c),indexCollection({model:c.model}));
+ const bge={model:'bge-m3'};
+ assert.equal(indexCollection(bge),'shiguang_chunks_v2_'+createHash('sha256').update('bge-m3').digest('hex').slice(0,10));
+ assert.equal(embeddingInput('不加新指令',bge,'query'),'不加新指令');
+ const v=checkedVector(Array(1024).fill(2),c);assert.equal(v.length,1024);assert.equal(v.reduce((n,x)=>n+x*x,0),1);
+ assert.throws(()=>checkedVector([1,2,3],c),/维度不符/);
+ assert.throws(()=>checkedVector(Array(1024).fill(0),c),/零向量/);
+ assert.throws(()=>checkedVector([Infinity],bge),/有效向量/);
+ assert.throws(()=>embeddingInput('x',{...c,model:'bge-m3'},'query'),/不一致/);
+ assert.throws(()=>indexCollection({...c,indexProfile:'unknown'}),/未知/);
+});

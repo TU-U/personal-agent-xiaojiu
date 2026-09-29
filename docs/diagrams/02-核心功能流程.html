@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>核心功能流程 · 从记录到小九闭环</title>
+<style>
+:root{
+  --color-background-primary:#FFFFFF;
+  --color-background-secondary:#F1EFE8;
+  --color-background-info:#E6F1FB;
+  --color-text-primary:#2C2C2A;
+  --color-text-secondary:#5F5E5A;
+  --color-text-info:#0C447C;
+  --color-border-tertiary:rgba(0,0,0,0.15);
+  --color-border-secondary:rgba(0,0,0,0.3);
+  --color-border-info:rgba(23,95,165,0.4);
+}
+*{box-sizing:border-box}
+body{margin:0;padding:24px;font-family:system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#FFFFFF;color:var(--color-text-primary);font-size:13px;line-height:1.6}
+h2{font-size:15px;font-weight:500;margin:0 0 16px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+button{background:transparent;border:0.5px solid var(--color-border-secondary);border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;color:inherit;font-family:inherit}
+button:hover{border-color:var(--color-border-secondary);background:var(--color-background-secondary)}
+h3{font-size:13px;font-weight:500;margin:0 0 4px}
+p{margin:0 0 12px}
+ul{margin:0;padding-left:1.2rem;line-height:1.7}
+</style>
+</head>
+<body>
+<h2>核心功能流程 · 从记录到小九闭环</h2>
+<h2 class="sr-only">核心功能流程六步分步说明，可点击步骤切换</h2>
+<div id="flowChips" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;"></div>
+<div id="flowCard" style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:1rem 1.25rem;"></div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;max-width:680px;">
+  <button onclick="flowMove(-1)">上一步</button>
+  <span id="flowPos" style="font-size:12px;color:var(--color-text-secondary);"></span>
+  <button onclick="flowMove(1)">下一步</button>
+</div>
+<div style="max-width:680px;margin-top:16px;font-size:12px;color:var(--color-text-secondary)">六步构成闭环：第 6 步的复盘与阶段总结沉淀为新的记录与记忆，回到第 1 步。每一步都有恢复语义——响应丢失可重试不重复、迟到结果不覆盖新编辑、失败不保存残稿。</div>
+<script>
+const flowSteps=[
+ {t:"捕获",d:"多入口进来，先保证不丢",p:[
+  "入口：随手记录、网页录音、文件导入（TXT / MD / CSV / JSON / PDF / DOCX）",
+  "电脑端可浏览已映射的 E 盘文件并导入；另有账单截图 OCR、微信账单导入",
+  "原则：先存原件和 SQLite 版本（revision），再谈解析；浏览器草稿可恢复",
+  "opId 操作标识：响应丢失后重试不会产生重复记录"]},
+ {t:"解析",d:"队列与独立进程干活，失败不丢原件",p:[
+  "Redis + BullMQ 任务队列，父进程 fork 独立 Worker 执行",
+  "文字层提取、编码检测（GB18030 兼容推断）、本地 ASR 转写（可取消、可重试）",
+  "单次解析两分钟上限；失败保留原件并显示原因，支持重试",
+  "迟到的解析结果会核对记录版本，不会覆盖用户期间的编辑"]},
+ {t:"组织",d:"自动分类、建立索引、提出候选",p:[
+  "AI 自动单分类 + 标签建议 + 规则摘要；人工分类不会被迟到的 AI 覆盖",
+  "片段进入 Qdrant：dense 向量 + sparse 词项；编辑、删除、暂停后同步更新",
+  "解析完成的资料后台自动补索引；失败可按单文件重试，无需重建全库",
+  "对话过程中提出候选记忆，等用户确认，不悄悄记住"]},
+ {t:"检索与生成",d:"带引用，可降级，不冒充",p:[
+  "关键词 + 向量并行召回，RRF 融合；服务端强制项目 / 范围过滤",
+  "候选回查 SQLite 当前版本；过期候选过多时扩大窗口，单次上限 1000",
+  "问答分话题会话、跨天继续；周报、主题整理、成果导出为 Markdown",
+  "引用须通过存在性与重复检查，不合格退回原文整理；失败不保存残缺成果"]},
+ {t:"确认与行动",d:"人始终在环上",p:[
+  "候选记忆：确认生效、暂停、删除；来源变化后重新确认，来源删除后失效",
+  "要事：约定检查、复核建议、用户确认，关联证据与图片",
+  "待办按天管理（北京时间），未完成可移入今天，按来源去重",
+  "待办可升级为监督任务，绑定完成条件与证据要求"]},
+ {t:"小九闭环",d:"提醒、复盘、回流——系统越用越懂你",p:[
+  "pet-reminders 聚合四类待处理：要事检查、今日待办、记忆确认、监督逾期",
+  "免打扰时段、按来源去重、只显示最新一条，提醒不变成噪音",
+  "引导处理，然后是证据与计时，最后形成阶段回顾（recap）",
+  "复盘与阶段总结沉淀为新的记录与记忆，回到第 1 步"]}
+];
+let flowCur=0;
+function flowRender(){
+ const s=flowSteps[flowCur];
+ document.getElementById('flowCard').innerHTML=
+  '<h3>'+(flowCur+1)+' · '+s.t+'</h3>'+
+  '<p style="color:var(--color-text-secondary)">'+s.d+'</p>'+
+  '<ul>'+s.p.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
+ document.getElementById('flowPos').textContent='步骤 '+(flowCur+1)+' / '+flowSteps.length;
+ [...document.getElementById('flowChips').children].forEach((c,i)=>{
+  c.style.background=i===flowCur?'var(--color-background-info)':'transparent';
+  c.style.color=i===flowCur?'var(--color-text-info)':'var(--color-text-secondary)';
+  c.style.borderColor=i===flowCur?'var(--color-border-info)':'var(--color-border-secondary)';
+ });
+}
+function flowMove(d){flowCur=Math.min(flowSteps.length-1,Math.max(0,flowCur+d));flowRender();}
+function flowGo(i){flowCur=i;flowRender();}
+const chips=document.getElementById('flowChips');
+flowSteps.forEach((s,i)=>{
+ const b=document.createElement('button');
+ b.textContent=(i+1)+' '+s.t;
+ b.style.borderRadius='999px';
+ b.style.padding='2px 12px';
+ b.style.fontSize='12px';
+ b.onclick=()=>flowGo(i);
+ chips.appendChild(b);
+});
+flowRender();
+</script>
+</body>
+</html>

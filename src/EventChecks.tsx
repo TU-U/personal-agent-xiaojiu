@@ -1,0 +1,14 @@
+import {eventRequest} from './eventRequest';
+import EventActionRecovery from './EventActionRecovery';
+import {useState} from 'react';
+import {api} from './api';
+import {ErrorBanner,Modal} from './components';
+import type {EventRecord} from './types';
+type Check={id:string;dueAt:string;status:string;confirmedAt?:string;reviewText?:string;reviewNotice?:string;history:{action:string;dueAt:string;reviewText?:string;reviewNotice?:string}[]};
+export default function EventChecks({event,onRefresh}:{event:EventRecord;onRefresh:()=>Promise<void>}){
+ const [open,setOpen]=useState(false),[items,setItems]=useState<Check[]>([]),[error,setError]=useState(''),[busy,setBusy]=useState(false),[date,setDate]=useState('');
+ async function load(){setBusy(true);setError('');try{setItems((await api<{items:Check[]}>('/events/'+event.id+'/checks')).items);}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
+ async function action(name:string){setBusy(true);setError('');try{await eventRequest('/events/'+event.id+'/'+name,{revision:event.revision,...(name==='end'?{}:{dueAt:new Date(date).toISOString(),...(name==='snooze'?{occurrenceId:event.currentOccurrenceId}:{})})});await onRefresh();setDate('');await load();}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
+ const pending=event.status==='open'&&!!event.currentOccurrenceId;
+ return <><button className="btn secondary small" onClick={()=>{setOpen(true);void load();}}>检查历史 / 安排</button>{open&&<Modal title="检查历史与安排" closeDisabled={busy} onClose={()=>setOpen(false)}><div className="form-body"><EventActionRecovery onRefresh={async()=>{await onRefresh();await load();}}/><ErrorBanner message={error}/><p>{event.title} · {event.lifecycleStatus==='ended'?'已结束':'进行中'}</p>{busy?<p role="status">处理中…</p>:<>{error&&<button className="btn secondary" onClick={()=>void load()}>重试加载</button>}{items.length===0&&<p>尚无约定检查。</p>}{items.map(check=><article className="phase-card" key={check.id}><p>{new Date(check.dueAt).toLocaleString('zh-CN')} · {({pending:'待确认',confirmed:'已确认',cancelled:'已取消'})[check.status]||check.status}</p>{check.confirmedAt&&<p>确认于 {new Date(check.confirmedAt).toLocaleString('zh-CN')}</p>}<p className="preserve-text">{check.reviewText||check.reviewNotice}</p>{check.history.map((entry,i)=><p key={i} className="preserve-text">历史约定：{new Date(entry.dueAt).toLocaleString('zh-CN')} · {entry.reviewText||entry.reviewNotice||'无复核内容'}</p>)}</article>)}</>}{event.lifecycleStatus!=='ended'&&<><label>{pending?'稍后检查时间':'下一次检查时间'}<input disabled={busy} type="datetime-local" value={date} onChange={e=>setDate(e.target.value)}/></label><button className="btn primary" disabled={busy||!date} onClick={()=>void action(pending?'snooze':'schedule')}>{pending?'确认改期':'安排下一次检查'}</button><p>确认检查只关闭本次提醒。结束要事会取消尚未确认的检查。</p><button className="btn secondary" disabled={busy} onClick={()=>{if(window.confirm('结束这件要事并取消待处理检查？历史记录会保留。'))void action('end');}}>结束要事</button></>}</div></Modal>}</>;
+}

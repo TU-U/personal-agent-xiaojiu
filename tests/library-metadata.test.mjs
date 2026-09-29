@@ -1,0 +1,37 @@
+import {test,after} from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,rmSync} from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+const directory=mkdtempSync(path.join(os.tmpdir(),'library-metadata-'));
+Object.assign(process.env,{DATA_DIR:directory,SEED_DEMO:'false',WORKER_MODE:'true'});
+const {db,save,get,remove}=await import('../server/store.mjs');
+const {editLibraryMetadata}=await import('../server/library-metadata.mjs');
+test('metadata edits preserve source identity and snapshots, enqueue current revision, and distinguish same-name projects',()=>{
+ const pa=save('project',{name:'同名'}),pb=save('project',{name:'同名'});
+ const file=save('libraryFile',{title:'原名.md',sourcePath:'文档/原名.md',copyName:'hash.md',hash:'same-hash',canonicalId:'sha256:same-hash',content:'# 原文',status:'ready',project:'旧标签',projectId:pa.id,tags:['旧']});
+ const body={opId:'metadata-edit',revision:file.revision,title:'新标题',tags:['新标签'],projectId:pb.id};
+ const result=editLibraryMetadata(file.id,body),updated=result.file;
+ assert.equal(updated.id,file.id);assert.equal(updated.projectId,pb.id);assert.equal(updated.originalName,'原名.md');assert.equal(updated.revision,file.revision+1);
+ for(const key of ['sourcePath','copyName','hash','canonicalId','content','status','createdAt','project'])assert.equal(updated[key],file[key]);
+ assert.equal(db.prepare('SELECT revision FROM search_outbox WHERE entity_id=?').get(file.id).revision,updated.revision);
+ const next=save('libraryFile',{...updated,title:'之后的编辑'},updated.revision);
+ const replay=editLibraryMetadata(file.id,body);assert.equal(replay.savedRevision,updated.revision);assert.equal(replay.file.title,'之后的编辑');assert.equal(get(file.id,'libraryFile').revision,next.revision);
+ assert.throws(()=>editLibraryMetadata(file.id,{...body,title:'复用编号改参数'}),e=>e.status===409);
+ const detached=editLibraryMetadata(file.id,{...body,opId:'unlink-project',revision:next.revision,title:next.title,projectId:''}).file;
+ assert.equal(detached.projectId,'');assert.equal(detached.project,'旧标签');
+});
+test('conflicts and invalid associations preserve current data; paths/body/status cannot be injected',()=>{
+ const project=save('project',{name:'将删除'}),file=save('libraryFile',{title:'原名',status:'copied',content:'',tags:[],projectId:project.id});
+ const body={opId:'validation-edit',revision:file.revision,title:'更改',tags:[],projectId:project.id};remove(project.id,'project',project.revision);
+ assert.throws(()=>editLibraryMetadata(file.id,body),e=>e.status===422);
+ for(const patch of [{title:''},{tags:['重复','重复']},{tags:Array(21).fill('x')},{sourcePath:'../outside'},{content:'恶意替换'},{status:'ready'}])assert.throws(()=>editLibraryMetadata(file.id,{...body,projectId:'',...patch}),e=>e.status===400);
+ assert.equal(get(file.id,'libraryFile').revision,file.revision);
+ const next=save('libraryFile',{...file,title:'并发修改'},file.revision);
+ assert.throws(()=>editLibraryMetadata(file.id,{...body,projectId:''}),e=>e.status===409&&e.current.title==='并发修改');
+ assert.equal(get(file.id,'libraryFile').revision,next.revision);
+ const unchanged=editLibraryMetadata(file.id,{opId:'unchanged-edit',revision:next.revision,title:next.title,tags:[],projectId:''}).file;
+ const again=editLibraryMetadata(file.id,{opId:'unchanged-again',revision:unchanged.revision,title:unchanged.title,tags:[],projectId:''}).file;
+ assert.equal(again.revision,unchanged.revision);
+});
+after(()=>{db.close();rmSync(directory,{recursive:true,force:true});});

@@ -1,0 +1,54 @@
+<svg viewBox="0 0 680 460" width="680" xmlns="http://www.w3.org/2000/svg" role="img">
+  <title>拾光核心工作流程</title>
+  <desc>六步闭环：捕获、解析、组织、检索与生成、确认与行动、小九闭环，最后回流到捕获</desc>
+  <style>.th{font:14px sans-serif;font-weight:500;fill:#2C2C2A}.ts{font:11px sans-serif;fill:#5F5E5A}.cap{font:11.5px sans-serif;fill:#5F5E5A}text{font-family:sans-serif}</style>
+  <defs>
+    <marker id="fa" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect width="680" height="460" fill="#FFFFFF"/>
+  <text class="th" x="340" y="30" text-anchor="middle">拾光核心工作流程 · 六步闭环</text>
+
+  <g>
+    <rect x="40" y="56" width="140" height="56" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+    <text class="th" x="110" y="76" text-anchor="middle" dominant-baseline="central" fill="#0C447C" font-size="13">① 捕获</text>
+    <text class="ts" x="110" y="96" text-anchor="middle" dominant-baseline="central">记录·录音·文件导入</text>
+    <rect x="200" y="56" width="140" height="56" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+    <text class="th" x="270" y="76" text-anchor="middle" dominant-baseline="central" fill="#0C447C" font-size="13">② 解析</text>
+    <text class="ts" x="270" y="96" text-anchor="middle" dominant-baseline="central">队列 Worker·ASR 转写</text>
+    <rect x="360" y="56" width="140" height="56" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+    <text class="th" x="430" y="76" text-anchor="middle" dominant-baseline="central" fill="#0C447C" font-size="13">③ 组织</text>
+    <text class="ts" x="430" y="96" text-anchor="middle" dominant-baseline="central">分类·索引·候选记忆</text>
+    <rect x="520" y="56" width="120" height="56" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+    <text class="th" x="580" y="76" text-anchor="middle" dominant-baseline="central" fill="#0C447C" font-size="13">④ 检索生成</text>
+    <text class="ts" x="580" y="96" text-anchor="middle" dominant-baseline="central">混合召回·带引用</text>
+    <line x1="180" y1="84" x2="198" y2="84" stroke="#888780" stroke-width="1.5" marker-end="url(#fa)"/>
+    <line x1="340" y1="84" x2="358" y2="84" stroke="#888780" stroke-width="1.5" marker-end="url(#fa)"/>
+    <line x1="500" y1="84" x2="518" y2="84" stroke="#888780" stroke-width="1.5" marker-end="url(#fa)"/>
+  </g>
+
+  <path d="M580 112 C 580 150, 580 150, 580 168" fill="none" stroke="#888780" stroke-width="1.5" marker-end="url(#fa)"/>
+
+  <g>
+    <rect x="520" y="168" width="120" height="56" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+    <text class="th" x="580" y="188" text-anchor="middle" dominant-baseline="central" fill="#0C447C" font-size="13">⑤ 确认行动</text>
+    <text class="ts" x="580" y="208" text-anchor="middle" dominant-baseline="central">人确认·记忆生效</text>
+    <rect x="360" y="168" width="140" height="56" rx="8" fill="#FBEAF0" stroke="#D4537E" stroke-width="0.5"/>
+    <text class="th" x="430" y="188" text-anchor="middle" dominant-baseline="central" fill="#72243E" font-size="13">⑥ 小九闭环</text>
+    <text class="ts" x="430" y="208" text-anchor="middle" dominant-baseline="central">提醒·监督·复盘 recap</text>
+    <line x1="518" y1="196" x2="502" y2="196" stroke="#888780" stroke-width="1.5" marker-end="url(#fa)"/>
+  </g>
+
+  <path d="M358 196 C 200 196, 150 240, 110 240 C 70 240, 110 220, 110 116" fill="none" stroke="#D4537E" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fa)"/>
+  <text class="cap" x="112" y="262" fill="#993556">复盘与阶段总结沉淀为新的记录与记忆，回到第①步 —— 系统越用越懂你</text>
+
+  <g>
+    <text class="cap" x="40" y="300" font-weight="500" fill="#2C2C2A">每一步都有恢复语义（生产级可靠性的来源）：</text>
+    <text class="cap" x="56" y="326">· 捕获：opId 幂等——响应丢失后重试，不会产生重复记录；浏览器草稿可恢复</text>
+    <text class="cap" x="56" y="350">· 解析：两分钟上限、失败保留原件可重试；迟到结果核对版本，不覆盖用户编辑</text>
+    <text class="cap" x="56" y="374">· 组织：人工分类不会被迟到的 AI 结果覆盖；单文件索引失败可单独重试</text>
+    <text class="cap" x="56" y="398">· 检索生成：引用须通过存在性与重复检查，不合格退回原文整理；失败不保存残缺成果</text>
+    <text class="cap" x="56" y="422">· 确认：来源变化后重新确认、来源删除后失效——记忆永远有据可查</text>
+  </g>
+</svg>

@@ -1,0 +1,8 @@
+import fs from 'node:fs/promises';
+const model=process.env.TEST_MODEL||'qwen2.5-1.5b-instruct';const apiKey=await fs.readFile('.data/local-model-key','utf8').catch(()=>'');const base='http://127.0.0.1:4317/api';const login=await fetch(base+'/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:'shiguang-demo'})});const cookie=login.headers.get('set-cookie').split(';')[0];
+const call=async(path,body)=>{const r=await fetch(base+path,{method:'POST',headers:{cookie,'Content-Type':'application/json'},body:JSON.stringify(body)});return {status:r.status,...await r.json()};};
+await fetch(base+'/settings',{method:'PATCH',headers:{cookie,'Content-Type':'application/json'},body:JSON.stringify({provider:{baseUrl:'http://127.0.0.1:4318/v1',model,apiKey}})});
+const checks=[];
+for(const query of ['拾光项目正式手机端优先什么平台？','资料导入有哪些风险？','我喜欢的周报表达方式是什么？']){const start=performance.now();const r=await call('/ask',{query});const entry={query,status:r.status,body:r.body,sources:r.sources?.map(s=>({title:s.title,id:s.id})),mode:r.mode,latencyMs:Math.round(performance.now()-start),error:r.error};checks.push(entry);console.log(JSON.stringify(entry));}
+const start=performance.now();const artifact=await call('/tasks',{template:'weekly',project:'拾光',days:7,instructions:'先写结论，再列本周进展、风险、下一步。不要把计划写成已经完成，控制在500字以内。'});checks.push({task:'weekly',status:artifact.status,body:artifact.body,mode:artifact.mode,latencyMs:Math.round(performance.now()-start),error:artifact.error});console.log(JSON.stringify(checks.at(-1)));
+await fs.writeFile('artifacts/model-smoke.json',JSON.stringify({testedAt:new Date().toISOString(),model:model+' Q4_K_M on local CPU',checks},null,2));

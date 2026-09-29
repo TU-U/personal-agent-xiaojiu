@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>拾光 PersonalAgent · 架构梳理与方向评审报告</title>
+<style>
+:root{
+  --bg:#FFFFFF;--bg2:#F1EFE8;--bg-info:#E6F1FB;--bg-danger:#FCEBEB;
+  --text:#2C2C2A;--text2:#5F5E5A;--text3:#888780;--text-info:#0C447C;
+  --border:rgba(0,0,0,0.15);--border2:rgba(0,0,0,0.3);
+}
+*{box-sizing:border-box}
+body{margin:0;padding:0;background:var(--bg);color:var(--text);
+  font-family:system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  font-size:14px;line-height:1.75}
+.page{max-width:760px;margin:0 auto;padding:40px 24px 80px}
+h1{font-size:22px;font-weight:500;margin:0 0 4px}
+h2{font-size:16px;font-weight:500;margin:48px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+h3{font-size:14px;font-weight:500;margin:24px 0 8px}
+p{margin:0 0 12px}
+.meta{font-size:12px;color:var(--text2);margin-bottom:8px}
+blockquote{margin:16px 0;padding:12px 16px;border-left:3px solid var(--border2);background:var(--bg2);border-radius:0 8px 8px 0;font-size:13px;color:var(--text2)}
+strong{font-weight:500}
+table{width:100%;border-collapse:collapse;margin:12px 0 20px;font-size:13px}
+th,td{border:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--bg2);font-weight:500}
+figure{margin:20px 0 28px}
+figcaption{font-size:12px;color:var(--text2);text-align:center;margin-top:8px}
+figure svg{width:100%;height:auto;border:1px solid var(--border);border-radius:12px;background:#fff}
+.chart-wrap{display:flex;flex-wrap:wrap;gap:16px;margin-bottom:8px;font-size:12px;color:var(--text2)}
+.chart-wrap span{display:flex;align-items:center;gap:4px}
+.chart-wrap i{width:10px;height:10px;border-radius:2px;display:inline-block}
+ul{margin:0 0 12px;padding-left:1.4rem}
+li{margin-bottom:4px}
+.warn{background:var(--bg-danger);border:1px solid rgba(163,45,45,0.3);border-radius:8px;padding:12px 16px;font-size:13px;margin:16px 0}
+.num{font-variant-numeric:tabular-nums}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.chips button{background:transparent;border:0.5px solid var(--border2);border-radius:999px;padding:3px 14px;font-size:12px;cursor:pointer;color:var(--text2);font-family:inherit}
+.chips button.on{background:var(--bg-info);color:var(--text-info);border-color:rgba(23,95,165,0.4)}
+.flow-card{background:#fff;border:0.5px solid var(--border);border-radius:12px;padding:16px 20px}
+.flow-card h4{margin:0 0 2px;font-size:14px;font-weight:500}
+.flow-nav{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.flow-nav button{background:transparent;border:0.5px solid var(--border2);border-radius:8px;padding:6px 16px;font-size:13px;cursor:pointer;font-family:inherit}
+.flow-pos{font-size:12px;color:var(--text2)}
+.flow-note{font-size:12px;color:var(--text2);margin-top:16px}
+svg text{font-family:sans-serif}
+@media print{.chips button,.flow-nav button{display:none}}
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>拾光 PersonalAgent · 架构梳理与方向评审报告</h1>
+<p class="meta">2026-09-29 · 基于当前代码库通读分析，与项目负责人讨论后的结论</p>
+<blockquote>本文档整合完整评审内容：摸底结论、整体架构图、核心功能流程图、技术栈与模块复杂度评估、小九功能定位分析、项目定位与方向讨论。报告结论与 docs/21-architecture-review.md 一致。</blockquote>
+
+<h2>〇、摸底结果</h2>
+<p>先汇报摸底结果，再逐张出图。</p>
+<p><strong>这个项目的真实体量</strong>（这直接决定了后面的讨论基调）：前端 63 个 React 组件、后端 78 个服务端模块、56 篇文档、一个独立的 Android 原生工程（约 2 万个文件的完整工程）、Playwright 端到端测试 + 无障碍测试 + 检索基准脚本。这不是“具备基础功能”，这是一个相当完整的<strong>单用户本地个人运营系统</strong>。</p>
+
+<h2>一、整体架构图</h2>
+<figure>
+<svg viewBox="0 0 680 818" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="拾光 PersonalAgent 整体架构图">
+  <title>拾光 PersonalAgent 整体架构</title>
+  <style>.th{font:14px sans-serif;font-weight:500;fill:#2C2C2A}.ts{font:12px sans-serif;fill:#5F5E5A}text{font-family:sans-serif}</style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect width="680" height="818" fill="#FFFFFF"/>
+  <text class="th" x="340" y="30" text-anchor="middle">拾光 PersonalAgent · 整体架构</text>
+  <rect x="40" y="44" width="600" height="92" rx="16" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="0.5"/>
+  <text class="ts" x="52" y="62" fill="#5F5E5A">客户端层</text>
+  <rect x="56" y="72" width="276" height="52" rx="8" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="0.5"/>
+  <text class="th" x="194" y="92" text-anchor="middle" dominant-baseline="central" fill="#444441">浏览器 · 电脑与手机</text>
+  <text class="ts" x="194" y="112" text-anchor="middle" dominant-baseline="central">React 19 + Vite · 响应式 Web UI</text>
+  <rect x="344" y="72" width="276" height="52" rx="8" fill="#FFFFFF" stroke="#5F5E5A" stroke-width="0.5"/>
+  <text class="th" x="482" y="92" text-anchor="middle" dominant-baseline="central" fill="#444441">Android 原生 App</text>
+  <text class="ts" x="482" y="112" text-anchor="middle" dominant-baseline="central">独立 Kotlin 工程 · 复用同一套 API</text>
+  <line x1="340" y1="136" x2="340" y2="168" stroke="#888780" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="350" y="156" font-size="11" fill="#888780">HTTPS :4317 · Cookie 与设备令牌 · 来源校验</text>
+  <rect x="40" y="168" width="600" height="234" rx="16" fill="#E6F1FB" stroke="#85B7EB" stroke-width="0.5"/>
+  <text class="ts" x="52" y="186" fill="#185FA5">服务端 · Express 5 模块化单体（server/ 78 个模块，index.mjs 组装）</text>
+  <rect x="56" y="196" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#185FA5" stroke-width="0.5"/>
+  <text class="th" x="122" y="216" text-anchor="middle" dominant-baseline="central" fill="#0C447C">记录·待办·要事</text>
+  <text class="ts" x="122" y="238" text-anchor="middle" dominant-baseline="central">版本与生命周期</text>
+  <rect x="196" y="196" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#185FA5" stroke-width="0.5"/>
+  <text class="th" x="262" y="216" text-anchor="middle" dominant-baseline="central" fill="#0C447C">资料库·解析</text>
+  <text class="ts" x="262" y="238" text-anchor="middle" dominant-baseline="central">导入·筛选·副本</text>
+  <rect x="336" y="196" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#185FA5" stroke-width="0.5"/>
+  <text class="th" x="402" y="216" text-anchor="middle" dominant-baseline="central" fill="#0C447C">搭子会话</text>
+  <text class="ts" x="402" y="238" text-anchor="middle" dominant-baseline="central">话题·摘要压缩</text>
+  <rect x="476" y="196" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#185FA5" stroke-width="0.5"/>
+  <text class="th" x="542" y="216" text-anchor="middle" dominant-baseline="central" fill="#0C447C">记忆系统</text>
+  <text class="ts" x="542" y="238" text-anchor="middle" dominant-baseline="central">候选→确认生效</text>
+  <rect x="56" y="262" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#185FA5" stroke-width="0.5"/>
+  <text class="th" x="122" y="282" text-anchor="middle" dominant-baseline="central" fill="#0C447C">混合检索</text>
+  <text class="ts" x="122" y="304" text-anchor="middle" dominant-baseline="central">向量+词项 RRF</text>
+  <rect x="196" y="262" width="132" height="54" rx="8" fill="#FBEAF0" stroke="#D4537E" stroke-width="0.5"/>
+  <text class="th" x="262" y="282" text-anchor="middle" dominant-baseline="central" fill="#72243E">小九·监督提醒</text>
+  <text class="ts" x="262" y="304" text-anchor="middle" dominant-baseline="central">计划·证据·回顾</text>
+  <rect x="336" y="262" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#185FA5" stroke-width="0.5"/>
+  <text class="th" x="402" y="282" text-anchor="middle" dominant-baseline="central" fill="#0C447C">成果导出</text>
+  <text class="ts" x="402" y="304" text-anchor="middle" dominant-baseline="central">周报·Markdown</text>
+  <rect x="476" y="262" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#185FA5" stroke-width="0.5"/>
+  <text class="th" x="542" y="282" text-anchor="middle" dominant-baseline="central" fill="#0C447C">记账</text>
+  <text class="ts" x="542" y="304" text-anchor="middle" dominant-baseline="central">微信导入·OCR</text>
+  <text x="56" y="340" font-size="11" fill="#0C447C">基础设施：备份恢复 · 设备认证 · 能力探测 · AI 调用日志 · 分类纠错表 · 草稿与会话恢复</text>
+  <text x="56" y="360" font-size="11" font-weight="500" fill="#0C447C">一致性基座：revision 版本号 · opId 幂等重试 · changes 增量游标 · 事务写入 · 迟到结果核对</text>
+  <line x1="340" y1="402" x2="340" y2="434" stroke="#888780" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="350" y="422" font-size="11" fill="#888780">SQL 事务 · changes 增量游标</text>
+  <rect x="40" y="434" width="600" height="100" rx="16" fill="#E1F5EE" stroke="#9FE1CB" stroke-width="0.5"/>
+  <text class="ts" x="52" y="452" fill="#0F6E56">数据层（全部本地 .data/ · 不上云）</text>
+  <rect x="56" y="462" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#0F6E56" stroke-width="0.5"/>
+  <text class="th" x="122" y="482" text-anchor="middle" dominant-baseline="central" fill="#085041">SQLite</text>
+  <text class="ts" x="122" y="504" text-anchor="middle" dominant-baseline="central">权威数据·revision</text>
+  <rect x="196" y="462" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#0F6E56" stroke-width="0.5"/>
+  <text class="th" x="262" y="482" text-anchor="middle" dominant-baseline="central" fill="#085041">文件原件</text>
+  <text class="ts" x="262" y="504" text-anchor="middle" dominant-baseline="central">上传·资料副本</text>
+  <rect x="336" y="462" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#0F6E56" stroke-width="0.5"/>
+  <text class="th" x="402" y="482" text-anchor="middle" dominant-baseline="central" fill="#085041">Qdrant</text>
+  <text class="ts" x="402" y="504" text-anchor="middle" dominant-baseline="central">dense+sparse 索引</text>
+  <rect x="476" y="462" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#0F6E56" stroke-width="0.5"/>
+  <text class="th" x="542" y="482" text-anchor="middle" dominant-baseline="central" fill="#085041">Redis·BullMQ</text>
+  <text class="ts" x="542" y="504" text-anchor="middle" dominant-baseline="central">后台任务队列</text>
+  <line x1="542" y1="534" x2="542" y2="566" stroke="#888780" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="552" y="554" font-size="11" fill="#888780">消费任务</text>
+  <rect x="40" y="566" width="600" height="100" rx="16" fill="#FAEEDA" stroke="#FAC775" stroke-width="0.5"/>
+  <text class="ts" x="52" y="584" fill="#854F0B">独立 Worker 进程（fork · 队列驱动 · 超时与取消保护）</text>
+  <rect x="56" y="594" width="180" height="54" rx="8" fill="#FFFFFF" stroke="#854F0B" stroke-width="0.5"/>
+  <text class="th" x="146" y="614" text-anchor="middle" dominant-baseline="central" fill="#633806">文件解析 Worker</text>
+  <text class="ts" x="146" y="636" text-anchor="middle" dominant-baseline="central">PDF·DOCX·编码</text>
+  <rect x="248" y="594" width="180" height="54" rx="8" fill="#FFFFFF" stroke="#854F0B" stroke-width="0.5"/>
+  <text class="th" x="338" y="614" text-anchor="middle" dominant-baseline="central" fill="#633806">ASR 转写</text>
+  <text class="ts" x="338" y="636" text-anchor="middle" dominant-baseline="central">独立进程·可取消</text>
+  <rect x="440" y="594" width="180" height="54" rx="8" fill="#FFFFFF" stroke="#854F0B" stroke-width="0.5"/>
+  <text class="th" x="530" y="614" text-anchor="middle" dominant-baseline="central" fill="#633806">向量索引器</text>
+  <text class="ts" x="530" y="636" text-anchor="middle" dominant-baseline="central">后台补索引·校验</text>
+  <line x1="340" y1="666" x2="340" y2="698" stroke="#888780" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="350" y="686" font-size="11" fill="#888780">模型调用（服务端与 Worker 都直连）</text>
+  <rect x="40" y="698" width="600" height="100" rx="16" fill="#EEEDFE" stroke="#CECBF6" stroke-width="0.5"/>
+  <text class="ts" x="52" y="716" fill="#534AB7">模型与外部服务（接口兼容 · 可替换 · 不绑定供应商）</text>
+  <rect x="56" y="726" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#534AB7" stroke-width="0.5"/>
+  <text class="th" x="122" y="746" text-anchor="middle" dominant-baseline="central" fill="#3C3489">DeepSeek 兼容</text>
+  <text class="ts" x="122" y="768" text-anchor="middle" dominant-baseline="central">chat·vision</text>
+  <rect x="196" y="726" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#534AB7" stroke-width="0.5"/>
+  <text class="th" x="262" y="746" text-anchor="middle" dominant-baseline="central" font-size="12" fill="#3C3489">Qwen3-Embedding</text>
+  <text class="ts" x="262" y="768" text-anchor="middle" dominant-baseline="central">1024 维·Q8_0</text>
+  <rect x="336" y="726" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#534AB7" stroke-width="0.5"/>
+  <text class="th" x="402" y="746" text-anchor="middle" dominant-baseline="central" fill="#3C3489">Whisper ASR</text>
+  <text class="ts" x="402" y="768" text-anchor="middle" dominant-baseline="central">large-v3-turbo</text>
+  <rect x="476" y="726" width="132" height="54" rx="8" fill="#FFFFFF" stroke="#534AB7" stroke-width="0.5"/>
+  <text class="th" x="542" y="746" text-anchor="middle" dominant-baseline="central" fill="#3C3489">Brave Search</text>
+  <text class="ts" x="542" y="768" text-anchor="middle" dominant-baseline="central">联网摘要·来源</text>
+</svg>
+<figcaption>图 1 · 整体架构（五层）</figcaption>
+</figure>
+
+<p>架构图里有几个值得点名的<strong>关键设计决策</strong>，它们是理解这个项目的钥匙：</p>
+<ol>
+<li><strong>SQLite 是唯一权威数据源，Qdrant/Redis 都是“可重建的衍生物”</strong>——检索服务挂了、队列丢了，数据不丢；备份只需 SQLite + 文件原件。这是整个系统能放心折腾的前提。</li>
+<li><strong>模型层全部接口兼容、可替换</strong>——DeepSeek 只是“当前默认”，chat/vision/embedding/ASR 全部走适配层，不绑定供应商。</li>
+<li><strong>“一致性基座”贯穿所有模块</strong>——每个业务对象都有 revision 版本号，每次提交都有 opId 幂等保护，跨端同步靠 changes 增量游标。这条横切的底线让“迟到结果不覆盖新数据”成为全系统语义。</li>
+</ol>
+
+<h3>技术栈汇总</h3>
+<table>
+<tr><th>层</th><th>技术</th><th>说明</th></tr>
+<tr><td>前端</td><td>React 19 + TypeScript + Vite 6</td><td>响应式单页，react-markdown 渲染，63 个组件</td></tr>
+<tr><td>后端</td><td>Node.js + Express 5（原生 ESM 模块）</td><td>模块化单体，78 个 .mjs 模块，zod 校验</td></tr>
+<tr><td>数据</td><td>SQLite + 文件系统 + Qdrant</td><td>SQLite 权威；Qdrant 做 dense+sparse 混合索引</td></tr>
+<tr><td>异步</td><td>Redis + BullMQ + fork Worker</td><td>解析/转写/索引在独立进程，超时可取消</td></tr>
+<tr><td>AI</td><td>DeepSeek（chat/vision）+ Qwen3-Embedding + Whisper + Brave Search</td><td>另有本地模型通道</td></tr>
+<tr><td>移动</td><td>Android 原生工程（Kotlin）</td><td>复用同一 API，独立工程约 2 万文件</td></tr>
+<tr><td>测试</td><td>node:test + Playwright + axe + 检索基准</td><td>单元/接口、双尺寸 e2e、无障碍、检索质量</td></tr>
+</table>
+
+<h2>二、核心功能流程图</h2>
+<p>动态视角——<strong>一条记录从进门到被小九提醒处理</strong>的完整旅程（点击步骤切换）：</p>
+<div class="chips" id="flowChips"></div>
+<div class="flow-card" id="flowCard"></div>
+<div class="flow-nav">
+  <button onclick="flowMove(-1)">上一步</button>
+  <span class="flow-pos" id="flowPos"></span>
+  <button onclick="flowMove(1)">下一步</button>
+</div>
+<p class="flow-note">图 2 · 核心功能流程（六步闭环）</p>
+
+<p>这条流程线最大的特点：<strong>每一步都有“恢复语义”</strong>。响应丢了能重试且不重复、解析迟到了不覆盖新编辑、生成失败不存残稿、引用不实宁可退回原文。大多数个人项目死于“边写边丢数据”，这个项目在这一点上已经是生产级的水准。</p>
+
+<h2>三、模块复杂度评估</h2>
+<p>按“读懂它 + 改对它 + 出错后能否恢复”的综合难度打分：</p>
+<figure>
+<div class="chart-wrap">
+  <span><i style="background:#1D9E75"></i>低（2–2.5）</span>
+  <span><i style="background:#378ADD"></i>中（3–3.5）</span>
+  <span><i style="background:#BA7517"></i>中高（4）</span>
+  <span><i style="background:#E24B4A"></i>高（4.5–5）</span>
+</div>
+<svg viewBox="0 0 680 600" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="各模块工程复杂度评估条形图">
+  <title>各模块工程复杂度评估</title>
+  <style>.th{font:14px sans-serif;font-weight:500;fill:#2C2C2A}.ts{font:12px sans-serif;fill:#5F5E5A}.lbl{font:12px sans-serif;fill:#444441}.val{font:12px sans-serif;font-weight:500;fill:#444441}text{font-family:sans-serif}</style>
+  <rect width="680" height="600" fill="#FFFFFF"/>
+  <text class="th" x="40" y="30">各模块工程复杂度评估</text>
+  <text class="ts" x="40" y="48">按「读懂 + 改对 + 出错后能否恢复」综合难度打分（1–5）</text>
+  <g>
+    <text class="lbl" x="248" y="97" text-anchor="end">小九表现层（心情状态机）</text>
+    <rect x="260" y="84" width="152" height="26" rx="3" fill="#1D9E75"/><text class="val" x="420" y="101">2</text>
+    <text class="lbl" x="248" y="137" text-anchor="end">记账（微信导入+OCR）</text>
+    <rect x="260" y="124" width="190" height="26" rx="3" fill="#1D9E75"/><text class="val" x="458" y="141">2.5</text>
+    <text class="lbl" x="248" y="177" text-anchor="end">备份与恢复</text>
+    <rect x="260" y="164" width="228" height="26" rx="3" fill="#378ADD"/><text class="val" x="496" y="181">3</text>
+    <text class="lbl" x="248" y="217" text-anchor="end">解析与转写管线</text>
+    <rect x="260" y="204" width="266" height="26" rx="3" fill="#378ADD"/><text class="val" x="534" y="221">3.5</text>
+    <text class="lbl" x="248" y="257" text-anchor="end">前端 Web 界面（63 组件）</text>
+    <rect x="260" y="244" width="266" height="26" rx="3" fill="#378ADD"/><text class="val" x="534" y="261">3.5</text>
+    <text class="lbl" x="248" y="297" text-anchor="end">要事生命周期与复核</text>
+    <rect x="260" y="284" width="266" height="26" rx="3" fill="#378ADD"/><text class="val" x="534" y="301">3.5</text>
+    <text class="lbl" x="248" y="337" text-anchor="end">Android 原生端（并行维护）</text>
+    <rect x="260" y="324" width="304" height="26" rx="3" fill="#BA7517"/><text class="val" x="572" y="341">4</text>
+    <text class="lbl" x="248" y="377" text-anchor="end">记忆生命周期与冲突</text>
+    <rect x="260" y="364" width="304" height="26" rx="3" fill="#BA7517"/><text class="val" x="572" y="381">4</text>
+    <text class="lbl" x="248" y="417" text-anchor="end">会话上下文与摘要压缩</text>
+    <rect x="260" y="404" width="304" height="26" rx="3" fill="#BA7517"/><text class="val" x="572" y="421">4</text>
+    <text class="lbl" x="248" y="457" text-anchor="end">小九监督系统（服务端约10模块）</text>
+    <rect x="260" y="444" width="342" height="26" rx="3" fill="#E24B4A"/><text class="val" x="610" y="461">4.5</text>
+    <text class="lbl" x="248" y="497" text-anchor="end">混合检索（Qdrant+RRF+范围过滤）</text>
+    <rect x="260" y="484" width="342" height="26" rx="3" fill="#E24B4A"/><text class="val" x="610" y="501">4.5</text>
+    <text class="lbl" x="248" y="537" text-anchor="end" font-weight="500">数据一致性基座（revision/opId/游标）</text>
+    <rect x="260" y="524" width="380" height="26" rx="3" fill="#A32D2D"/><text x="632" y="541" text-anchor="end" font-size="12" font-weight="500" fill="#FFFFFF">5</text>
+  </g>
+  <line x1="260" y1="560" x2="640" y2="560" stroke="#B4B2A9" stroke-width="0.5"/>
+  <g class="ts" text-anchor="middle">
+    <text x="260" y="578">0</text><text x="336" y="578">1</text><text x="412" y="578">2</text><text x="488" y="578">3</text><text x="564" y="578">4</text><text x="640" y="578">5</text>
+  </g>
+</svg>
+<figcaption>图 3 · 模块复杂度评估（1–5 分）</figcaption>
+</figure>
+
+<p>复杂度评估的几个关键判断：</p>
+<ul>
+<li><strong>榜首不是检索也不是监督，而是“数据一致性基座”</strong>（revision / opId / changes 游标 / 迟到结果核对 / 快照迁移）。它横切所有模块，是典型的分布式系统语义——在个人项目里做到这个程度非常罕见。<strong>这是项目最值钱的资产，也是最脆弱的资产</strong>：它没有独立的文档和回归测试守护，散落在 78 个模块的约定里。</li>
+<li><strong>小九监督系统 4.5 分</strong>：条件快照（模板改动不影响已约定的历史）、证据链、每日执行记录、复盘回顾——这是一套完整的“可审计执行系统”，约 10 个服务端模块。</li>
+<li><strong>Android 端 4 分不是因为代码难，而是“双端并行”的维护成本</strong>——每个 API 契约变化都要同步两个消费方，M2 离线目标还会引入冲突合并问题。</li>
+<li><strong>小九表现层只有 2 分</strong>——这是个好消息，说明架构方向正确：拟人化的“脸”很轻，复杂的引擎在数据侧。</li>
+</ul>
+
+<h2>四、小九 · 功能定位与实现考量</h2>
+<figure>
+<svg viewBox="0 0 680 578" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="小九三层结构图">
+  <title>小九 · 三层结构与功能定位</title>
+  <style>.th{font:14px sans-serif;font-weight:500;fill:#2C2C2A}.ts{font:12px sans-serif;fill:#5F5E5A}text{font-family:sans-serif}</style>
+  <rect width="680" height="578" fill="#FFFFFF"/>
+  <text class="th" x="340" y="30" text-anchor="middle">小九 · 三层结构与功能定位</text>
+  <rect x="40" y="44" width="600" height="122" rx="16" fill="#FBEAF0" stroke="#F4C0D1" stroke-width="0.5"/>
+  <text class="ts" x="52" y="62" fill="#993556">表现层 · PetBuddy.tsx（纯前端 · 轻量 · 复杂度 2/5）</text>
+  <rect x="56" y="72" width="180" height="78" rx="8" fill="#FFFFFF" stroke="#D4537E" stroke-width="0.5"/>
+  <text class="th" x="146" y="90" text-anchor="middle" dominant-baseline="central" fill="#72243E" font-size="13">10 种心情表情</text>
+  <text class="ts" x="146" y="112" text-anchor="middle" dominant-baseline="central" font-size="11">安心·好奇·局促·开心·嘻嘻</text>
+  <text class="ts" x="146" y="132" text-anchor="middle" dominant-baseline="central" font-size="11">思考·打理·不嘻嘻·力竭·打盹</text>
+  <rect x="248" y="72" width="180" height="78" rx="8" fill="#FFFFFF" stroke="#D4537E" stroke-width="0.5"/>
+  <text class="th" x="338" y="90" text-anchor="middle" dominant-baseline="central" fill="#72243E" font-size="13">事件驱动转换</text>
+  <text class="ts" x="338" y="112" text-anchor="middle" dominant-baseline="central" font-size="11">HOVER·PET·CHAT·NAP</text>
+  <text class="ts" x="338" y="132" text-anchor="middle" dominant-baseline="central" font-size="11">TIMEOUT·过度互动</text>
+  <rect x="440" y="72" width="180" height="78" rx="8" fill="#FFFFFF" stroke="#D4537E" stroke-width="0.5"/>
+  <text class="th" x="530" y="90" text-anchor="middle" dominant-baseline="central" fill="#72243E" font-size="13">轻交互细节</text>
+  <text class="ts" x="530" y="112" text-anchor="middle" dominant-baseline="central" font-size="11">拖拽·贴贴·Q 弹动画</text>
+  <text class="ts" x="530" y="132" text-anchor="middle" dominant-baseline="central" font-size="11">闲置 2 分钟自动打盹</text>
+  <rect x="40" y="186" width="600" height="122" rx="16" fill="#E6F1FB" stroke="#85B7EB" stroke-width="0.5"/>
+  <text class="ts" x="52" y="204" fill="#185FA5">交互层 · 她与用户的接触面</text>
+  <rect x="56" y="214" width="180" height="78" rx="8" fill="#FFFFFF" stroke="#185FA5" stroke-width="0.5"/>
+  <text class="th" x="146" y="232" text-anchor="middle" dominant-baseline="central" fill="#0C447C" font-size="13">陪伴聊天</text>
+  <text class="ts" x="146" y="254" text-anchor="middle" dominant-baseline="central" font-size="11">接口 /api/pet/chat</text>
+  <text class="ts" x="146" y="274" text-anchor="middle" dominant-baseline="central" font-size="11">带记忆上下文回答</text>
+  <rect x="248" y="214" width="180" height="78" rx="8" fill="#FFFFFF" stroke="#185FA5" stroke-width="0.5"/>
+  <text class="th" x="338" y="232" text-anchor="middle" dominant-baseline="central" fill="#0C447C" font-size="13">提醒面板</text>
+  <text class="ts" x="338" y="254" text-anchor="middle" dominant-baseline="central" font-size="11">角标 + 待处理清单</text>
+  <text class="ts" x="338" y="274" text-anchor="middle" dominant-baseline="central" font-size="11">同源版本快照，不错报</text>
+  <rect x="440" y="214" width="180" height="78" rx="8" fill="#FFFFFF" stroke="#185FA5" stroke-width="0.5"/>
+  <text class="th" x="530" y="232" text-anchor="middle" dominant-baseline="central" fill="#0C447C" font-size="13">引导直达</text>
+  <text class="ts" x="530" y="254" text-anchor="middle" dominant-baseline="central" font-size="11">点击直达对应页面</text>
+  <text class="ts" x="530" y="274" text-anchor="middle" dominant-baseline="central" font-size="11">actionTarget 页面跳转</text>
+  <rect x="40" y="328" width="600" height="150" rx="16" fill="#FAEEDA" stroke="#FAC775" stroke-width="0.5"/>
+  <text class="ts" x="52" y="346" fill="#854F0B">服务层 · 她背后真正重的引擎（约 10 个服务端模块 · 复杂度 4.5/5）</text>
+  <rect x="56" y="356" width="280" height="84" rx="8" fill="#FFFFFF" stroke="#854F0B" stroke-width="0.5"/>
+  <text class="th" x="196" y="374" text-anchor="middle" dominant-baseline="central" fill="#633806" font-size="13">提醒聚合 · pet-reminders</text>
+  <text class="ts" x="196" y="396" text-anchor="middle" dominant-baseline="central" font-size="11">要事检查 · 今日待办 · 记忆确认 · 监督逾期</text>
+  <text class="ts" x="196" y="416" text-anchor="middle" dominant-baseline="central" font-size="11">免打扰时段 · 按来源去重 · 只显示最新</text>
+  <text class="ts" x="196" y="434" text-anchor="middle" dominant-baseline="central" font-size="11">四类事项统一聚合，一个入口待办</text>
+  <rect x="344" y="356" width="280" height="84" rx="8" fill="#FFFFFF" stroke="#854F0B" stroke-width="0.5"/>
+  <text class="th" x="484" y="374" text-anchor="middle" dominant-baseline="central" fill="#633806" font-size="13">任务监督 · supervision 系统</text>
+  <text class="ts" x="484" y="396" text-anchor="middle" dominant-baseline="central" font-size="11">计划模板 workTask → 每日执行 workRun</text>
+  <text class="ts" x="484" y="416" text-anchor="middle" dominant-baseline="central" font-size="11">条件快照 · 计时器 · 证据 · 复盘 recap</text>
+  <text class="ts" x="484" y="434" text-anchor="middle" dominant-baseline="central" font-size="11">模板改动不影响已约定的历史，可审计</text>
+  <text x="56" y="462" font-size="11" fill="#633806">复杂度集中在数据与一致性，不在形象本身——拟人化 UI 保持轻量，是正确的架构方向</text>
+  <rect x="40" y="498" width="600" height="60" rx="12" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="0.5"/>
+  <text x="340" y="522" text-anchor="middle" font-size="11.5" fill="#5F5E5A">原型是现实中真实存在的宠物（朋友的宠物），素材为真实照片——有故事、可信、非虚拟 IP</text>
+  <text x="340" y="542" text-anchor="middle" font-size="11.5" fill="#5F5E5A">定位类似《魔法少女樱》里的小可：陪伴 · 守护 · 引导，是这个系统唯一的「主动交互界面」</text>
+</svg>
+<figcaption>图 4 · 小九三层结构与功能定位</figcaption>
+</figure>
+
+<p>看完代码后我的判断是——<strong>小九不是桌宠皮肤，她是监督系统的拟人化前端</strong>。这个认知很重要：她背后那 4.5 分复杂度的引擎（提醒聚合 + 任务监督）才是本体，飘在屏幕上的形象只是 2 分复杂度的“脸”。这个分层是对的，别倒过来。</p>
+
+<h3>五个具体考量</h3>
+<ol>
+<li><strong>她是这个系统唯一的“主动交互界面”。</strong> 普通功能都是用户发起、系统应答；只有小九会主动找你（要事检查、待办提醒、记忆确认、监督逾期）。这意味着所有“系统主动找用户”的功能，未来都应该经小九的口说出，保持人格一致性——而不是又冒出一个通知中心和她抢戏。</li>
+<li><strong>人设与机制分离。</strong> pet-chat 已经带记忆上下文（memoryUsage），方向正确。下一步建议把小九的语气、口头禅、表情素材做成可配置的“人设包”，与监督引擎彻底解耦——换一个形象、换一种性格，引擎不动。</li>
+<li><strong>真实原型是双刃剑，但优势明显。</strong> 朋友的宠物、真实照片——有故事、可信、有“生活感”，这是任何虚拟 IP 做不到的。可以让她有“自己的日常”（真实宠物的新照片、小动态），和用户互相陪伴，形成任何产品都抄不走的情感锚点。</li>
+<li><strong>主动性要有阶梯，且克制。</strong> 现在是“应答 + 定时提醒”，且已有免打扰、去重、过度互动会“不嘻嘻”的好设计——说明你已经在保护双方。下一级是“主动发起对话”，建议只以 recap 为契机：有数据支撑的关心（“这周你完成了 4 次跑步，比上周多一次”），而不是为说话而说话。频率、免打扰、可关闭三条底线先立好。</li>
+<li><strong>她应该成为“阶段总结与行动建议”的讲述者。</strong> 你最初的需求“根据已有内容生成阶段总结与后续行动建议”，原料恰好就是监督 recap（证据、完成率）+ 检索 + 记忆。让小九来说这些总结，功能与角色合一，这是这个项目最自然的差异化。</li>
+</ol>
+<div class="warn">⚠️ 素材授权提醒：assets 里小九的照片是朋友的宠物，个人使用没问题，但如果将来开源仓库，记得先和朋友明确授权并处理素材目录。</div>
+
+<h2>五、项目定位、边界与方向</h2>
+<p><strong>定位：单用户、本地优先的“个人运营系统”</strong>，三层价值——记忆层（第二大脑：资料 + 长期记忆 + 混合检索）、行动层（外置的执行监督：待办 + 要事 + 证据闭环）、陪伴层（小九：黏性引擎）。个人工具最大的死因不是功能不够，而是弃用——小九这层恰恰是解药。</p>
+
+<h3>边界（建议守住）</h3>
+<ul>
+<li>保持单用户、SQLite + 本地文件的单服务器架构——对一个人绰绰有余，且是隐私上的根本优势；</li>
+<li>Android 端定位为“录入 + 查看 + 提醒”的薄客户端，<strong>暂缓</strong> M2 完整离线第二大脑（那会引入冲突合并，复杂度直接上一个量级）；</li>
+<li>记账、OCR 这类外围模块，按实际使用频率决定投入，低频的降级为维护模式；</li>
+<li>不做多人 SaaS，不参与通用笔记软件的功能竞赛（协作、富文本这些 Notion 们已经卷完了）。</li>
+</ul>
+
+<h3>方向（按优先级）</h3>
+<ol>
+<li><strong>短期——巩固</strong>：把“一致性基座”文档化并加回归测试守护（这是散落在 78 个模块里的隐性约定，最值钱也最怕无声劣化）；index.mjs 已接近 150 行 import、数千行组装，值得按路由拆分。</li>
+<li><strong>中期——小九深化</strong>：主动性阶梯上一级（recap 驱动的主动对话）+ 人设配置化 + 阶段总结讲述者。</li>
+<li><strong>长期——差异化路线</strong>：通用第二大脑市场已经很拥挤，但“真实宠物原型的陪伴 + 可审计的监督闭环”是独有的。纵深做质量，而不是横向加模块。</li>
+</ol>
+
+<h2>六、已确认的方向决策</h2>
+<table>
+<tr><th>问题</th><th>决策</th><th>落地含义</th></tr>
+<tr><td>手机端投入</td><td>够用就行</td><td>Android 定位薄客户端（录入/查看/提醒），暂缓 M2 完整离线</td></tr>
+<tr><td>记账使用频率</td><td>约一月三次</td><td>低频外围模块，降级为维护模式，精力留给核心链路</td></tr>
+<tr><td>小九主动性</td><td>数据驱动</td><td>只在 recap/复盘有关键数据时主动搭话（如每周阶段总结），不做定时问候</td></tr>
+</table>
+
+<p class="meta" style="margin-top:48px">—— 报告完 · 2026-09-29 ——</p>
+</div>
+
+<script>
+const flowSteps=[
+ {t:"捕获",d:"多入口进来，先保证不丢",p:[
+  "入口：随手记录、网页录音、文件导入（TXT / MD / CSV / JSON / PDF / DOCX）",
+  "电脑端可浏览已映射的 E 盘文件并导入；另有账单截图 OCR、微信账单导入",
+  "原则：先存原件和 SQLite 版本（revision），再谈解析；浏览器草稿可恢复",
+  "opId 操作标识：响应丢失后重试不会产生重复记录"]},
+ {t:"解析",d:"队列与独立进程干活，失败不丢原件",p:[
+  "Redis + BullMQ 任务队列，父进程 fork 独立 Worker 执行",
+  "文字层提取、编码检测（GB18030 兼容推断）、本地 ASR 转写（可取消、可重试）",
+  "单次解析两分钟上限；失败保留原件并显示原因，支持重试",
+  "迟到的解析结果会核对记录版本，不会覆盖用户期间的编辑"]},
+ {t:"组织",d:"自动分类、建立索引、提出候选",p:[
+  "AI 自动单分类 + 标签建议 + 规则摘要；人工分类不会被迟到的 AI 覆盖",
+  "片段进入 Qdrant：dense 向量 + sparse 词项；编辑、删除、暂停后同步更新",
+  "解析完成的资料后台自动补索引；失败可按单文件重试，无需重建全库",
+  "对话过程中提出候选记忆，等用户确认，不悄悄记住"]},
+ {t:"检索与生成",d:"带引用，可降级，不冒充",p:[
+  "关键词 + 向量并行召回，RRF 融合；服务端强制项目 / 范围过滤",
+  "候选回查 SQLite 当前版本；过期候选过多时扩大窗口，单次上限 1000",
+  "问答分话题会话、跨天继续；周报、主题整理、成果导出为 Markdown",
+  "引用须通过存在性与重复检查，不合格退回原文整理；失败不保存残缺成果"]},
+ {t:"确认与行动",d:"人始终在环上",p:[
+  "候选记忆：确认生效、暂停、删除；来源变化后重新确认，来源删除后失效",
+  "要事：约定检查、复核建议、用户确认，关联证据与图片",
+  "待办按天管理（北京时间），未完成可移入今天，按来源去重",
+  "待办可升级为监督任务，绑定完成条件与证据要求"]},
+ {t:"小九闭环",d:"提醒、复盘、回流——系统越用越懂你",p:[
+  "pet-reminders 聚合四类待处理：要事检查、今日待办、记忆确认、监督逾期",
+  "免打扰时段、按来源去重、只显示最新一条，提醒不变成噪音",
+  "引导处理，然后是证据与计时，最后形成阶段回顾（recap）",
+  "复盘与阶段总结沉淀为新的记录与记忆，回到第 1 步"]}
+];
+let flowCur=0;
+function flowRender(){
+ const s=flowSteps[flowCur];
+ document.getElementById('flowCard').innerHTML=
+  '<h4>'+(flowCur+1)+' · '+s.t+'</h4>'+
+  '<p style="color:var(--text2);margin:0 0 10px">'+s.d+'</p>'+
+  '<ul style="margin:0">'+s.p.map(x=>'<li>'+x+'</li>').join('')+'</ul>';
+ document.getElementById('flowPos').textContent='步骤 '+(flowCur+1)+' / '+flowSteps.length;
+ [...document.getElementById('flowChips').children].forEach((c,i)=>{
+  c.classList.toggle('on',i===flowCur);
+ });
+}
+function flowMove(d){flowCur=Math.min(flowSteps.length-1,Math.max(0,flowCur+d));flowRender();}
+function flowGo(i){flowCur=i;flowRender();}
+const chips=document.getElementById('flowChips');
+flowSteps.forEach((s,i)=>{
+ const b=document.createElement('button');
+ b.textContent=(i+1)+' '+s.t;
+ b.onclick=()=>flowGo(i);
+ chips.appendChild(b);
+});
+flowRender();
+</script>
+</body>
+</html>
