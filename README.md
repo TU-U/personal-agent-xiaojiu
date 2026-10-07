@@ -42,11 +42,6 @@
 </p>
 <p align="center"><sub>电脑端 · 资料库</sub></p>
 
-<p align="center">
-  <img src="artifacts/mobile-library.png" alt="手机端界面" width="280">
-</p>
-<p align="center"><sub>手机端 · 同一服务器、同一空间（响应式界面）</sub></p>
-
 ## 3. 项目结构
 
 ```text
@@ -140,35 +135,3 @@ Agent 链路的核心是**上下文与证据驱动**：回答不是"模型直接
 - **多端协议共享**：API 协议 Schema 抽取为**独立模块**，桌面端 / Web 端 / Android 端通过 **Git Submodule** 依赖同一份 Schema——协议版本集中管理，多端不漂移；
 - **语义化 API 版本**：请求路径统一带 `/v1/` 版本前缀，协议大变更时新旧版本可并行过渡，避免多端同步混乱；
 - **小九常驻桌面（规划）**：基于 Electron 将现有 Web 前端包装为桌面壳，透明窗口 + 系统托盘，小九常驻桌面——关掉浏览器后她仍在，情绪状态机与业务引擎保持解耦。
-
-## 8. FAQ
-
-**怎么运行？**
-
-```bash
-npm ci
-npm run build
-npm start        # http://localhost:4317/ ，初始演示口令 shiguang-demo
-```
-
-开发模式 `npm run dev`（会同时启动本地 Redis 队列）。Windows 可直接双击 `启动拾光.cmd`。
-
-**数据存在哪？安全吗？**
-
-全部在本地 `.data/` 目录（SQLite + 文件原件），不上云、不外发。备份排除接口密钥和登录凭据；`server/provider.local.mjs` 是本机专用配置，不进 Git。
-
-**没有 AI 模型能用吗？**
-
-能。搜索、原文摘录、资料整理仍可使用，不会把摘录冒充 AI 生成。在「设置与数据」中可配置任何兼容模型接口。
-
-**手机怎么访问？**
-
-手机与电脑处于同一网络时，访问电脑局域网地址的 4317 端口（响应式 Web 界面）；另有独立 Android 原生工程，位于同级的 `../personalagent-android`（见其中的 `分离说明.md`），复用本项目的后端 API。录音功能需要 HTTPS 或本机 localhost。多端共享的 API 协议将抽取为独立 Schema 模块（Submodule 依赖 + `/v1/` 语义化前缀），见第 7 节演进方向。
-
-**小九的照片能商用吗？**
-
-不能。小九原型是朋友的现实宠物，素材为真实照片，目前仅限个人使用；开源或发布前须先取得明确授权。
-
-**完整的设计文档在哪？**
-
-见 [docs/](docs/)：[产品设计](docs/01-product.md) · [架构评审（最新结论）](docs/21-architecture-review.md) · [验收说明](docs/07-demo-acceptance.md) · [V1 功能清单](docs/09-v1-overview.md)。更详细的运行、备份、Qdrant 配置说明见 [旧版 README 存档](docs/00-readme-archive-2026-09.md)。
