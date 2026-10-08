@@ -4,11 +4,12 @@ import {randomUUID} from 'node:crypto';
 import {readFileSync,writeFileSync,mkdirSync,appendFileSync} from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {placePet,PET_SIZE} from './pet-placement.mjs';
 const here=path.dirname(fileURLToPath(import.meta.url));
 app.setName('拾光小九');app.setAppUserModelId('org.xiaojiu.shiguang');
 if(process.env.XIAOJIU_DESKTOP_TEST_DIR)app.setPath('userData',process.env.XIAOJIU_DESKTOP_TEST_DIR);
 const auto=process.argv.includes('--autostart'),client=randomUUID();
-let main,pet,tray,starting,backend,config,quitting=false,quitBusy=false,pendingNavigation=null,rendererReady=false,dragTimer;
+let main,pet,tray,starting,backend,config,quitting=false,quitBusy=false,pendingNavigation=null,rendererReady=false,dragTimer,petPlacement;
 const errorUrl=new URL('./startup.html',import.meta.url).href;
 const prefsFile=path.join(app.getPath('userData'),'desktop.json'),logFile=path.join(app.getPath('userData'),'desktop.log');
 let prefs={};try{prefs=JSON.parse(readFileSync(prefsFile,'utf8'));}catch{}
@@ -39,15 +40,21 @@ function openMain(target){
  if(rendererReady&&pendingNavigation){win.webContents.send('desktop:navigate',pendingNavigation);pendingNavigation=null;}
  return true;
 }
+function petAnchor(){const [x,y]=pet.getPosition();return {x:x+petPlacement.pet.x,y:y+petPlacement.pet.y};}
+function publishPetPlacement(){if(pet&&!pet.isDestroyed())pet.webContents.send('desktop:pet-layout',petPlacement);}
+function positionPet(anchor,area=screen.getDisplayNearestPoint(anchor).workArea){
+ petPlacement=placePet(anchor,area);pet.setBounds(petPlacement.window);publishPetPlacement();
+}
 function makePet(){
- if(pet&&!pet.isDestroyed()){pet.showInactive();return;}
- const area=screen.getPrimaryDisplay().workArea;const width=Math.min(490,area.width),height=Math.min(720,area.height);
- const saved=prefs.petPosition||{x:area.x+area.width-width,y:area.y+area.height-height};
- const point=screen.getDisplayNearestPoint(saved).workArea;
- pet=new BrowserWindow({title:'小九',width,height,x:Math.max(point.x,Math.min(saved.x,point.x+point.width-width)),y:Math.max(point.y,Math.min(saved.y,point.y+point.height-height)),frame:false,transparent:true,hasShadow:false,resizable:false,skipTaskbar:true,alwaysOnTop:true,show:false,webPreferences:options('pet')});secure(pet);
+ if(pet&&!pet.isDestroyed()){positionPet(petAnchor());pet.showInactive();return;}
+ const area=screen.getPrimaryDisplay().workArea;
+ const old=prefs.petPosition; // Migrate the old window origin once; new preferences store the pet itself.
+ const saved=prefs.petAnchor||(old?{x:old.x+Math.min(490,area.width)-PET_SIZE.width-12,y:old.y+Math.min(720,area.height)-PET_SIZE.height-12}:{x:area.x+area.width-PET_SIZE.width-12,y:area.y+area.height-PET_SIZE.height-12});
+ petPlacement=placePet(saved,screen.getDisplayNearestPoint(saved).workArea);
+ pet=new BrowserWindow({title:'小九',...petPlacement.window,frame:false,transparent:true,hasShadow:false,resizable:false,skipTaskbar:true,alwaysOnTop:true,show:false,webPreferences:options('pet')});secure(pet);
  pet.once('ready-to-show',()=>pet.showInactive());pet.on('close',event=>{if(!quitting){event.preventDefault();pet.hide();}});pet.on('blur',()=>stopDrag());void pet.loadURL(origin()+'/?desktop=pet');
 }
-function stopDrag(){clearInterval(dragTimer);dragTimer=null;if(pet&&!pet.isDestroyed()){const [x,y]=pet.getPosition();prefs.petPosition={x,y};persist();}}
+function stopDrag(){clearInterval(dragTimer);dragTimer=null;if(pet&&!pet.isDestroyed()&&petPlacement){prefs.petAnchor=petAnchor();persist();}}
 function setAutostart(enabled){
  if(typeof enabled!=='boolean'||process.platform!=='win32')throw new Error('开机自启开关仅在 Windows 桌面安装版可用。');
  const args=[...(app.isPackaged?[]:[here]),'--autostart'];
@@ -91,7 +98,10 @@ if(!app.requestSingleInstanceLock())app.quit();else{
   for(const [name,handler] of Object.entries({open:openMain,settings,autostart:setAutostart,retry:start,logs:()=>shell.openPath(logFile),serverLogs:()=>shell.openPath(process.platform==='win32'?path.win32.join(config.windowsRoot,'.data','logs','server.log'):path.join(config.projectRoot,'.data','logs','server.log')),quit}))ipcMain.handle('desktop:'+name,(event,...args)=>{validate(event);return handler(...args);});
   ipcMain.on('desktop:ready',event=>{validate(event);if(event.sender===main?.webContents){rendererReady=true;if(pendingNavigation){event.sender.send('desktop:navigate',pendingNavigation);pendingNavigation=null;}}});
   ipcMain.on('desktop:mouse',(event,interactive)=>{validate(event);if(event.sender===pet?.webContents&&typeof interactive==='boolean'&&!dragTimer)pet.setIgnoreMouseEvents(!interactive,{forward:true});});
-  ipcMain.on('desktop:drag',(event,enabled)=>{validate(event);if(event.sender!==pet?.webContents)return;stopDrag();if(enabled===true){pet.setIgnoreMouseEvents(false);const begin=screen.getCursorScreenPoint(),[x,y]=pet.getPosition();dragTimer=setInterval(()=>{const p=screen.getCursorScreenPoint();if(Math.abs(p.x-begin.x)+Math.abs(p.y-begin.y)<5)return;const area=screen.getDisplayNearestPoint(p).workArea;const [w,h]=pet.getSize();pet.setPosition(Math.max(area.x,Math.min(area.x+area.width-w,x+p.x-begin.x)),Math.max(area.y,Math.min(area.y+area.height-h,y+p.y-begin.y)));},16);}});
+  ipcMain.on('desktop:pet-layout-ready',event=>{validate(event);if(event.sender===pet?.webContents)publishPetPlacement();});
+  ipcMain.on('desktop:move',(event,dx,dy)=>{validate(event);if(event.sender!==pet?.webContents||![dx,dy].every(n=>Number.isFinite(n)&&Math.abs(n)<=80))return;stopDrag();const anchor=petAnchor();positionPet({x:anchor.x+dx,y:anchor.y+dy});stopDrag();});
+  ipcMain.on('desktop:drag',(event,enabled)=>{validate(event);if(event.sender!==pet?.webContents)return;stopDrag();if(enabled===true){pet.setIgnoreMouseEvents(false);const begin=screen.getCursorScreenPoint(),anchor=petAnchor();dragTimer=setInterval(()=>{const point=screen.getCursorScreenPoint();if(Math.abs(point.x-begin.x)+Math.abs(point.y-begin.y)<5)return;positionPet({x:anchor.x+point.x-begin.x,y:anchor.y+point.y-begin.y},screen.getDisplayNearestPoint(point).workArea);},16);}});
+  for(const event of ['display-removed','display-metrics-changed'])screen.on(event,()=>{if(pet&&!pet.isDestroyed())positionPet(petAnchor());});
   void start();
  });
 }

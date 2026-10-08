@@ -781,3 +781,9 @@ html.desktop-pet-mode,html.desktop-pet-mode body,html.desktop-pet-mode #root{bac
 .desktop-pet-mode .pet-buddy-button{width:112px;height:112px;flex:none;overflow:hidden}
 .desktop-pet-mode .pet-buddy-image{position:absolute;inset:2px;width:calc(100% - 4px);height:calc(100% - 4px)}
 .desktop-open-main{position:relative;z-index:1;flex:none;margin-top:6px}
+
+/* Position the character independently of the transparent panel host. */
+.desktop-pet-mode[data-pet-layout="ready"] .pet-buddy{left:var(--pet-left,auto);top:var(--pet-top,auto);height:156px;justify-content:flex-start}
+.desktop-pet-mode[data-pet-layout="ready"] .pet-buddy-panel{position:fixed;left:var(--pet-panel-left,auto);top:var(--pet-panel-top,auto);right:12px;bottom:auto;width:var(--pet-panel-width,440px);max-height:var(--pet-panel-height,calc(100vh - 178px))}
+.desktop-pet-mode[data-pet-layout="ready"] .pet-buddy-name{left:var(--pet-label-left,-168px);right:auto;bottom:80px;width:max-content;max-width:160px}
+.desktop-pet-mode[data-pet-layout="ready"] .pet-buddy-speech{position:fixed;left:var(--pet-speech-left,auto);top:var(--pet-speech-top,auto);bottom:auto;right:auto;max-height:100px;overflow:hidden}

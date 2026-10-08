@@ -19,7 +19,7 @@ if not (runtime/'xiaojiu.exe').exists():
  with zipfile.ZipFile(archive) as z:z.extractall(runtime)
  (runtime/'electron.exe').rename(runtime/'xiaojiu.exe')
 appdir=runtime/'resources/app';appdir.mkdir(parents=True,exist_ok=True)
-for name in ['package.json','main.mjs','preload.cjs','startup.html','startup.js']:
+for name in ['package.json','main.mjs','pet-placement.mjs','preload.cjs','startup.html','startup.js']:
  shutil.copy2(root/'desktop'/name,appdir/name)
 shutil.copy2(root/'assets/小九-端正坐好萌萌地看着你.png',appdir/'icon.png')
 node=subprocess.check_output(['node','-p','process.execPath'],text=True).strip()

@@ -95,3 +95,10 @@ sequenceDiagram
 签名安装包、自动升级、无 WSL 的后端发行包尚未交付；本轮不扩张到这些内容。其他模型、手机端和 skill/studio 编辑器仍不在本轮范围内。
 
 实现依据：[Electron 安全指南](https://www.electronjs.org/docs/latest/tutorial/security)、[自启接口](https://www.electronjs.org/docs/latest/api/app#appsetloginitemsettingssettings-macos-windows)、[窗口鼠标穿透](https://www.electronjs.org/docs/latest/api/base-window#winsetignoremouseeventsignore-options)。
+
+
+## 2026-10-09 · 全屏移动修复
+
+原实现将小九固定在 490×720 透明窗口右下角，并把整窗限制在工作区，造成角色只能在屏幕下方/右侧移动。现在以小九本体的屏幕坐标定位，透明宿主与窗口内角色位置共同调整，可到达整个桌面可用区域；仅保留防止角色和打开按钮移出屏幕的边界。提示表根据上下空间选择展开方向，超长内容仍可滚动。保存角色位置，兼容旧窗口位置设置；聚焦角色后也可使用方向键移动，Shift 加速。
+
+针对性验证：坐标边界检查（含负坐标显示器）、Windows 原生窗口四角移动、四角提示表可见、方向键移动与重启恢复位置通过；未调用模型或修改业务记录。更新已复制到本机运行时，旧桌面进程需从托盘「退出拾光」后重新打开；只关闭主窗口不会更新桌面进程。

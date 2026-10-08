@@ -318,11 +318,12 @@ export default function PetBuddy() {
         type="button"
         aria-label={`小九现在${moodNames[mood]}，点击摸摸她`}
         aria-expanded={visible}
-        title="小九 · 按住拖动，点击摸摸"
+        title={desktop?.role==='pet'?'小九 · 按住拖动，点击摸摸；聚焦后可用方向键移动':'小九 · 按住拖动，点击摸摸'}
         onPointerDown={startDrag}
         onPointerMove={moveDrag}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
+        onKeyDown={event=>{if(desktop?.role!=='pet')return;const step=event.shiftKey?64:16;const delta=({ArrowUp:[0,-step],ArrowDown:[0,step],ArrowLeft:[-step,0],ArrowRight:[step,0]} as Record<string,number[]>)[event.key];if(delta){event.preventDefault();desktop.move?.(delta[0],delta[1]);}}}
         onClick={handlePetClick}
       >
         <img key={`${mood}-${jelly}`} className={jelly ? 'pet-buddy-image jelly' : 'pet-buddy-image'} src={petImages[mood]} alt="" draggable="false" />
