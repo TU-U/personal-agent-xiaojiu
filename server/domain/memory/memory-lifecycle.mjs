@@ -4,7 +4,7 @@ const key=id=>'memory-turn-count:'+id;
 const threadOf=turn=>turn.threadId||turn.id;
 function initialize(threadId){
  const known=getSetting(key(threadId),null);if(known!==null)return known;
- const turns=all('conversation').filter(t=>threadOf(t)===threadId).sort((a,b)=>a.createdAt.localeCompare(b.createdAt)||a.id.localeCompare(b.id));
+ const turns=all('conversation').filter(t=>threadOf(t)===threadId&&t.agentRun?.status!=='stopped').sort((a,b)=>a.createdAt.localeCompare(b.createdAt)||a.id.localeCompare(b.id));
  for(const [index,turn] of turns.entries())if(turn.memoryReview==='pending'&&!Number.isInteger(turn.originTurn))save('conversation',{...turn,originTurn:index+1,expiresAfterTurn:index+6,memoryExpiryBasis:'existing-successful-history'},turn.revision);
  setSetting(key(threadId),turns.length);return turns.length;
 }
@@ -24,6 +24,8 @@ export function refreshMemoryCandidates(threadId){return transaction(()=>{
 });}
 // Called only inside the successful conversation commit transaction.
 export function saveMemoryTurn(data){
+ // Budget/cancellation partials are visible history, not successful memory turns.
+ if(data.agentRun?.status==='stopped')return save('conversation',{...data,memoryProposals:[],memoryReview:'none'});
  const id=data.id||randomUUID(),threadId=data.threadId||id,count=initialize(threadId)+1;
  setSetting(key(threadId),count);
  const result=save('conversation',{...data,id,threadId,originTurn:count,expiresAfterTurn:count+5,memoryExpiryBasis:'successful-turn-counter'});

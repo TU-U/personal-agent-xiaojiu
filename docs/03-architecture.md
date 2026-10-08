@@ -1,6 +1,6 @@
 # 系统与记忆设计
 
-> 当前架构与实施状态以 [架构评审第9节](21-architecture-review.md) 和 [协议治理实施记录](26-contract-governance-implementation.md) 为准。本文是早期提案快照；9.3的服务端/Web字段迁移已完成（协议0.2.0），Android消费协议仍留待后续阶段。
+> 当前架构与实施状态以 [架构评审第9节](21-architecture-review.md) 和 [协议治理实施记录](26-contract-governance-implementation.md) 为准。Pi/搭子接入见 [27号实施记录](27-pi-agent-implementation.md)。本文是早期提案快照；9.3的服务端/Web字段迁移已完成（当前协议0.3.0），Android消费协议仍留待后续阶段。
 
 > Android 阶段更新：请先阅读 [手机端实施文档](mobile/README.md)。本文件保留早期完整产品提案；当前后端实际为 Express + SQLite，Android 具体范围、接口现状与开发顺序以新文档为准。
 

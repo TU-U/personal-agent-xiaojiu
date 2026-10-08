@@ -1,3 +1,4 @@
+import {conversationSourceIssue} from './conversation-source-state.mjs';
 import {sourceProjectId} from '../domain/notes/categories.mjs';
 import {refreshMemoryCandidates} from '../domain/memory/memory-lifecycle.mjs';
 import {randomUUID,createHash} from 'node:crypto';
@@ -8,9 +9,10 @@ const fail=(message,status)=>Object.assign(new Error(message),{status});
 export function threadMetadata(id){return get(id,'thread')||get('thread-state:'+id,'thread');}
 export function threadUnavailable(id){return threadMetadata(id)?.status==='deleted';}
 export function openSourceThread(input){
- const {kind,id}=validate(z.strictObject({kind:z.enum(['note','event']),id:z.string().uuid()}),input);
+ const {kind,id}=validate(z.strictObject({kind:z.enum(['note','event','libraryFile']),id:z.string().uuid()}),input);
  return transaction(()=>{
   const source=get(id,kind);if(!source)throw fail('来源已删除，已有讨论历史仍独立保留。',404);
+  if(kind==='libraryFile'){const issue=conversationSourceIssue(source,kind);if(issue)throw fail(issue,422);}
   const key='source-thread:'+kind+':'+id;let mapping=get(key,'sourceThread');
   if(mapping){if(!get(mapping.threadId,'thread')||threadUnavailable(mapping.threadId))throw fail('关联会话已删除或不可用，原关联仍保留，不会自动新建。',410);}
   else{const thread=save('thread',{id:randomUUID(),title:source.title,status:'active',source:{kind,id}});mapping=save('sourceThread',{id:key,sourceKind:kind,sourceId:id,threadId:thread.id});}

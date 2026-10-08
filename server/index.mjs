@@ -1,3 +1,6 @@
+import {installChatPolicy,threadWebPolicy} from './agent/chat-policy.mjs';
+import {startChatRun,chatRun,writeChatRun} from './agent/chat-budget.mjs';
+import {runChatAgent,recoverChatRun} from './agent/chat-agent.mjs';
 import {installContractRoutes} from './core/contracts.mjs';
 import {readSummaryImages} from './domain/notes/note-summary-images.mjs';
 import {withAiContext,updateAiContext} from './core/ai-context.mjs';
@@ -300,28 +303,40 @@ app.post('/api/search-brief',async(req,res)=>{
  res.json(await prepareSearchBrief(req.body.query.trim(),selectedSources,history,{summary:req.body.threadId?threadContext(req.body.threadId).text:''}));
 });
 installSourceThreads(app);
+installChatPolicy(app);
 app.get('/api/threads/:id/context',(req,res)=>res.json(threadContext(req.params.id)));
 app.post('/api/threads/:id/context',async(req,res)=>res.json(await updateThreadContext(req.params.id))); 
 app.post('/api/ask',async(req,res)=>{const response=await conversationRequest(req.body,async commit=>{
  if(!validString(req.body.query,2000)||!req.body.query.trim())throw fail('先输入你想问的问题。');if(!validString(req.body.project||'',80))throw fail('项目名称无效。');
  if(req.body.webSearch!==undefined&&typeof req.body.webSearch!=='boolean')throw fail('联网分析选项无效。');
+ if(req.body.continueRunId!==undefined&&(!validString(req.body.continueRunId,100)||req.body.continueRunId.length<8))throw fail('继续执行标识无效。');
  const selectedSources=resolveConversationReferences(req.body.references,req.body.query.trim());
  const requestedThread=req.body.threadId;
  if(requestedThread!==undefined&&(!validString(requestedThread,80)||!/^[0-9a-f-]{36}$/i.test(requestedThread)))throw fail('会话标识无效。');
  const existing=requestedThread?all('conversation').filter(c=>(c.threadId||c.id)===requestedThread).sort((a,b)=>a.createdAt.localeCompare(b.createdAt)):[];
  if(requestedThread&&(threadUnavailable(requestedThread)||(!existing.length&&!get(requestedThread,'thread'))))throw fail('会话不存在或已删除，请新建会话。',404);
- const threadId=requestedThread||randomUUID();
+ const previousRun=req.body.opId?chatRun(req.body.opId):null;
+ const threadId=requestedThread||previousRun?.threadId||randomUUID();
  updateAiContext({threadId});
  const retrievalContext=conversationScope(req.body,threadId);
  const threadTitle=existing[0]?.threadTitle||existing[0]?.query.slice(0,40)||req.body.query.trim().slice(0,40);
- if(req.body.webSearch&&!providerAvailable())throw fail('联网分析需要先连接 AI 模型；也可以整理搜索简报并在 DeepSeek 网页端搜索。',422);
- const webSources=req.body.webSearch?await searchWeb(req.body.query.trim()):[];
- if(req.body.webSearch&&!webSources.length)throw fail('没有找到可引用的网页结果，请换个说法或改用 DeepSeek 网页端搜索。',422);
  const assembled=assembleThreadContext(threadId);
- const result=await answer(req.body.query.trim(),retrievalContext.project,assembled.history,selectedSources,webSources,assembled.text,retrievalContext);const validSources=result.sources.filter(s=>{if(s.kind==='web')return true;const entity=get(s.id,s.kind==='memory'?'memory':s.kind==='event'?'event':s.kind==='libraryFile'?'libraryFile':'note');return entity&&entity.revision===s.revision&&(s.kind!=='memory'||memoryApplies(entity,retrievalContext));});
+ let result,proposals,runId;
+ if(providerAvailable()){
+  runId=req.body.opId||randomUUID();
+  if(!get(threadId,'thread')&&!get('thread-state:'+threadId,'thread'))save('thread',{id:get(threadId)?'thread-state:'+threadId:threadId,threadId,title:threadTitle,status:'active'});
+  if(previousRun)recoverChatRun(runId);
+  startChatRun(runId,req.body,threadId,{historyRevision:assembled.usage.historyRevision});
+  const answerResult=await runChatAgent({id:runId,query:req.body.query.trim(),scope:retrievalContext,history:assembled.history,summary:assembled.text,selectedSources});
+  ({proposals,...result}=answerResult);
+ }else{
+  if(req.body.webSearch)throw fail('联网分析需要先连接 AI 模型。',422);
+  result=await answer(req.body.query.trim(),retrievalContext.project,assembled.history,selectedSources,[],assembled.text,retrievalContext);
+  proposals={items:[],notice:'未配置 AI 模型，本轮没有生成记忆候选。'};
+ }
+ const validSources=result.sources.filter(s=>{if(s.kind==='web')return true;const entity=get(s.id,s.kind==='memory'?'memory':s.kind==='event'?'event':s.kind==='libraryFile'?'libraryFile':'note');return entity&&entity.revision===s.revision&&(s.kind!=='memory'||memoryApplies(entity,retrievalContext));});
  if(validSources.length!==result.sources.length)throw fail('回答期间有来源记录被删除，请重新提问。',409);
- const proposals=await proposeTurnMemories(req.body.query.trim(),all('memory').filter(m=>m.status==='active'));
- const conversation=commit(()=>{conversationScope(retrievalContext,threadId);if(threadHistorySignature(threadId)!==assembled.usage.historyRevision)throw fail('回答期间话题历史已变化，请重新提问。',409);if(threadUnavailable(threadId))throw fail('会话已删除，本轮未保存。',410);for(const source of selectedSources){const current=get(source.id,source.kind);if(!current||current.revision!==source.revision)throw fail('讨论期间引用资料已变化，请重新提问。',409);}for(const source of result.sources){if(source.kind==='web')continue;const entity=get(source.id,source.kind||'note');if(!entity||entity.revision!==source.revision||(source.kind==='memory'&&!memoryApplies(entity,retrievalContext)))throw fail('保存回答前有引用来源或记忆已变化，请重新提问。',409);}return saveMemoryTurn({contextUsage:assembled.usage,threadId,threadTitle,project:retrievalContext.project,projectId:retrievalContext.projectId,query:req.body.query.trim(),references:selectedSources.map(({id,kind,title,revision})=>({id,kind,title,revision})),webSearch:!!req.body.webSearch,...result,memoryProposals:proposals.items,memoryNotice:proposals.notice,memoryReview:proposals.items.length?'pending':'none'});});void updateThreadContext(threadId).catch(()=>{});return conversation;
+ const conversation=commit(()=>{conversationScope(retrievalContext,threadId);if(threadHistorySignature(threadId)!==assembled.usage.historyRevision)throw fail('回答期间话题历史已变化，请重新提问。',409);if(threadUnavailable(threadId))throw fail('会话已删除，本轮未保存。',410);for(const source of selectedSources){const current=get(source.id,source.kind);if(!current||current.revision!==source.revision)throw fail('讨论期间引用资料已变化，请重新提问。',409);}for(const source of result.sources){if(source.kind==='web')continue;const entity=get(source.id,source.kind||'note');if(!entity||entity.revision!==source.revision||(source.kind==='memory'&&!memoryApplies(entity,retrievalContext)))throw fail('保存回答前有引用来源或记忆已变化，请重新提问。',409);}const saved=saveMemoryTurn({contextUsage:assembled.usage,threadId,threadTitle,project:retrievalContext.project,projectId:retrievalContext.projectId,query:req.body.query.trim(),references:selectedSources.map(({id,kind,title,revision})=>({id,kind,title,revision})),webSearch:threadWebPolicy(threadId).webSearch,...result,memoryProposals:proposals.items,memoryNotice:proposals.notice,memoryReview:proposals.items.length?'pending':'none'});if(runId)writeChatRun({...chatRun(runId),conversationId:saved.id});return saved;});return conversation;
 });res.json(response);});
 app.get('/api/conversations/:id',(req,res)=>{const initial=get(req.params.id,'conversation');if(!initial)throw fail('会话轮次不存在或已删除。',404);if(threadUnavailable(initial.threadId||initial.id))throw fail('会话已删除。',410);refreshMemoryCandidates(initial.threadId||initial.id);res.json(get(initial.id,'conversation'));});
 app.patch('/api/conversations/:id/memory-proposals/:index',(req,res)=>res.json(editMemoryProposal(req.params.id,Number(req.params.index),req.body)));

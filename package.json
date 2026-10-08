@@ -19,6 +19,8 @@
     "contracts:inventory": "node scripts/check-contracts.mjs --write-inventory"
   },
   "dependencies": {
+    "@earendil-works/pi-agent-core": "1.1.0",
+    "@earendil-works/pi-ai": "1.1.0",
     "@langchain/langgraph": "^1.4.18",
     "@langchain/langgraph-checkpoint": "^1.1.5",
     "ajv": "8.20.0",

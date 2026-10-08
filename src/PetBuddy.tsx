@@ -83,9 +83,9 @@ export default function PetBuddy() {
   const suppressClick = useRef(false);
   const panelRef = useRef<HTMLElement>(null);
   const chatInput = useRef<HTMLInputElement>(null);
-  const moodTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const moodTimer = useRef<number | null>(null);
+  const idleTimer = useRef<number | null>(null);
+  const closeTimer = useRef<number | null>(null);
   const petTaps = useRef<number[]>([]);
   const chatCount = useRef(0);
 

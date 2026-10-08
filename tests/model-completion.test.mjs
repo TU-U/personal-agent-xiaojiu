@@ -11,7 +11,7 @@ const originalFetch=globalThis.fetch,originalLog=console.log;
 console.log=()=>{};
 const config={baseUrl:'https://api.deepseek.com',model:'deepseek-flash',apiKey:'private-test-value'};
 const usage={prompt_tokens:20,completion_tokens:5,total_tokens:25,prompt_cache_hit_tokens:10,prompt_cache_miss_tokens:10};
-function response(content='正文',finish_reason='stop'){return new Response(JSON.stringify({model:'deepseek-flash',choices:[{message:{content},finish_reason}],usage:{...usage,secret:'must-not-persist'}}));}
+function response(content='正文',finish_reason='stop'){return new Response('data: '+JSON.stringify({model:'deepseek-flash',choices:[{delta:{content},finish_reason}],usage:{...usage,secret:'must-not-persist'}})+'\n\ndata: [DONE]\n\n',{headers:{'content-type':'text/event-stream'}});}
 after(()=>{globalThis.fetch=originalFetch;console.log=originalLog;rmSync(dir,{recursive:true,force:true});});
 test('text callers stay compatible; receipts expose only metering fields and fixed provider request',async()=>{
  let sent;
@@ -28,7 +28,7 @@ test('paid empty and truncated responses preserve usage on failure; malformed us
   globalThis.fetch=async()=>response(content,finish);
   await assert.rejects(requestCompletion(config,'s','u',null,{requireComplete:true}),error=>{assert.equal(error.code,code);assert.deepEqual(error.receipt.usage,usage);return true;});
  }
- globalThis.fetch=async()=>new Response(JSON.stringify({choices:[{message:{content:'ok'}}],usage:{prompt_tokens:-1,completion_tokens:'5',total_tokens:1.5}}));
+ globalThis.fetch=async()=>new Response('data: '+JSON.stringify({choices:[{delta:{content:'ok'},finish_reason:'stop'}],usage:{prompt_tokens:-1,completion_tokens:'5',total_tokens:1.5}})+'\n\ndata: [DONE]\n\n',{headers:{'content-type':'text/event-stream'}});
  assert.equal((await requestCompletion(config,'s','u',null,{returnDetails:true})).usage,null);
  for(const value of ['null','not-json']){
   globalThis.fetch=async()=>new Response(value);
@@ -55,4 +55,10 @@ test('real HTTP timeout covers stalled response body; caller cancellation aborts
   const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),100);
   try{await assert.rejects(requestCompletion(local,'s','u',null,{signal:controller.signal}),error=>error.code==='MODEL_CANCELLED');}finally{clearTimeout(timer);}
  }finally{server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
+});
+
+test('Pi preserves JSON-only compatible providers, images and caller log redaction',async()=>{
+ let sent;globalThis.fetch=async(_url,options)=>{sent=JSON.parse(options.body);return new Response(JSON.stringify({model:config.model,choices:[{message:{content:'图片分析正文'},finish_reason:'stop'}],usage}));};
+ const output=await requestCompletion(config,'图片说明','sensitive-bank-description',null,{userContent:[{type:'text',text:'sensitive-bank-description'},{type:'image_url',image_url:{url:'data:image/png;base64,aGVsbG8='}}],logUser:'[账单提示已隐藏]'});assert.equal(output,'图片分析正文');assert.ok(sent.messages.some(m=>Array.isArray(m.content)&&m.content.some(c=>c.type==='image_url')));
+ const {readFileSync}=await import('node:fs');const {AI_LOG_FILE}=await import('../server/core/ai-log.mjs');const log=readFileSync(AI_LOG_FILE,'utf8');assert.equal(log.includes('sensitive-bank-description'),false);assert.equal(log.includes('aGVsbG8='),false);
 });

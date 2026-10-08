@@ -2,7 +2,7 @@
 
 由 `npm run contracts:inventory` 从协议和实际路由生成，不把路径接通当作字段抽取完成。
 
-协议版本：0.2.0；共 152 个操作。已抽取形状 149；待抽取 0；已退役 3。
+协议版本：0.3.0；共 156 个操作。已抽取形状 153；待抽取 0；已退役 3。
 
 新旧路径均调用同一处理函数；鉴权、事务、revision、opId、游标和附件存储不切换。错误仍为原 HTTP 状态与 `{error,current?}`。
 
@@ -21,9 +21,10 @@
 | GET | `/api/research-tasks/:id` | `/api/v1/research-tasks/:id` | 无 | 无 | 200 application/json: ResearchDetail | Web；桌面后续复用 | reviewed | server/agent/research/research-tasks.mjs:141 |
 | POST | `/api/research-tasks/:id/action` | `/api/v1/research-tasks/:id/action` | application/json: ResearchAction | 无 | 200 application/json: ResearchTask | Web；桌面后续复用 | reviewed | server/agent/research/research-tasks.mjs:142 |
 | GET | `/api/research-sources` | `/api/v1/research-sources` | 无 | `cursor`、`limit`、`q`、`kind` | 200 application/json: 内联对象 | Web；桌面后续复用 | reviewed | server/agent/research/research-tasks.mjs:143 |
-| POST | `/api/source-threads` | `/api/v1/source-threads` | application/json: SourceThreadRequest | 无 | 200 application/json: SourceThread | Web；桌面后续复用 | reviewed | server/agent/source-threads.mjs:41 |
-| GET | `/api/threads` | `/api/v1/threads` | 无 | `cursor`、`limit` | 200 application/json: ThreadDirectoryPage | Web；桌面后续复用 | reviewed | server/agent/source-threads.mjs:42 |
-| GET | `/api/threads/:id/turns` | `/api/v1/threads/:id/turns` | 无 | `cursor`、`limit` | 200 application/json: 内联对象 | Web；桌面后续复用 | reviewed | server/agent/source-threads.mjs:43 |
+| POST | `/api/source-threads` | `/api/v1/source-threads` | application/json: SourceThreadRequest | 无 | 200 application/json: SourceThread | Web；桌面后续复用 | reviewed | server/agent/source-threads.mjs:43 |
+| GET | `/api/threads` | `/api/v1/threads` | 无 | `cursor`、`limit` | 200 application/json: ThreadDirectoryPage | Web；桌面后续复用 | reviewed | server/agent/source-threads.mjs:44 |
+| POST | `/api/threads` | `/api/v1/threads` | application/json: ChatThreadRequest | 无 | 200 application/json: ChatThreadCreated | Web；桌面后续复用 | reviewed | server/agent/chat-policy.mjs:17 |
+| GET | `/api/threads/:id/turns` | `/api/v1/threads/:id/turns` | 无 | `cursor`、`limit` | 200 application/json: 内联对象 | Web；桌面后续复用 | reviewed | server/agent/source-threads.mjs:45 |
 | GET | `/api/settings/storage` | `/api/v1/settings/storage` | 无 | 无 | 200 application/json: StorageStatus | Web；桌面后续复用 | reviewed | server/core/backups/backup-routes.mjs:12 |
 | POST | `/api/backups` | `/api/v1/backups` | application/json: EmptyRequest | 无 | 201 application/json: BackupReceipt | Web；桌面后续复用 | reviewed | server/core/backups/backup-routes.mjs:16 |
 | GET | `/api/backups/:id/download` | `/api/v1/backups/:id/download` | 无 | 无 | 200 application/zip: string | Web；桌面后续复用 | reviewed | server/core/backups/backup-routes.mjs:25 |
@@ -81,70 +82,70 @@
 | GET | `/api/notes/:id/classification` | `/api/v1/notes/:id/classification` | 无 | 无 | 200 application/json: ClassificationState | Web；桌面后续复用 | reviewed | server/domain/notes/classification.mjs:35 |
 | POST | `/api/notes/:id/classification` | `/api/v1/notes/:id/classification` | application/json: 内联对象 | 无 | 200 application/json: Ok | Web；桌面后续复用 | reviewed | server/domain/notes/classification.mjs:40 |
 | POST | `/api/todos/:id/carry` | `/api/v1/todos/:id/carry` | application/json: CarryTodoRequest | 无 | 200 application/json: Todo | Web；桌面后续复用 | reviewed | server/domain/notes/todo-days.mjs:25 |
-| GET | `/api/health` | `/api/v1/health` | 无 | 无 | 200 application/json: Health | Web；桌面后续复用 | reviewed | server/index.mjs:81 |
-| GET | `/api/session` | `/api/v1/session` | 无 | 无 | 200 application/json: Session | Web；桌面后续复用 | reviewed | server/index.mjs:82 |
-| POST | `/api/login` | `/api/v1/login` | application/json: LoginRequest | 无 | 200 application/json: Ok | Web；桌面后续复用 | reviewed | server/index.mjs:85 |
-| GET | `/api/settings/worker` | `/api/v1/settings/worker` | 无 | 无 | 200 application/json: WorkerStatus | Web；桌面后续复用 | reviewed | server/index.mjs:96 |
-| POST | `/api/logout` | `/api/v1/logout` | 无 | 无 | 200 application/json: Ok | Web；桌面后续复用 | reviewed | server/index.mjs:107 |
-| GET | `/api/bootstrap` | `/api/v1/bootstrap` | 无 | 无 | 200 application/json: Bootstrap | Web；桌面后续复用 | reviewed | server/index.mjs:108 |
-| GET | `/api/changes` | `/api/v1/changes` | 无 | `since` | 200 application/json: Changes | Web；桌面后续复用 | reviewed | server/index.mjs:112 |
-| GET | `/api/search` | `/api/v1/search` | 无 | `q`、`project`、`tag`、`type` | 200 application/json: 内联对象 | Web；桌面后续复用 | reviewed | server/index.mjs:113 |
-| POST | `/api/todos/:id/upgrade` | `/api/v1/todos/:id/upgrade` | application/json: TodoUpgradeRequest | 无 | 200 application/json: 内联对象 | Web；桌面后续复用 | reviewed | server/index.mjs:133 |
-| POST | `/api/todos` | `/api/v1/todos` | application/json: TodoCreate | 无 | 201 application/json: Todo | Web；桌面后续复用 | reviewed | server/index.mjs:134 |
-| PATCH | `/api/todos/:id` | `/api/v1/todos/:id` | application/json: TodoPatch | 无 | 200 application/json: Todo | Web；桌面后续复用 | reviewed | server/index.mjs:135 |
-| DELETE | `/api/todos/:id` | `/api/v1/todos/:id` | application/json: RevisionRequest | 无 | 200 application/json: Ok | Web；桌面后续复用 | reviewed | server/index.mjs:136 |
-| GET | `/api/transactions` | `/api/v1/transactions` | 无 | 无 | 200 application/json: 内联对象 | Web；桌面后续复用 | reviewed | server/index.mjs:137 |
-| POST | `/api/transactions` | `/api/v1/transactions` | application/json: TransactionInput | 无 | 201 application/json: LedgerTransaction | Web；桌面后续复用 | reviewed | server/index.mjs:138 |
-| PATCH | `/api/transactions/:id` | `/api/v1/transactions/:id` | application/json: TransactionPatch | 无 | 200 application/json: LedgerTransaction | Web；桌面后续复用 | reviewed | server/index.mjs:139 |
-| DELETE | `/api/transactions/:id` | `/api/v1/transactions/:id` | application/json: RevisionRequest | 无 | 200 application/json: Ok | Web；桌面后续复用 | reviewed | server/index.mjs:140 |
-| POST | `/api/transactions/import/preview` | `/api/v1/transactions/import/preview` | 无 | 无 | 410 application/json: Error | Web；桌面后续复用 | retired | server/index.mjs:147 |
-| POST | `/api/transactions/import/commit` | `/api/v1/transactions/import/commit` | 无 | 无 | 410 application/json: Error | Web；桌面后续复用 | retired | server/index.mjs:147 |
-| POST | `/api/transactions/ocr` | `/api/v1/transactions/ocr` | 无 | 无 | 410 application/json: Error | Web；桌面后续复用 | retired | server/index.mjs:148 |
-| POST | `/api/pet/chat` | `/api/v1/pet/chat` | application/json: PetChatRequest | 无 | 200 application/json: PetChatReply | Web；桌面后续复用 | reviewed | server/index.mjs:149 |
-| POST | `/api/notes` | `/api/v1/notes` | application/json: NoteCreate | 无 | 200 application/json: Note<br>201 application/json: Note | Web；桌面后续复用 | reviewed | server/index.mjs:150 |
-| PATCH | `/api/notes/:id` | `/api/v1/notes/:id` | application/json: NotePatch | 无 | 200 application/json: Note | Web；桌面后续复用 | reviewed | server/index.mjs:155 |
-| DELETE | `/api/notes/:id` | `/api/v1/notes/:id` | application/json: RevisionRequest | 无 | 200 application/json: Ok | Web；桌面后续复用 | reviewed | server/index.mjs:156 |
-| POST | `/api/notes/:id/summarize` | `/api/v1/notes/:id/summarize` | 无 | 无 | 200 application/json: Note | Web；桌面后续复用 | reviewed | server/index.mjs:160 |
-| POST | `/api/events/suggest` | `/api/v1/events/suggest` | application/json: EventSuggestRequest | 无 | 200 application/json: 内联对象 | Web；桌面后续复用 | reviewed | server/index.mjs:178 |
-| POST | `/api/events` | `/api/v1/events` | application/json: EventCreate | 无 | 201 application/json: EventRecord | Web；桌面后续复用 | reviewed | server/index.mjs:204 |
-| PATCH | `/api/events/:id` | `/api/v1/events/:id` | application/json: EventPatch | 无 | 200 application/json: EventRecord | Web；桌面后续复用 | reviewed | server/index.mjs:205 |
-| DELETE | `/api/events/:id` | `/api/v1/events/:id` | application/json: RevisionRequest | 无 | 200 application/json: Ok | Web；桌面后续复用 | reviewed | server/index.mjs:212 |
-| POST | `/api/events/:id/check` | `/api/v1/events/:id/check` | application/json: EventCheckRequest | 无 | 202 application/json: EventRecord | Web；桌面后续复用 | reviewed | server/index.mjs:206 |
-| GET | `/api/events/:id/checks` | `/api/v1/events/:id/checks` | 无 | 无 | 200 application/json: 内联对象 | Web；桌面后续复用 | reviewed | server/index.mjs:207 |
-| POST | `/api/events/:id/schedule` | `/api/v1/events/:id/schedule` | application/json: 内联对象 | 无 | 200 application/json: EventRecord | Web；桌面后续复用 | reviewed | server/index.mjs:208 |
-| POST | `/api/events/:id/snooze` | `/api/v1/events/:id/snooze` | application/json: 内联对象 | 无 | 200 application/json: EventRecord | Web；桌面后续复用 | reviewed | server/index.mjs:209 |
-| POST | `/api/events/:id/end` | `/api/v1/events/:id/end` | application/json: 内联对象 | 无 | 200 application/json: EventRecord | Web；桌面后续复用 | reviewed | server/index.mjs:210 |
-| POST | `/api/events/:id/confirm` | `/api/v1/events/:id/confirm` | application/json: 内联对象 | 无 | 200 application/json: EventRecord | Web；桌面后续复用 | reviewed | server/index.mjs:211 |
-| GET | `/api/events/:id/image/:imageId` | `/api/v1/events/:id/image/:imageId` | 无 | `download` | 200 image/*: string | Web；桌面后续复用 | reviewed | server/index.mjs:213 |
-| GET | `/api/computer-files` | `/api/v1/computer-files` | 无 | `path`、`q` | 200 application/json: ComputerFileListing | Web；桌面后续复用 | reviewed | server/index.mjs:243 |
-| POST | `/api/computer-files/import` | `/api/v1/computer-files/import` | application/json: 内联对象 | 无 | 201 application/json: Note | Web；桌面后续复用 | reviewed | server/index.mjs:248 |
-| POST | `/api/import` | `/api/v1/import` | multipart/form-data: 内联对象 | 无 | 200 application/json: Note<br>201 application/json: Note | Web；桌面后续复用 | reviewed | server/index.mjs:258 |
-| POST | `/api/notes/:id/images` | `/api/v1/notes/:id/images` | multipart/form-data: 内联对象 | 无 | 200 application/json: Note<br>201 application/json: Note | Web；桌面后续复用 | reviewed | server/index.mjs:264 |
-| DELETE | `/api/notes/:id/images/:attachment` | `/api/v1/notes/:id/images/:attachment` | application/json: RevisionRequest | 无 | 200 application/json: Note | Web；桌面后续复用 | reviewed | server/index.mjs:276 |
-| GET | `/api/notes/:id/file/:attachment` | `/api/v1/notes/:id/file/:attachment` | 无 | `download` | 200 */*: string | Web；桌面后续复用 | reviewed | server/index.mjs:285 |
-| POST | `/api/search-brief` | `/api/v1/search-brief` | application/json: SearchBriefRequest | 无 | 200 application/json: SearchBrief | Web；桌面后续复用 | reviewed | server/index.mjs:295 |
-| GET | `/api/threads/:id/context` | `/api/v1/threads/:id/context` | 无 | 无 | 200 application/json: ThreadContext | Web；桌面后续复用 | reviewed | server/index.mjs:303 |
-| POST | `/api/threads/:id/context` | `/api/v1/threads/:id/context` | 无 | 无 | 200 application/json: ThreadContext | Web；桌面后续复用 | reviewed | server/index.mjs:304 |
-| POST | `/api/ask` | `/api/v1/ask` | application/json: AskRequest | 无 | 200 application/json: Conversation | Web；桌面后续复用 | reviewed | server/index.mjs:305 |
-| GET | `/api/conversations/:id` | `/api/v1/conversations/:id` | 无 | 无 | 200 application/json: Conversation | Web；桌面后续复用 | reviewed | server/index.mjs:326 |
-| DELETE | `/api/conversations/:id` | `/api/v1/conversations/:id` | application/json: RevisionRequest | 无 | 200 application/json: Ok | Web；桌面后续复用 | reviewed | server/index.mjs:329 |
-| PATCH | `/api/conversations/:id/memory-proposals/:index` | `/api/v1/conversations/:id/memory-proposals/:index` | application/json: EditMemoryProposal | 无 | 200 application/json: Conversation | Web；桌面后续复用 | reviewed | server/index.mjs:327 |
-| POST | `/api/conversations/:id/memory-review` | `/api/v1/conversations/:id/memory-review` | application/json: ReviewMemoryBatch | 无 | 200 application/json: Conversation | Web；桌面后续复用 | reviewed | server/index.mjs:328 |
-| DELETE | `/api/threads/:id` | `/api/v1/threads/:id` | 无 | 无 | 200 application/json: Ok | Web；桌面后续复用 | reviewed | server/index.mjs:330 |
-| POST | `/api/tasks` | `/api/v1/tasks` | application/json: 内联对象 | 无 | 201 application/json: Artifact | Web；桌面后续复用 | reviewed | server/index.mjs:331 |
-| GET | `/api/artifacts/:id` | `/api/v1/artifacts/:id` | 无 | `revision` | 200 application/json: Artifact | Web；桌面后续复用 | reviewed | server/index.mjs:339 |
-| PATCH | `/api/artifacts/:id` | `/api/v1/artifacts/:id` | application/json: ArtifactUpdate | 无 | 200 application/json: Artifact | Web；桌面后续复用 | reviewed | server/index.mjs:341 |
-| DELETE | `/api/artifacts/:id` | `/api/v1/artifacts/:id` | application/json: RevisionRequest | 无 | 200 application/json: Ok | Web；桌面后续复用 | reviewed | server/index.mjs:342 |
-| GET | `/api/artifacts/:id/download` | `/api/v1/artifacts/:id/download` | 无 | `revision` | 200 text/markdown: string | Web；桌面后续复用 | reviewed | server/index.mjs:340 |
-| POST | `/api/memories` | `/api/v1/memories` | application/json: MemoryCreate | 无 | 201 application/json: Memory | Web；桌面后续复用 | reviewed | server/index.mjs:343 |
-| GET | `/api/memories/:id/source-review` | `/api/v1/memories/:id/source-review` | 无 | 无 | 200 application/json: MemorySourcePreview | Web；桌面后续复用 | reviewed | server/index.mjs:344 |
-| PATCH | `/api/memories/:id` | `/api/v1/memories/:id` | application/json: MemoryPatch | 无 | 200 application/json: Memory | Web；桌面后续复用 | reviewed | server/index.mjs:345 |
-| DELETE | `/api/memories/:id` | `/api/v1/memories/:id` | application/json: RevisionRequest | 无 | 200 application/json: Ok | Web；桌面后续复用 | reviewed | server/index.mjs:346 |
-| GET | `/api/settings` | `/api/v1/settings` | 无 | 无 | 200 application/json: Settings | Web；桌面后续复用 | reviewed | server/index.mjs:347 |
-| PATCH | `/api/settings` | `/api/v1/settings` | application/json: SettingsPatch | 无 | 200 application/json: Ok | Web；桌面后续复用 | reviewed | server/index.mjs:348 |
-| POST | `/api/settings/test` | `/api/v1/settings/test` | 无 | 无 | 200 application/json: 内联对象 | Web；桌面后续复用 | reviewed | server/index.mjs:361 |
-| GET | `/api/ai/logs` | `/api/v1/ai/logs` | 无 | 无 | 200 application/json: 内联对象 | Web；桌面后续复用 | reviewed | server/index.mjs:368 |
-| GET | `/api/export` | `/api/v1/export` | 无 | 无 | 200 application/json: BusinessExport | Web；桌面后续复用 | reviewed | server/index.mjs:369 |
+| GET | `/api/health` | `/api/v1/health` | 无 | 无 | 200 application/json: Health | Web；桌面后续复用 | reviewed | server/index.mjs:84 |
+| GET | `/api/session` | `/api/v1/session` | 无 | 无 | 200 application/json: Session | Web；桌面后续复用 | reviewed | server/index.mjs:85 |
+| POST | `/api/login` | `/api/v1/login` | application/json: LoginRequest | 无 | 200 application/json: Ok | Web；桌面后续复用 | reviewed | server/index.mjs:88 |
+| GET | `/api/settings/worker` | `/api/v1/settings/worker` | 无 | 无 | 200 application/json: WorkerStatus | Web；桌面后续复用 | reviewed | server/index.mjs:99 |
+| POST | `/api/logout` | `/api/v1/logout` | 无 | 无 | 200 application/json: Ok | Web；桌面后续复用 | reviewed | server/index.mjs:110 |
+| GET | `/api/bootstrap` | `/api/v1/bootstrap` | 无 | 无 | 200 application/json: Bootstrap | Web；桌面后续复用 | reviewed | server/index.mjs:111 |
+| GET | `/api/changes` | `/api/v1/changes` | 无 | `since` | 200 application/json: Changes | Web；桌面后续复用 | reviewed | server/index.mjs:115 |
+| GET | `/api/search` | `/api/v1/search` | 无 | `q`、`project`、`tag`、`type` | 200 application/json: 内联对象 | Web；桌面后续复用 | reviewed | server/index.mjs:116 |
+| POST | `/api/todos/:id/upgrade` | `/api/v1/todos/:id/upgrade` | application/json: TodoUpgradeRequest | 无 | 200 application/json: 内联对象 | Web；桌面后续复用 | reviewed | server/index.mjs:136 |
+| POST | `/api/todos` | `/api/v1/todos` | application/json: TodoCreate | 无 | 201 application/json: Todo | Web；桌面后续复用 | reviewed | server/index.mjs:137 |
+| PATCH | `/api/todos/:id` | `/api/v1/todos/:id` | application/json: TodoPatch | 无 | 200 application/json: Todo | Web；桌面后续复用 | reviewed | server/index.mjs:138 |
+| DELETE | `/api/todos/:id` | `/api/v1/todos/:id` | application/json: RevisionRequest | 无 | 200 application/json: Ok | Web；桌面后续复用 | reviewed | server/index.mjs:139 |
+| GET | `/api/transactions` | `/api/v1/transactions` | 无 | 无 | 200 application/json: 内联对象 | Web；桌面后续复用 | reviewed | server/index.mjs:140 |
+| POST | `/api/transactions` | `/api/v1/transactions` | application/json: TransactionInput | 无 | 201 application/json: LedgerTransaction | Web；桌面后续复用 | reviewed | server/index.mjs:141 |
+| PATCH | `/api/transactions/:id` | `/api/v1/transactions/:id` | application/json: TransactionPatch | 无 | 200 application/json: LedgerTransaction | Web；桌面后续复用 | reviewed | server/index.mjs:142 |
+| DELETE | `/api/transactions/:id` | `/api/v1/transactions/:id` | application/json: RevisionRequest | 无 | 200 application/json: Ok | Web；桌面后续复用 | reviewed | server/index.mjs:143 |
+| POST | `/api/transactions/import/preview` | `/api/v1/transactions/import/preview` | 无 | 无 | 410 application/json: Error | Web；桌面后续复用 | retired | server/index.mjs:150 |
+| POST | `/api/transactions/import/commit` | `/api/v1/transactions/import/commit` | 无 | 无 | 410 application/json: Error | Web；桌面后续复用 | retired | server/index.mjs:150 |
+| POST | `/api/transactions/ocr` | `/api/v1/transactions/ocr` | 无 | 无 | 410 application/json: Error | Web；桌面后续复用 | retired | server/index.mjs:151 |
+| POST | `/api/pet/chat` | `/api/v1/pet/chat` | application/json: PetChatRequest | 无 | 200 application/json: PetChatReply | Web；桌面后续复用 | reviewed | server/index.mjs:152 |
+| POST | `/api/notes` | `/api/v1/notes` | application/json: NoteCreate | 无 | 200 application/json: Note<br>201 application/json: Note | Web；桌面后续复用 | reviewed | server/index.mjs:153 |
+| PATCH | `/api/notes/:id` | `/api/v1/notes/:id` | application/json: NotePatch | 无 | 200 application/json: Note | Web；桌面后续复用 | reviewed | server/index.mjs:158 |
+| DELETE | `/api/notes/:id` | `/api/v1/notes/:id` | application/json: RevisionRequest | 无 | 200 application/json: Ok | Web；桌面后续复用 | reviewed | server/index.mjs:159 |
+| POST | `/api/notes/:id/summarize` | `/api/v1/notes/:id/summarize` | 无 | 无 | 200 application/json: Note | Web；桌面后续复用 | reviewed | server/index.mjs:163 |
+| POST | `/api/events/suggest` | `/api/v1/events/suggest` | application/json: EventSuggestRequest | 无 | 200 application/json: 内联对象 | Web；桌面后续复用 | reviewed | server/index.mjs:181 |
+| POST | `/api/events` | `/api/v1/events` | application/json: EventCreate | 无 | 201 application/json: EventRecord | Web；桌面后续复用 | reviewed | server/index.mjs:207 |
+| PATCH | `/api/events/:id` | `/api/v1/events/:id` | application/json: EventPatch | 无 | 200 application/json: EventRecord | Web；桌面后续复用 | reviewed | server/index.mjs:208 |
+| DELETE | `/api/events/:id` | `/api/v1/events/:id` | application/json: RevisionRequest | 无 | 200 application/json: Ok | Web；桌面后续复用 | reviewed | server/index.mjs:215 |
+| POST | `/api/events/:id/check` | `/api/v1/events/:id/check` | application/json: EventCheckRequest | 无 | 202 application/json: EventRecord | Web；桌面后续复用 | reviewed | server/index.mjs:209 |
+| GET | `/api/events/:id/checks` | `/api/v1/events/:id/checks` | 无 | 无 | 200 application/json: 内联对象 | Web；桌面后续复用 | reviewed | server/index.mjs:210 |
+| POST | `/api/events/:id/schedule` | `/api/v1/events/:id/schedule` | application/json: 内联对象 | 无 | 200 application/json: EventRecord | Web；桌面后续复用 | reviewed | server/index.mjs:211 |
+| POST | `/api/events/:id/snooze` | `/api/v1/events/:id/snooze` | application/json: 内联对象 | 无 | 200 application/json: EventRecord | Web；桌面后续复用 | reviewed | server/index.mjs:212 |
+| POST | `/api/events/:id/end` | `/api/v1/events/:id/end` | application/json: 内联对象 | 无 | 200 application/json: EventRecord | Web；桌面后续复用 | reviewed | server/index.mjs:213 |
+| POST | `/api/events/:id/confirm` | `/api/v1/events/:id/confirm` | application/json: 内联对象 | 无 | 200 application/json: EventRecord | Web；桌面后续复用 | reviewed | server/index.mjs:214 |
+| GET | `/api/events/:id/image/:imageId` | `/api/v1/events/:id/image/:imageId` | 无 | `download` | 200 image/*: string | Web；桌面后续复用 | reviewed | server/index.mjs:216 |
+| GET | `/api/computer-files` | `/api/v1/computer-files` | 无 | `path`、`q` | 200 application/json: ComputerFileListing | Web；桌面后续复用 | reviewed | server/index.mjs:246 |
+| POST | `/api/computer-files/import` | `/api/v1/computer-files/import` | application/json: 内联对象 | 无 | 201 application/json: Note | Web；桌面后续复用 | reviewed | server/index.mjs:251 |
+| POST | `/api/import` | `/api/v1/import` | multipart/form-data: 内联对象 | 无 | 200 application/json: Note<br>201 application/json: Note | Web；桌面后续复用 | reviewed | server/index.mjs:261 |
+| POST | `/api/notes/:id/images` | `/api/v1/notes/:id/images` | multipart/form-data: 内联对象 | 无 | 200 application/json: Note<br>201 application/json: Note | Web；桌面后续复用 | reviewed | server/index.mjs:267 |
+| DELETE | `/api/notes/:id/images/:attachment` | `/api/v1/notes/:id/images/:attachment` | application/json: RevisionRequest | 无 | 200 application/json: Note | Web；桌面后续复用 | reviewed | server/index.mjs:279 |
+| GET | `/api/notes/:id/file/:attachment` | `/api/v1/notes/:id/file/:attachment` | 无 | `download` | 200 */*: string | Web；桌面后续复用 | reviewed | server/index.mjs:288 |
+| POST | `/api/search-brief` | `/api/v1/search-brief` | application/json: SearchBriefRequest | 无 | 200 application/json: SearchBrief | Web；桌面后续复用 | reviewed | server/index.mjs:298 |
+| GET | `/api/threads/:id/context` | `/api/v1/threads/:id/context` | 无 | 无 | 200 application/json: ThreadContext | Web；桌面后续复用 | reviewed | server/index.mjs:307 |
+| POST | `/api/threads/:id/context` | `/api/v1/threads/:id/context` | 无 | 无 | 200 application/json: ThreadContext | Web；桌面后续复用 | reviewed | server/index.mjs:308 |
+| POST | `/api/ask` | `/api/v1/ask` | application/json: AskRequest | 无 | 200 application/json: Conversation | Web；桌面后续复用 | reviewed | server/index.mjs:309 |
+| GET | `/api/conversations/:id` | `/api/v1/conversations/:id` | 无 | 无 | 200 application/json: Conversation | Web；桌面后续复用 | reviewed | server/index.mjs:341 |
+| DELETE | `/api/conversations/:id` | `/api/v1/conversations/:id` | application/json: RevisionRequest | 无 | 200 application/json: Ok | Web；桌面后续复用 | reviewed | server/index.mjs:344 |
+| PATCH | `/api/conversations/:id/memory-proposals/:index` | `/api/v1/conversations/:id/memory-proposals/:index` | application/json: EditMemoryProposal | 无 | 200 application/json: Conversation | Web；桌面后续复用 | reviewed | server/index.mjs:342 |
+| POST | `/api/conversations/:id/memory-review` | `/api/v1/conversations/:id/memory-review` | application/json: ReviewMemoryBatch | 无 | 200 application/json: Conversation | Web；桌面后续复用 | reviewed | server/index.mjs:343 |
+| DELETE | `/api/threads/:id` | `/api/v1/threads/:id` | 无 | 无 | 200 application/json: Ok | Web；桌面后续复用 | reviewed | server/index.mjs:345 |
+| POST | `/api/tasks` | `/api/v1/tasks` | application/json: 内联对象 | 无 | 201 application/json: Artifact | Web；桌面后续复用 | reviewed | server/index.mjs:346 |
+| GET | `/api/artifacts/:id` | `/api/v1/artifacts/:id` | 无 | `revision` | 200 application/json: Artifact | Web；桌面后续复用 | reviewed | server/index.mjs:354 |
+| PATCH | `/api/artifacts/:id` | `/api/v1/artifacts/:id` | application/json: ArtifactUpdate | 无 | 200 application/json: Artifact | Web；桌面后续复用 | reviewed | server/index.mjs:356 |
+| DELETE | `/api/artifacts/:id` | `/api/v1/artifacts/:id` | application/json: RevisionRequest | 无 | 200 application/json: Ok | Web；桌面后续复用 | reviewed | server/index.mjs:357 |
+| GET | `/api/artifacts/:id/download` | `/api/v1/artifacts/:id/download` | 无 | `revision` | 200 text/markdown: string | Web；桌面后续复用 | reviewed | server/index.mjs:355 |
+| POST | `/api/memories` | `/api/v1/memories` | application/json: MemoryCreate | 无 | 201 application/json: Memory | Web；桌面后续复用 | reviewed | server/index.mjs:358 |
+| GET | `/api/memories/:id/source-review` | `/api/v1/memories/:id/source-review` | 无 | 无 | 200 application/json: MemorySourcePreview | Web；桌面后续复用 | reviewed | server/index.mjs:359 |
+| PATCH | `/api/memories/:id` | `/api/v1/memories/:id` | application/json: MemoryPatch | 无 | 200 application/json: Memory | Web；桌面后续复用 | reviewed | server/index.mjs:360 |
+| DELETE | `/api/memories/:id` | `/api/v1/memories/:id` | application/json: RevisionRequest | 无 | 200 application/json: Ok | Web；桌面后续复用 | reviewed | server/index.mjs:361 |
+| GET | `/api/settings` | `/api/v1/settings` | 无 | 无 | 200 application/json: Settings | Web；桌面后续复用 | reviewed | server/index.mjs:362 |
+| PATCH | `/api/settings` | `/api/v1/settings` | application/json: SettingsPatch | 无 | 200 application/json: Ok | Web；桌面后续复用 | reviewed | server/index.mjs:363 |
+| POST | `/api/settings/test` | `/api/v1/settings/test` | 无 | 无 | 200 application/json: 内联对象 | Web；桌面后续复用 | reviewed | server/index.mjs:376 |
+| GET | `/api/ai/logs` | `/api/v1/ai/logs` | 无 | 无 | 200 application/json: 内联对象 | Web；桌面后续复用 | reviewed | server/index.mjs:383 |
+| GET | `/api/export` | `/api/v1/export` | 无 | 无 | 200 application/json: BusinessExport | Web；桌面后续复用 | reviewed | server/index.mjs:384 |
 | GET | `/api/notes/:id/transcript-history` | `/api/v1/notes/:id/transcript-history` | 无 | `offset` | 200 application/json: 内联对象 | Web；桌面后续复用 | reviewed | server/jobs/audio-jobs.mjs:50 |
 | GET | `/api/notes/:id/transcription` | `/api/v1/notes/:id/transcription` | 无 | 无 | 200 application/json: TranscriptionState | Web；桌面后续复用 | reviewed | server/jobs/audio-jobs.mjs:57 |
 | POST | `/api/notes/:id/transcription` | `/api/v1/notes/:id/transcription` | application/json: 内联对象 | 无 | 200 application/json: Ok | Web；桌面后续复用 | reviewed | server/jobs/audio-jobs.mjs:63 |
@@ -166,3 +167,6 @@
 | POST | `/api/work-tasks/:id/conditions` | `/api/v1/work-tasks/:id/conditions` | application/json: 内联对象 | 无 | 200 application/json: WorkTask | Web；桌面后续复用 | reviewed | server/pet/supervision/work-tasks.mjs:61 |
 | POST | `/api/work-tasks/:id/action` | `/api/v1/work-tasks/:id/action` | application/json: WorkTaskAction | 无 | 200 application/json: WorkTask ∪ ResearchTask | Web；桌面后续复用 | reviewed | server/pet/supervision/work-tasks.mjs:63 |
 | POST | `/api/work-runs/:id/action` | `/api/v1/work-runs/:id/action` | application/json: WorkRunAction | 无 | 200 application/json: WorkRunActionResult | Web；桌面后续复用 | reviewed | server/pet/supervision/work-tasks.mjs:64 |
+| GET | `/api/threads/:id/web-policy` | `/api/v1/threads/:id/web-policy` | 无 | 无 | 200 application/json: ChatWebPolicy | Web；桌面后续复用 | reviewed | server/agent/chat-policy.mjs:18 |
+| PATCH | `/api/threads/:id/web-policy` | `/api/v1/threads/:id/web-policy` | application/json: ChatWebPolicy | 无 | 200 application/json: ChatWebPolicy | Web；桌面后续复用 | reviewed | server/agent/chat-policy.mjs:19 |
+| GET | `/api/chat-runs/:id` | `/api/v1/chat-runs/:id` | 无 | 无 | 200 application/json: ChatRun | Web；桌面后续复用 | reviewed | server/agent/chat-policy.mjs:20 |

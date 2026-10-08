@@ -150,7 +150,7 @@
 | 搭子plan.md · CHAT-P03 | 已验证（对应范围） | A03/A05：共同来源/记忆范围过滤、长文选段及可操作失效项。 详见 chat-acceptance-audit.md。 |
 | 搭子plan.md · CHAT-P04 | 部分验证：真实联网待G04 | A04/A05：草稿与网页接力已验；真实联网仍待RES/G04。 详见 chat-acceptance-audit.md。 |
 | 搭子plan.md · CHAT-P05 | 已验证（对应范围） | A06：原子固定映射、旧历史与当前引用版本分开。 详见 chat-acceptance-audit.md。 |
-| 搭子plan.md · Q04 实施补充：共享项目与聚合入口 | 共享验收已关联 | 按稳定projectId聚合记录/要事/文件，同名不混、会话各自保留；项目要事图片→原会话当前网页已通过。见CHAT/REC/EVT/RET对照与21号项目入口记录。文件固定会话未确认，不擅自扩展。 |
+| 搭子plan.md · Q04 实施补充：共享项目与聚合入口 | 共享验收已关联 | 按稳定projectId聚合记录/要事/文件，同名不混、会话各自保留；项目要事图片→原会话当前网页已通过。见CHAT/REC/EVT/RET对照与21号项目入口记录。文件固定会话随后已确认并于Pi阶段实施，见27号记录。 |
 | 搭子plan.md · Q09 实施补充：成功轮次与候选期限 | 共享验收已关联 | 成功轮次计数、五轮候选到期和迟到响应保护见MEM候选期限及CHAT轮次专项；失败/取消不算成功。见memory/chat-acceptance-audit.md。 |
 | 搭子spec.md · CHAT-01 | 已验证（对应范围） | A01：两个话题实际续聊及历史分页，不按天新建。 详见 chat-acceptance-audit.md。 |
 | 搭子spec.md · CHAT-02 | 已验证（对应范围） | A02：205轮分页、摘要签名/失败补偿/分段检查点及真实约束保真。 详见 chat-acceptance-audit.md。 |
@@ -228,7 +228,7 @@
 | 要事plan.md · EVT-P05 | 已验证（对应范围） | A07：四组合与独立检查实例、类型未知保留。 见 [EVT逐项对照](event-acceptance-audit.md) 及A编号证据；不泛化模型质量。 |
 | 要事plan.md · PET-P01 | 共享验收已关联 | 复用PET-P01/A02–A10及六来源网页联验：查看不确认、回源处理、新报告再次提示；见pet-acceptance-audit.md。源模块其他缺口分别保留。 |
 | 要事plan.md · 补充实施项：接入小九统一提醒 | 共享验收已关联 | 复用PET-P01/A02–A10及六来源网页联验：查看不确认、回源处理、新报告再次提示；见pet-acceptance-audit.md。源模块其他缺口分别保留。 |
-| 要事plan.md · Q04 实施补充：共享项目与聚合入口 | 共享验收已关联 | 按稳定projectId聚合记录/要事/文件，同名不混、会话各自保留；项目要事图片→原会话当前网页已通过。见CHAT/REC/EVT/RET对照与21号项目入口记录。文件固定会话未确认，不擅自扩展。 |
+| 要事plan.md · Q04 实施补充：共享项目与聚合入口 | 共享验收已关联 | 按稳定projectId聚合记录/要事/文件，同名不混、会话各自保留；项目要事图片→原会话当前网页已通过。见CHAT/REC/EVT/RET对照与21号项目入口记录。文件固定会话随后已确认并于Pi阶段实施，见27号记录。 |
 | 要事plan.md · 已确认技术栈接入（2026-09-29） | 分项证据已关联 | TECH-01/02/03实现及真实队列、持久图、恢复、schema证据见24-validation-evidence-index.md；正式worker已重载就绪。TECH-02搜索费用仍并入G04，ACT独立loop仍范围外。 |
 | 要事spec.md · EVT-01 | 已验证（对应范围） | 图片副本、来源删除保留、发生日期和搜索及保存断响应网页。 见 [EVT逐项对照](event-acceptance-audit.md) 及A编号证据；不泛化模型质量。 |
 | 要事spec.md · EVT-02 | 已验证（对应范围） | 图文真实辅助编辑/人工保存、无效关联原因、来源变化拒绝。 见 [EVT逐项对照](event-acceptance-audit.md) 及A编号证据；不泛化模型质量。 |
@@ -284,7 +284,7 @@
 | 记录&每日待办&成果plan.md · SET-P05 | 共享验收已关联 | 这里引用分类纠错能力：见REC-P08/A10及SET纠错历史证据；不将SET中另列的G04搜索费用缺口强加给分类。 |
 | 记录&每日待办&成果plan.md · SUP-P05 | 共享验收已关联 | 复用REC-A11与SUP-A07的待办升级/唯一来源映射/人工条件确认证据，见record/supervision-acceptance-audit.md；不启动待讨论ACT。 |
 | 记录&每日待办&成果plan.md · 补充实施项：接入小九统一提醒 | 共享验收已关联 | 复用PET-P01/A02–A10及六来源网页联验：查看不确认、回源处理、新报告再次提示；见pet-acceptance-audit.md。源模块其他缺口分别保留。 |
-| 记录&每日待办&成果plan.md · Q04 实施补充：共享项目与聚合入口 | 共享验收已关联 | 按稳定projectId聚合记录/要事/文件，同名不混、会话各自保留；项目要事图片→原会话当前网页已通过。见CHAT/REC/EVT/RET对照与21号项目入口记录。文件固定会话未确认，不擅自扩展。 |
+| 记录&每日待办&成果plan.md · Q04 实施补充：共享项目与聚合入口 | 共享验收已关联 | 按稳定projectId聚合记录/要事/文件，同名不混、会话各自保留；项目要事图片→原会话当前网页已通过。见CHAT/REC/EVT/RET对照与21号项目入口记录。文件固定会话随后已确认并于Pi阶段实施，见27号记录。 |
 | 记录&每日待办&成果plan.md · 已确认技术栈接入（2026-09-29） | 分项证据已关联 | TECH-01/02/03实现及真实队列、持久图、恢复、schema证据见24-validation-evidence-index.md；正式worker已重载就绪。TECH-02搜索费用仍并入G04，ACT独立loop仍范围外。 |
 | 记录&每日待办&成果spec.md · REC-01 | 已验证（对应范围） | 原文草稿、有效附件与服务端保存回执，导入断响应幂等网页。 见 record-acceptance-audit.md。 |
 | 记录&每日待办&成果spec.md · REC-02 | 已验证（对应范围） | Ozon原文/Markdown、单图及多图部分上传失败后剪切回贴，原字节一致。 见 record-acceptance-audit.md。 |
@@ -410,7 +410,7 @@
 | 超强检索plan.md · RET-P03 | 已验证对应范围 | 真实网页/API/SQLite/文件扫描→复制解析→正文后段关键词命中→定位→搭子引用，同一次desktop通过；原件/副本字节一致。见library-flow-20261008.json与RET对照；语义质量复用独立证据。 |
 | 超强检索plan.md · RET-P04 | 已验证（对应范围） | A05及Qwen迁移：真实留出评测、切换/回退保留证据，不重算全库。 详见 retrieval-acceptance-audit.md。 |
 | 超强检索plan.md · Embedding 迁移补充：Qwen | 共享验收已关联 | Qwen实际留出样本、分集合迁移/启用/回退及10月8日转写改版真实Qwen/Qdrant已验证，见retrieval-acceptance-audit.md与qwen-activation/rollback/transcript-retrieval产物；不重复全库计算。 |
-| 超强检索plan.md · Q04 实施补充：共享项目与聚合入口 | 共享验收已关联 | 按稳定projectId聚合记录/要事/文件，同名不混、会话各自保留；项目要事图片→原会话当前网页已通过。见CHAT/REC/EVT/RET对照与21号项目入口记录。文件固定会话未确认，不擅自扩展。 |
+| 超强检索plan.md · Q04 实施补充：共享项目与聚合入口 | 共享验收已关联 | 按稳定projectId聚合记录/要事/文件，同名不混、会话各自保留；项目要事图片→原会话当前网页已通过。见CHAT/REC/EVT/RET对照与21号项目入口记录。文件固定会话随后已确认并于Pi阶段实施，见27号记录。 |
 | 超强检索plan.md · 已确认技术栈接入（2026-09-29） | 分项证据已关联 | TECH-01/02/03实现及真实队列、持久图、恢复、schema证据见24-validation-evidence-index.md；正式worker已重载就绪。TECH-02搜索费用仍并入G04，ACT独立loop仍范围外。 |
 | 超强检索spec.md · REC-P07 | 部分验证 · 共享ASR | 复用REC-P07/A09：中英文转写、时间/说话人、人工修订、真实归纳已测；中文错词/人数偏差仍保留。见record-acceptance-audit.md及audio-evidence-review-20261008.json。 |
 | 超强检索spec.md · RET-01 | 已验证（对应范围） | 隔离来源哈希/副本独立及realpath边界，未使用E盘做删除测试。 详见 retrieval-acceptance-audit.md。 |
@@ -2630,3 +2630,7 @@ REC编号已对应各自证据；REC-10/P07/A09保留中文错词和4人分5编�
 原92个legacy-owned操作已全部抽取，当前149个现行+3个退役；协议0.2.0，155个Schema。67处Web读取和49处具体写入按operationId消费生成类型；复杂页面传输类型改为共享引用。原业务Zod/事务/幂等/人工确认保留，新增原始路径与查询形状检查以及可选无正文响应诊断。10项真实HTTP定向测试通过，含监督升级、调研取消、Excel核对入账与新旧路径重复提交。详见[实施记录](26-contract-governance-implementation.md)。未启动Pi/Electron/skill/Android工作，未恢复暂停goal。
 
 发布：协议仓库提交991d0aa与v0.2.0已推送；4317服务按原环境重启为PID184334，健康及协议版本0.2.0已确认。生产构建通过（保留原有包体积提示），桌面网页冒烟1项通过。
+
+## 2026-10-08 · Pi与搭子续批
+
+Pi 1.1.0 统一生成/图像适配及搭子只读循环、会话独立联网许可、持久预算和libraryFile固定会话已实现。停止记录不增加成功轮次；既有记忆需人工确认。20项定向服务端检查、1项隔离网页场景、构建及协议检查通过；未做真实付费压力测试、手机验证或打包。协议0.3.0为153个现行+3个退役操作、159个具名Schema。完整实现、价格支持边界及未覆盖项见[27](27-pi-agent-implementation.md)。本轮继续用户交互任务，没有恢复暂停的goal。

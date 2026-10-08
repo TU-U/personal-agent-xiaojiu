@@ -762,3 +762,6 @@ html[data-theme="brutalist"] .accounting-type-switch button,html[data-theme="bru
 }
 
 .accounting-page [hidden] { display: none !important; }
+
+.chat-web-toggle{display:inline-flex;align-items:center;gap:.5rem;cursor:pointer;}
+.chat-web-toggle input[type="checkbox"]{width:1.1rem;height:1.1rem;min-height:0;margin:0;flex:0 0 auto;}
