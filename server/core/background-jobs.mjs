@@ -1,3 +1,4 @@
+import {executionContext,withExecutionContext} from './execution-context.mjs';
 import {withAiContext} from './ai-context.mjs';
 import { randomUUID, createHash } from 'node:crypto';
 import { Queue, Worker } from 'bullmq';
@@ -22,6 +23,7 @@ export function createJobRepository(db, clock = Date.now) {
     attempts INTEGER NOT NULL DEFAULT 0, lease_token TEXT, lease_until INTEGER,
     updated_at INTEGER NOT NULL
   ); CREATE INDEX IF NOT EXISTS background_jobs_pending ON background_jobs(state,due_at);`);
+  db.exec('CREATE TABLE IF NOT EXISTS desktop_job_owners(job_id TEXT PRIMARY KEY, client_id TEXT NOT NULL)');
   const decode = row => row ? { ...row, payload: JSON.parse(row.payload), result: row.result ? JSON.parse(row.result) : null } : null;
   const get = id => decode(db.prepare('SELECT * FROM background_jobs WHERE id=?').get(id));
   function atomic(fn) {
@@ -32,6 +34,7 @@ export function createJobRepository(db, clock = Date.now) {
   }
   return {
     get,
+    owner(id){return db.prepare('SELECT client_id FROM desktop_job_owners WHERE job_id=?').get(id)?.client_id;},
     enqueue(input) {
       const value = validate(jobInput, input);
       const id = createHash('sha256').update(value.key).digest('hex');
@@ -45,6 +48,7 @@ export function createJobRepository(db, clock = Date.now) {
         }
         db.prepare(`INSERT INTO background_jobs(id,operation_key,kind,entity_id,revision,payload,state,due_at,updated_at)
           VALUES(?,?,?,?,?,?,'pending',?,?)`).run(id,value.key,value.kind,value.entityId,value.revision,JSON.stringify(value.payload),value.dueAt,clock());
+        const client=executionContext()?.client;if(client)db.prepare('INSERT INTO desktop_job_owners(job_id,client_id) VALUES(?,?)').run(id,client);
         return get(id);
       });
     },
@@ -88,7 +92,11 @@ export function createJobRepository(db, clock = Date.now) {
         .run(clock(),id).changes === 1;
     },
     retry(id) {
-      return db.prepare("UPDATE background_jobs SET state='pending',error=NULL,updated_at=? WHERE id=? AND state='failed'").run(clock(),id).changes === 1;
+      return atomic(()=>{
+        const changed=db.prepare("UPDATE background_jobs SET state='pending',error=NULL,updated_at=? WHERE id=? AND state='failed'").run(clock(),id).changes===1;
+        if(changed){const client=executionContext()?.client;if(client)db.prepare('INSERT INTO desktop_job_owners(job_id,client_id) VALUES(?,?) ON CONFLICT(job_id) DO UPDATE SET client_id=excluded.client_id').run(id,client);else db.prepare('DELETE FROM desktop_job_owners WHERE job_id=?').run(id);}
+        return changed;
+      });
     },
   };
 }
@@ -100,14 +108,14 @@ export function createBackgroundQueue({ repository, handlers, connection, name =
     const token = randomUUID();
     const record = repository.claim(job.id,token,leaseMs);
     if (!record) return;
-    let heartbeat;
+    let heartbeat;const execution=new AbortController(),context={signal:execution.signal,client:repository.owner?.(record.id)};
     try {
       const handler = handlers[record.kind];
       if (!handler) throw new Error(`后台任务类型尚未接入：${record.kind}`);
-      heartbeat = setInterval(() => { try { repository.heartbeat(record.id,token,leaseMs); } catch (error) { onError(error); } }, Math.max(100, Math.floor(leaseMs/3)));
+      heartbeat = setInterval(() => { try { if(!repository.heartbeat(record.id,token,leaseMs))execution.abort(new Error('后台任务已停止，保留已保存进度。')); } catch (error) { onError(error); } }, Math.max(100, Math.min(1000, Math.floor(leaseMs/3))));
       heartbeat.unref();
-      const result = await withAiContext({jobId:record.id,jobKind:record.kind,entityId:record.entity_id,revision:record.revision,attempt:record.attempts},()=>handler.run(record));
-      repository.finish(record.id,token,result,handler.commit);
+      const result = await withAiContext({jobId:record.id,jobKind:record.kind,entityId:record.entity_id,revision:record.revision,attempt:record.attempts},()=>withExecutionContext(context,()=>handler.run(record)));
+      withExecutionContext(context,()=>repository.finish(record.id,token,result,handler.commit));
     } catch (error) {
       repository.fail(record.id,token,error.message);
       throw error;

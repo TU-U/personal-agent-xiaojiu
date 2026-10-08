@@ -765,3 +765,19 @@ html[data-theme="brutalist"] .accounting-type-switch button,html[data-theme="bru
 
 .chat-web-toggle{display:inline-flex;align-items:center;gap:.5rem;cursor:pointer;}
 .chat-web-toggle input[type="checkbox"]{width:1.1rem;height:1.1rem;min-height:0;margin:0;flex:0 0 auto;}
+
+/* Electron pet surface shares the Web reminder and companion components. */
+html.desktop-pet-mode,html.desktop-pet-mode body,html.desktop-pet-mode #root{background:transparent!important;width:100%;height:100%;overflow:hidden}
+.desktop-pet-mode .pet-buddy{right:14px;bottom:12px;width:122px}
+.desktop-pet-mode .pet-buddy-panel{right:0;bottom:156px;width:min(440px,calc(100vw - 28px));max-height:calc(100vh - 178px);background:var(--paper)}
+.desktop-pet-mode .pet-buddy-name{bottom:80px}
+.desktop-pet-mode .pet-buddy-speech{white-space:normal;width:220px;bottom:105px}
+.desktop-open-main{pointer-events:auto;min-height:32px;padding:5px 9px;border:1px solid var(--line);border-radius:12px;background:var(--paper);font-size:12px;color:var(--text);cursor:pointer}
+.desktop-open-main:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.desktop-pet-gate{position:absolute;right:14px;bottom:14px;width:280px;padding:20px;border:1px solid var(--line);border-radius:20px;background:var(--paper);box-shadow:0 8px 24px #0002}
+.desktop-pet-gate p{font-size:14px;overflow-wrap:anywhere}.desktop-pet-gate button{margin-top:8px}
+.desktop-autostart{display:flex!important;align-items:center;gap:10px;margin:16px 0}.desktop-autostart input{width:18px!important;height:18px;flex:none}
+
+.desktop-pet-mode .pet-buddy-button{width:112px;height:112px;flex:none;overflow:hidden}
+.desktop-pet-mode .pet-buddy-image{position:absolute;inset:2px;width:calc(100% - 4px);height:calc(100% - 4px)}
+.desktop-open-main{position:relative;z-index:1;flex:none;margin-top:6px}

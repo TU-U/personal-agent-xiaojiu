@@ -1,3 +1,4 @@
+import {executionSignal} from '../core/execution-context.mjs';
 import {stream} from '@earendil-works/pi-ai/api/openai-completions';
 import {normalizeContext} from '@earendil-works/pi-ai/utils/transcript';
 import {randomUUID} from 'node:crypto';
@@ -16,6 +17,7 @@ export function piUserContent(content){
  });
 }
 export async function piRequest(config,context,options={}){
+ options={...options,signal:executionSignal(options.signal)};
  registerAiSecret(config.apiKey);
  const timeoutMs=options.timeoutMs??90000,maxTokens=options.maxTokens??1400;
  if(!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>300000)throw Object.assign(new Error('模型超时必须为 1–300000 毫秒。'),{status:422});

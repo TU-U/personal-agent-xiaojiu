@@ -53,6 +53,7 @@ import multer from 'multer';
 import path from 'node:path';
 import { copyFile, readFile, unlink, stat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import {createDesktopRuntime} from './core/desktop-runtime.mjs';
 import { randomBytes, randomUUID, createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { db, DATA_DIR, all, get, save, remove, transaction, getSetting, setSetting, verifyCode, hashCode, now } from './store.mjs';
@@ -81,7 +82,8 @@ app.use('/api',(req,res,next)=>{
  const origin=req.headers.origin; if(origin) { try { if(new URL(origin).host!==req.headers.host) throw new Error(); }catch{ return res.status(403).json({error:'请求来源不匹配，请从当前站点操作。'}); } }
  next();
 });
-app.get('/api/health',(_req,res)=>res.json({ok:true,version:'0.1.0'}));
+const desktopRuntime=createDesktopRuntime({db,dataDir:DATA_DIR,root,port,stop:()=>process.kill(process.pid,'SIGTERM')});
+app.get('/api/health',(_req,res)=>{res.setHeader('X-Xiaojiu-Instance',desktopRuntime.instance);res.json({ok:true,version:'0.1.0'});});
 app.get('/api/session',(req,res)=>res.json({authenticated:!!authenticated(req),demoAccess:getSetting('demoAccess',false)}));
 const attempts=new Map();
 installDeviceLogin(app,attempts,fail);
@@ -92,6 +94,7 @@ app.post('/api/login',(req,res)=>{
  res.setHeader('Set-Cookie',`shiguang_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=2592000${process.env.COOKIE_SECURE==='true'?'; Secure':''}`); res.json({ok:true});
 });
 app.use('/api',(req,_res,next)=>{ if(!authenticated(req)) return next(fail('登录已过期，请重新进入你的空间。',401)); next(); });
+app.use(desktopRuntime.middleware);
 app.use('/api',(req,_res,next)=>withAiContext({requestId:randomUUID(),method:req.method,endpoint:req.path,threadId:req.body?.threadId,taskId:req.body?.taskId,sourceId:req.body?.sourceId},next));
 installDeviceLogout(app,fail);
 installBackups(app,DATA_DIR);
@@ -387,7 +390,8 @@ app.use('/api',(_req,_res,next)=>next(fail('接口不存在。',404)));
 if(existsSync(path.join(root,'dist'))){app.use(express.static(path.join(root,'dist')));app.get('/{*path}',(_req,res)=>res.sendFile(path.join(root,'dist/index.html')));}
 app.use((err,req,res,_next)=>{if(err.code==='LIMIT_FILE_SIZE')return res.status(413).json({error:(/^\/api\/(?:v1\/)?transactions\//.test(req.path)||/^\/api\/(?:v1\/)?accounting\/imports/.test(req.path))?'文件超过 12 MB，请压缩截图或拆分账单后重试。':'文件超过 25 MB，请压缩或拆分后再导入。'});if(err.type==='entity.too.large')return res.status(413).json({error:'提交内容过大，请减少内容后重试。'});if(err instanceof SyntaxError&&'body' in err)return res.status(400).json({error:'请求内容格式不正确。'});if(!err.status)console.error('[server]',err.message);res.status(err.status||500).json({error:err.status?err.message:'服务暂时遇到问题，请稍后重试。',...(err.current?{current:err.current}:{})});});
 migrateEventLifecycle();
-app.listen(port,process.env.HOST||'0.0.0.0',()=>console.log(`\n拾光已启动：http://localhost:${port}\n数据目录：${DATA_DIR}\n${getSetting('demoAccess')?'演示口令：shiguang-demo（设置中可修改）':'使用你设置的访问口令'}\n`));
+const httpServer=app.listen(port,process.env.HOST||'0.0.0.0',()=>console.log(`\n拾光已启动：http://localhost:${port}\n数据目录：${DATA_DIR}\n${getSetting('demoAccess')?'演示口令：shiguang-demo（设置中可修改）':'使用你设置的访问口令'}\n`));
+httpServer.once('listening',()=>desktopRuntime.start());
 reconcileEventJobs();
 
 // Isolate heavy document parsing from the API event loop; child exits with its parent.

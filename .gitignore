@@ -32,3 +32,6 @@ snapshots/
 UI设计参考图/
 artifacts/*.json
 docs/22-resume-project.md
+
+# Machine-specific Electron backend paths
+desktop/runtime.local.json

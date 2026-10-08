@@ -309,3 +309,8 @@ A01所需同次长文学习证据补齐，P02结合既有表单/话题/计划证
 仅执行 `SHIGUANG_E2E_LIBRARY_FLOW=1 ... tests/e2e/library-flow.spec.ts --project=desktop`，一次通过，总18.7秒/用例5.6秒。结果 `/tmp/shiguang-library-flow-results`、报告 `/tmp/shiguang-library-flow-report`、摘要 `artifacts/library-flow-20261008.json`。不调用模型、不重算向量；此证据针对plan指定的同次桌面流程，语义质量及索引恢复复用已有独立证据。未改产品代码，无需构建/服务重启。RET-P03剩余串联缺口关闭，G04真实搜索仍待配置。
 
 2026-10-08：记账原始Phase9中空账单/51笔加载/删除失败与读取失败重试已通过单条desktop用例（16秒），详见记账对照和accounting-boundaries-20261008.json。20号剩余记账汇总行已映射到子项证据；不重复基础CRUD或真实AI。
+
+
+## 2026-10-09 桌面交付补充
+
+本机 Windows 桌面小九的实现、3 条退出边界检查及 Windows 原生窗口验证见 [28](28-desktop-xiaojiu-implementation.md)。未重启用户电脑；自启验证为实际运行 `--autostart` 与本机登记状态。其他模型暂不考虑；本轮未进行付费模型测试。

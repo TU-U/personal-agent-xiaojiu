@@ -1,3 +1,4 @@
+import {desktop,navigateDesktop} from './desktop';
 import {contractPost} from './api';
 import { useEffect, useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent, type FocusEvent } from 'react';
 import { Circle, Bell, FileText, Heart, MessageCircle, Moon, Send, Sparkles, X } from 'lucide-react';
@@ -168,22 +169,23 @@ export default function PetBuddy() {
 
   function startDrag(event: ReactPointerEvent<HTMLButtonElement>) {
     if (event.pointerType !== 'mouse' || event.button !== 0) return;
+    if(desktop?.role==='pet')desktop.drag(true);
     const bounds = event.currentTarget.parentElement?.getBoundingClientRect();
     if (!bounds) return;
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
-    drag.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, offsetX: event.clientX - bounds.left, offsetY: event.clientY - bounds.top, moved: false };
+    drag.current = { pointerId: event.pointerId, startX: desktop?.role==='pet'?event.screenX:event.clientX, startY: desktop?.role==='pet'?event.screenY:event.clientY, offsetX: event.clientX - bounds.left, offsetY: event.clientY - bounds.top, moved: false };
   }
 
   function moveDrag(event: ReactPointerEvent<HTMLButtonElement>) {
     const current = drag.current;
     if (!current || current.pointerId !== event.pointerId) return;
-    if (Math.abs(event.clientX - current.startX) + Math.abs(event.clientY - current.startY) > 4 && !current.moved) {
+    if (Math.abs((desktop?.role==='pet'?event.screenX:event.clientX) - current.startX) + Math.abs((desktop?.role==='pet'?event.screenY:event.clientY) - current.startY) > 4 && !current.moved) {
       current.moved = true;
       setIsDragging(true);
       setPanelOpen(false);
     }
-    if (!current.moved) return;
+    if (!current.moved||desktop?.role==='pet') return;
     const bounds = event.currentTarget.parentElement?.getBoundingClientRect();
     const width = bounds?.width ?? 122;
     const height = bounds?.height ?? 132;
@@ -191,6 +193,7 @@ export default function PetBuddy() {
   }
 
   function endDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+    if(desktop?.role==='pet')desktop.drag(false);
     const current = drag.current;
     if (!current || current.pointerId !== event.pointerId) return;
     if (current.moved) {
@@ -291,7 +294,7 @@ export default function PetBuddy() {
         </div>
         <div className="pet-actions" role="group" aria-label="和小九互动">
           <button type="button" onClick={openChat} aria-expanded={chatOpen}><MessageCircle size={17}/><span>交流</span></button>
-          <button type="button" onClick={()=>{location.hash='artifacts';setPetMood('PET');setReply('一起看看你的成果吧 ✨');setShowSpeech(true);keepHerAwake();}}><FileText size={17}/><span>汇报</span></button>
+          <button type="button" onClick={()=>{if(!navigateDesktop({page:'artifacts'}))location.hash='artifacts';setPetMood('PET');setReply('一起看看你的成果吧 ✨');setShowSpeech(true);keepHerAwake();}}><FileText size={17}/><span>汇报</span></button>
           <button type="button" aria-pressed={pinned} onClick={()=>{setPinned(value=>!value);setPanelOpen(hover.current);}}><Bell size={17}/><span>提示语</span></button>
         </div>
         {chatOpen && <div className="pet-chat">
@@ -324,6 +327,7 @@ export default function PetBuddy() {
       >
         <img key={`${mood}-${jelly}`} className={jelly ? 'pet-buddy-image jelly' : 'pet-buddy-image'} src={petImages[mood]} alt="" draggable="false" />
       </button>
+      {desktop?.role==='pet'&&<button type="button" className="desktop-open-main" onClick={()=>void desktop?.openMain()}>打开主界面</button>}
       <span className="pet-buddy-name" aria-hidden="true">小九 · {moodNames[mood]}</span>
     </aside>
   );

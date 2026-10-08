@@ -4,7 +4,7 @@
 <aside class="sidebar" aria-label="文档导航"><div class="brand"><div class="brand-mark">拾</div><div><strong>拾光</strong><small>ARCHITECTURE ATLAS</small></div></div><div class="search-wrap"><label for="module-search" class="muted" style="display:block;font-size:11px;margin-bottom:6px">查找模块</label><input id="module-search" type="search" placeholder="搜索模块 / 英文编号…" autocomplete="off"></div><nav class="nav-scroll"><div class="nav-label">全局视图 / Overview</div><button class="nav-item" data-go="overview"><span class="nav-code">◎</span>全局架构</button><button class="nav-item" data-go="roadmap"><span class="nav-code">↗</span>实施路线与共同契约</button><div class="nav-label">11 个模块 / Modules</div><button class="nav-item module-nav" data-go="RET" data-search="ret 超强检索 超强检索"><span class="nav-code">RET</span><span>超强检索</span></button><button class="nav-item module-nav" data-go="RES" data-search="res 快速学习 / 调研 快速学习与调研"><span class="nav-code">RES</span><span>快速学习 / 调研</span></button><button class="nav-item module-nav" data-go="ACT" data-search="act 帮忙做事 帮忙做事"><span class="nav-code">ACT</span><span>帮忙做事</span></button><button class="nav-item module-nav" data-go="SUP" data-search="sup 监督 / 督促做事 监督与督促做事"><span class="nav-code">SUP</span><span>监督 / 督促做事</span></button><button class="nav-item module-nav" data-go="REC" data-search="rec 记录 / 每日待办 / 成果 记录&amp;每日待办&amp;成果"><span class="nav-code">REC</span><span>记录 / 每日待办 / 成果</span></button><button class="nav-item module-nav" data-go="CHAT" data-search="chat 搭子 搭子"><span class="nav-code">CHAT</span><span>搭子</span></button><button class="nav-item module-nav" data-go="EVT" data-search="evt 要事 要事"><span class="nav-code">EVT</span><span>要事</span></button><button class="nav-item module-nav" data-go="MEM" data-search="mem 长期记忆 长期记忆"><span class="nav-code">MEM</span><span>长期记忆</span></button><button class="nav-item module-nav" data-go="SET" data-search="set 设置和数据 设置和数据"><span class="nav-code">SET</span><span>设置和数据</span></button><button class="nav-item module-nav" data-go="PET" data-search="pet 小九桌宠 小九桌宠"><span class="nav-code">PET</span><span>小九桌宠</span></button><button class="nav-item module-nav" data-go="FIN" data-search="fin 记账 记账"><span class="nav-code">11</span><span>记账</span></button><p id="no-results" class="no-results" hidden>没有匹配的模块。</p></nav><div class="side-footer"><span class="live-dot"></span>离线可浏览 · 原文快照<br>2026.09.29 · Spec & Plan</div></aside>
 <div class="shell"><header class="topbar"><button class="plain-btn mobile-menu" id="menu-toggle" aria-label="打开模块目录">目录</button><div class="crumb">项目设计 /<span id="crumb-title">全局架构</span></div><div class="top-actions"><span class="date">DESIGN SNAPSHOT · 2026.10.08</span><button class="plain-btn" data-go="roadmap">查看开发顺序 ↗</button><button class="plain-btn" id="print-page">打印当前视图</button></div></header><main class="main" id="main">
 <section class="panel" id="overview"><header class="page-head"><div class="eyebrow">SHIGUANG / PRODUCT & SYSTEM DESIGN</div><h1>从随手记录，到有依据地行动。</h1><p class="lead">用一张架构图理解拾光，再沿着流程与时序进入每个模块。<br>保留人的选择、证据的来源，以及每一次行动的真实状态。</p><div class="tags"><span class="tag teal">网页端设计</span><span class="tag">基于当前 spec & plan</span><span class="tag amber">目标 ≠ 已实现</span></div></header><div class="summary-grid"><div class="stat"><b>11</b><span>模块全覆盖<br>含用户原版记账</span></div><div class="stat"><b>25</b><span>架构 / 流程 / 时序图<br>可放大并导出 SVG</span></div><div class="stat"><b>22</b><span>Markdown 原文快照<br>索引 + 21 份模块文档</span></div></div>
-<aside class="callout"><strong>2026-10-08 · Pi搭子循环与9.3协议已接入</strong><p>本地 xiaojiu-contracts 独立仓库与 contracts/ Submodule 已接入，协议版本0.3.0。156个操作已建立新旧路径映射；153个现行操作已抽取请求/响应及适用查询参数、3个保持已退役。Web使用 /api/v1，旧入口继续兼容。协议远端已发布，Android接入尚未完成；Pi搭子循环、6次/2分钟/1元预算、会话联网许可和资料库固定会话已实施。Electron和skill不属于本轮。</p><p>下列图解仍表示目标设计，实际状态以本页附带的最新架构与实施原文为准。</p></aside>
+<aside class="callout"><strong>2026-10-09 · Pi搭子、9.3协议与Windows桌面小九已接入</strong><p>本地 xiaojiu-contracts 独立仓库与 contracts/ Submodule 已接入，协议版本0.3.0。156个操作已建立新旧路径映射；153个现行操作已抽取请求/响应及适用查询参数、3个保持已退役。Web使用 /api/v1，旧入口继续兼容。协议远端已发布，Android接入尚未完成；Pi搭子循环、6次/2分钟/1元预算、会话联网许可和资料库固定会话已实施。Windows Electron 本机版已完成，具备独立小九、托盘、自启和共享后台保护。当前仅使用 DeepSeek flash；skill 暂缓。</p><p>下列图解仍表示目标设计，实际状态以本页附带的最新架构与实施原文为准。</p></aside>
 <section class="diagram-card"><div class="diagram-heading"><div><h3>全局目标架构</h3><p>实线表示主要调用 / 数据依赖；下方分清权威数据、文件与派生索引</p></div><button class="expand" type="button" aria-label="放大全局目标架构">放大 ↗</button></div><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 550" role="img" aria-label="拾光全局目标架构"><title>拾光全局目标架构</title><defs><marker id="arrow-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#66818f"/></marker></defs><style>text{font-family:system-ui,'Microsoft YaHei',sans-serif}.node{fill:#fff;stroke:#cad8df;stroke-width:1.4}.nt{font-size:17px;font-weight:650;fill:#172e3b}.ns{font-size:13px;fill:#526979}.edge{fill:none;stroke:#66818f;stroke-width:1.5}.msg{font-size:13px;fill:#334f60}</style><rect x="20" y="15" width="1080" height="98" rx="14" fill="#e7f3ef"/><text class="nt" x="43" y="47">用户工作区 · React / TypeScript 网页</text><text class="ns" x="43" y="75">记录与待办 · 搭子 · 要事 · 资料库 · 调研 / 做事 · 成果 · 记账 · 设置</text><rect x="820" y="34" width="250" height="55" rx="10" fill="#fff" stroke="#8fbbb2"/><text class="nt" x="838" y="67">小九 · 统一提醒表达</text><path class="edge" marker-end="url(#arrow-2)" d="M390 113 V155"/><path class="edge" marker-end="url(#arrow-2)" d="M945 155 V113"/>
  <rect x="20" y="164" width="1080" height="139" rx="14" fill="#edf2f8"/><text class="nt" x="43" y="194">服务端 · Node / Express · 状态、确认、编排和访问范围</text><rect x="43" y="212" width="329" height="68" rx="9" fill="#fff" stroke="#cbd7e3"/><text class="nt" x="58" y="239" style="font-size:15px">内容与会话</text><text class="ns" x="58" y="262">REC / CHAT / EVT / MEM</text><rect x="394" y="212" width="329" height="68" rx="9" fill="#fff" stroke="#cbd7e3"/><text class="nt" x="409" y="239" style="font-size:15px">执行与监督</text><text class="ns" x="409" y="262">ACT / RES / SUP</text><rect x="745" y="212" width="329" height="68" rx="9" fill="#fff" stroke="#cbd7e3"/><text class="nt" x="760" y="239" style="font-size:15px">能力与聚合</text><text class="ns" x="760" y="262">RET / SET / 提示契约</text><path class="edge" marker-end="url(#arrow-2)" d="M147 303 V361"/><rect class="node" x="20" y="370" width="255" height="115" rx="12"/><text class="nt" x="36" y="399">SQLite</text><text class="ns" x="36" y="426">正文、业务状态、版本与确认</text><text x="36" y="457" font-size="12" fill="#0b837d">权威数据</text><path class="edge" marker-end="url(#arrow-2)" d="M422 303 V361"/><rect class="node" x="295" y="370" width="255" height="115" rx="12"/><text class="nt" x="311" y="399">项目内文件</text><text class="ns" x="311" y="426">附件、资料副本与成果文件</text><text x="311" y="457" font-size="12" fill="#0b837d">文件存储</text><path class="edge" marker-end="url(#arrow-2)" d="M697 303 V361"/><rect class="node" x="570" y="370" width="255" height="115" rx="12"/><text class="nt" x="586" y="399">Qdrant + Qwen</text><text class="ns" x="586" y="426">语义向量 + 词项 / RRF</text><text x="586" y="457" font-size="12" fill="#0b837d">派生索引</text><path class="edge" marker-end="url(#arrow-2)" d="M972 303 V361"/><rect class="node" x="845" y="370" width="255" height="115" rx="12"/><text class="nt" x="861" y="399">外部能力</text><text class="ns" x="861" y="426">文本 / 视觉 / 搜索与网页交接</text><text x="861" y="457" font-size="12" fill="#0b837d">按需调用</text><text class="ns" x="26" y="523">E 盘原件 ── 只读筛选与复制 ──→ 项目资料库；不会将本页面图示当成已完成实现。</text></svg></div></section>
 <aside class="callout"><strong>两项最新决定已纳入设计</strong><p>长期记忆与检索共用 Qwen/Qwen3-Embedding-0.6B（本地、1024 维）；所有监督与提醒由小九统一表达。模型迁移和小九提示表是已确认目标，此页面不代表它们已经上线。</p></aside>
@@ -37,7 +37,7 @@
 <aside class="callout"><strong>跨模块共同门槛</strong><p>共同引用包含 kind、id、revision、title、quote / locator；外部证据补充 URL、抓取时间与证据类型。AI 失败要有真实错误，不能伪造产物。业务源拥有确认权；小九聚合提示，模型不能替用户确认。</p></aside>
 <div class="section-label">DATA OWNERSHIP / 谁对事实负责</div><div style="overflow:auto"><table class="data-table"><thead><tr><th>模块</th><th>主要实体</th><th>责任边界</th></tr></thead><tbody><tr><td>REC</td><td>project / category / note / todo / artifact</td><td>项目聚合、自动单分类、原文与成果版本</td></tr><tr><td>RET</td><td>libraryFile / chunks / index status</td><td>资料副本、位置与可重建索引</td></tr><tr><td>CHAT</td><td>conversation / threadSummary</td><td>按话题的历史和压缩摘要</td></tr><tr><td>MEM</td><td>memory / scope / revision</td><td>用户确认过的长期事实</td></tr><tr><td>EVT</td><td>event / review / dueAt</td><td>用户等级、要事与确认历史</td></tr><tr><td>ACT</td><td>workTask / workStep / toolInvocation</td><td>执行计划、步骤和工具结果</td></tr><tr><td>SUP</td><td>workRun / evidence / timer</td><td>每日实例、证据与监督事实</td></tr><tr><td>PET</td><td>提示视图 / 短聊 / 反馈</td><td>聚合表达；不拥有业务完成权</td></tr><tr><td>SET</td><td>settings / logs / backup</td><td>能力配置、日志与一致性备份</td></tr><tr><td>记账</td><td>Transaction / 分类 / 预算</td><td>确认后的交易与程序统计</td></tr></tbody></table></div>
 <aside class="callout"><strong>容易混淆的概念</strong><p>旧 task 是成果生成作业；workTask 是帮忙做事的任务；workRun 是某个计划日的执行实例。会话摘要不等于长期记忆。要事复核不等于用户确认。小九提示表不拥有这些实体的完成状态。</p></aside>
-<div class="section-label">SOURCE INDEX / 完整共同约定与执行草案</div><details class="source"><summary><span>README.md</span><small>原文快照 · SHA-256 b98148b4901b</small></summary><div class="source-tools"><a href="README.md">打开 Markdown 原文件 ↗</a></div><article class="prose"><h1>拾光模块 spec 与 plan 总索引</h1>
+<div class="section-label">SOURCE INDEX / 完整共同约定与执行草案</div><details class="source"><summary><span>README.md</span><small>原文快照 · SHA-256 efc9bdb99db4</small></summary><div class="source-tools"><a href="README.md">打开 Markdown 原文件 ↗</a></div><article class="prose"><h1>拾光模块 spec 与 plan 总索引</h1>
 <p>整理日期：2026-09-28。用途：供用户审阅，并作为后续 goal 的开发与验收依据。本次只编写文档，不创建 goal、不启动下一轮开发。</p>
 <h2>全模块 goal 执行入口（2026-09-29）</h2>
 <p><a href="../19-goal-execution.md">总执行文档</a> 已明确本轮全模块 goal 的范围、依赖顺序、恢复记录和完成标准。默认包含记账在内的 10 个已确认模块；“帮忙做事”独立场景继续待讨论。下面旧文档中“记账由 goal 另行指定”的条件，使用这份总执行文档启动时已由“包含记账”满足。</p>
@@ -141,8 +141,10 @@
 </ul>
 <p>以上Pi/搭子、桌面小九及9.3协议治理方案均已确认，<strong>方案确认不等于实现完成</strong>。9.3独立Submodule、152条路由映射、复杂公共类型和校验已实施，协议0.2.0覆盖149个现行操作与3个退役操作；详见<a href="../26-contract-governance-implementation.md">实施记录</a>。协议远端已发布，服务端/Web字段迁移已完成，分阶段完成条件见架构第9.3节；Android接入仍是后续独立阶段。界面更新、服务归属等工程细节按已确认要求设计，涉及产品行为变化再提出；用户后续已授权实施9.3，本轮未恢复暂停goal，Pi/Electron/skill及Android未随本次协议迁移启动，也不将待实施写为已交付。</p>
 <h2>2026-10-08 后续实施状态</h2>
-<p>用户继续授权后，Pi 1.1.0 模型适配及搭子工具循环已接入，包含会话联网许可、6次/2分钟/1元持久预算、记忆人工确认与资料库固定会话。协议更新到 0.3.0：156个操作映射、159个具名Schema。前文“Pi未随协议迁移启动”是0.2.0批次历史，当前实现见 <a href="../27-pi-agent-implementation.md">27</a>。Electron/Android仍待后续，skill继续暂缓，没有恢复暂停的goal。</p></article></details>
-<details class="source"><summary>最新架构评审与已确认决策<small>最新补充快照 · SHA-256 f21d441cbf68</small></summary><article class="prose"><h1>架构梳理与方向评审</h1>
+<p>用户继续授权后，Pi 1.1.0 模型适配及搭子工具循环已接入，包含会话联网许可、6次/2分钟/1元持久预算、记忆人工确认与资料库固定会话。协议更新到 0.3.0：156个操作映射、159个具名Schema。前文“Pi未随协议迁移启动”是0.2.0批次历史，当前实现见 <a href="../27-pi-agent-implementation.md">27</a>。Electron 在 2026-10-09 已完成 Windows 本机版，见 <a href="../28-desktop-xiaojiu-implementation.md">28</a>；Android 仍待后续，skill 继续暂缓，没有恢复暂停的 goal。</p>
+<h3>2026-10-09 桌面小九</h3>
+<p>本机 Windows 桌面壳、快捷方式、双窗口、托盘、自启只显示小九、共享后台保护已实施并做原生验证。使用及范围见 <a href="../28-desktop-xiaojiu-implementation.md">28</a>。模型当前仅 DeepSeek flash。</p></article></details>
+<details class="source"><summary>最新架构评审与已确认决策<small>最新补充快照 · SHA-256 db9e137a2bd9</small></summary><article class="prose"><h1>架构梳理与方向评审</h1>
 <blockquote>
 <p>2026-09-29 · 基于当前代码库（前端 63 个 React 组件、后端 78 个 Express 模块、56 篇文档、独立 Android 原生工程）的通读分析，与项目负责人讨论后的结论。
 2026-10-08 增补 · 第 9 节：Android 工程分离（已执行）、pi-agent 接入层重构、多端协议治理、小九桌面常驻、开源发布决策。增补内容与正文冲突时以第 9 节为准。
@@ -306,11 +308,12 @@
 </ol>
 <p>2026-10-08续批实施：原92个复杂操作已迁移，当前149个现行操作与3个退役操作均有协议；10项定向HTTP验证及网页冒烟、构建和协议检查记录见<a href="26-contract-governance-implementation.md">26</a>。协议0.2.0继续保留旧入口和业务校验。这里只报告服务端/Web阶段完成，Android与桌面闭环仍待后续。</p>
 <p>2026-10-08 Pi 续批：协议 0.3.0 增加4个操作，目前153个现行、3个退役操作；159个具名Schema。上一段0.2.0数字保留为该批次历史。</p>
-<h3>9.4 小九桌面常驻：Electron 桌面壳（规划）</h3>
-<p><strong>桌面壳含义与数据关系已澄清（2026-10-08，用户确认）</strong>：本节的“桌面版”统一理解为「拾光桌面壳＋桌面小九」：复用现有Web主界面，通过Electron承载主窗口、独立小九窗口与托盘。网页与桌面壳连接同一后端，共用SQLite与文件，不维护两套需要互相同步的数据副本。两个界面同时打开时的数据变更通知、自动刷新和编辑冲突处理仍需落实，不能把共用数据库描述为已完成实时界面同步。本轮仅更新方案，尚未开发桌面壳或制作安装包。</p>
-<p>现状小九是 Web 前端内的浮层组件（<code>PetBuddy.tsx</code>），关掉浏览器即消失。规划以 <strong>Electron 将现有 Web 前端包装为桌面壳</strong>：透明窗口 + 系统托盘，小九常驻桌面。</p>
+<h3>9.4 小九桌面常驻：Electron 桌面壳（Windows 本机版已实施）</h3>
+<p><strong>2026-10-09 实施更新</strong>：主窗口、独立透明小九、托盘、启动/复用、自启默认开启且仅显示小九、按来源停止执行和共享后台保护已落地。Windows 桌面快捷方式已创建；使用方式、验证及发行包边界见 <a href="28-desktop-xiaojiu-implementation.md">28-桌面小九实施</a>。下文保留原确认决策，旧“待实施”措辞以本更新为准。模型本轮只使用 DeepSeek flash。</p>
+<p><strong>桌面壳含义与数据关系已澄清（2026-10-08，用户确认）</strong>：本节的“桌面版”统一理解为「拾光桌面壳＋桌面小九」：复用现有Web主界面，通过Electron承载主窗口、独立小九窗口与托盘。网页与桌面壳连接同一后端，共用SQLite与文件，不维护两套需要互相同步的数据副本。两个界面同时打开时的数据变更通知、自动刷新和编辑冲突处理仍需落实，不能把共用数据库描述为已完成实时界面同步。当时仅确认方案；当前桌面壳实现见上方实施更新，尚未制作通用发行安装包。</p>
+<p>原来小九仅是 Web 浮层组件（<code>PetBuddy.tsx</code>）。现已用 <strong>Electron 承载原 Web 前端与独立小九</strong>：透明窗口 + 系统托盘，关闭主窗口不关闭小九。</p>
 <p>架构约束不变：<strong>情绪状态机（表现层）与监督引擎（服务层）保持解耦</strong>——桌面壳只是换了&quot;脸&quot;的宿主，引擎仍在本项目后端。这也与 6.2 节&quot;人设与机制分离&quot;的路线一致。</p>
-<p><strong>桌面版启动体验已确认（2026-10-08，待实施）</strong>：</p>
+<p><strong>桌面版启动体验已确认（2026-10-08 确认；9.4 实施进度见上）</strong>：</p>
 <ul>
 <li>双击拾光即可使用：自动启动所需本机后台服务，再显示主界面和小九，日常使用不要求手动运行终端脚本。</li>
 <li>已有拾光后台运行时复用已有服务，避免启动两套服务；实现时核验服务身份、兼容性与数据目录，不能仅凭端口被占用就认定可复用。</li>
@@ -318,21 +321,21 @@
 <li>启动失败时在界面显示原因，提供查看日志与重试入口。</li>
 <li>服务打包和进程管理的具体实现另行设计；开机自启默认开启（用户已确认），可在设置中关闭；共享后台的退出范围按下文已确认规则处理。</li>
 </ul>
-<p><strong>关闭窗口与重新打开已确认（2026-10-08，待实施）</strong>：</p>
+<p><strong>关闭窗口与重新打开已确认（2026-10-08 确认；9.4 实施进度见上）</strong>：</p>
 <ul>
 <li>点击主窗口「×」仅收起主界面，小九继续留在桌面，后台任务和提醒继续运行。</li>
 <li>托盘可重新打开主界面，并单独提供「退出拾光」，区分关闭窗口与退出应用。</li>
 <li>小九新增明确的「打开主界面」按钮；与托盘入口使用同一窗口恢复逻辑。作为实现约定，窗口已存在时恢复并聚焦，连续点击不重复创建窗口或后台服务。</li>
 <li>保留「交流」「汇报」「提示语」原有职责；点击角色本体仍为摸摸。「打开主界面」只负责导航，不确认或消除待处理提醒。</li>
 </ul>
-<p><strong>开机自启展示已确认（2026-10-08，待实施）</strong>：支持开机自启；通过开机自启进入时只显示小九，不自动弹出主界面。主界面通过小九「打开主界面」按钮或托盘入口打开。沿用已确认的后台启动/复用机制。设置提供开机自启开关，默认开启，用户可关闭（2026-10-08最终确认）；自启只显示小九。本轮仍仅记录产品方案，不在讨论阶段修改当前操作系统的自启设置。</p>
-<p><strong>主动退出时的任务处理已确认（2026-10-08，待实施）</strong>：</p>
+<p><strong>开机自启展示已确认（2026-10-08 确认；9.4 实施进度见上）</strong>：支持开机自启；通过开机自启进入时只显示小九，不自动弹出主界面。主界面通过小九「打开主界面」按钮或托盘入口打开。沿用已确认的后台启动/复用机制。设置提供开机自启开关，默认开启，用户可关闭（2026-10-08最终确认）；自启只显示小九。该句原为讨论阶段限制；用户授权实施后，本机桌面版首次正式启动已登记自启，设置中可以关闭。</p>
+<p><strong>主动退出时的任务处理已确认（2026-10-08 确认；9.4 实施进度见上）</strong>：</p>
 <ul>
 <li>用户点击托盘「退出拾光」时，有执行中的任务则提供两项选择：「继续后台运行」收起界面并保留任务执行；「确认退出」停止当前执行、保留已保存进度，下次打开明确提示需要恢复或重试的任务。</li>
 <li>没有执行中的任务时直接退出，不增加无关确认。</li>
 <li>工程实现需区分可恢复检查点与只能重试的任务，不能承诺所有外部模型请求都能断点续跑；退出不得把未完成任务标为成功。后台进程的停止范围按下文规则处理，不能用直接杀共享进程代替任务收尾。</li>
 </ul>
-<p><strong>桌面壳退出时的共享后台边界已确认（2026-10-08，待实施）</strong>：</p>
+<p><strong>桌面壳退出时的共享后台边界已确认（2026-10-08 确认；9.4 实施进度见上）</strong>：</p>
 <ul>
 <li>桌面壳接入原本已运行的后台时，退出桌面壳保留该后台，让网页继续使用。</li>
 <li>只有桌面壳自己启动且由它独占的后台，才随退出关闭；“自己启动”不自动等于“仍然独占”。</li>
@@ -451,7 +454,88 @@ git submodule update --init --recursive
 </ul>
 <p>模型响应使用隔离测试桩，无真实付费模型或搜索压力测试；没有声称真实联网和实际模型回答质量已全面验收。未运行手机端测试、APK 打包或全量应用回归。</p>
 <h2>运行状态</h2>
-<p>本机4317服务已保留原环境与 <code>.data</code> 目录重启，健康检查返回协议头 <code>X-Contract-Version: 0.3.0</code>。刷新网页即可使用。后端日志仍是 <code>.data/logs/server.log</code>，AI交互结构化日志仍为 <code>.data/logs/ai-interactions.jsonl</code>。本轮没有付费检查用户的密钥或搜索账户可用性。</p></article></details></section>
+<p>本机4317服务已保留原环境与 <code>.data</code> 目录重启，健康检查返回协议头 <code>X-Contract-Version: 0.3.0</code>。刷新网页即可使用。后端日志仍是 <code>.data/logs/server.log</code>，AI交互结构化日志仍为 <code>.data/logs/ai-interactions.jsonl</code>。本轮没有付费检查用户的密钥或搜索账户可用性。</p></article></details>
+<details class="source"><summary>Windows桌面小九：使用、服务归属与退出边界<small>最新补充快照 · SHA-256 d2d79f61f59a</small></summary><article class="prose"><h1>桌面小九实施与使用</h1>
+<p>更新：2026-10-09。对应架构评审 §9.4；本轮模型只使用现有 DeepSeek flash，不扩展其他模型，不开发手机端。</p>
+<h2>使用</h2>
+<ul>
+<li>Windows 桌面快捷方式：<strong>拾光小九</strong>。普通双击打开主界面和独立小九窗口；首次进入仍使用原空间口令（演示口令可用）。</li>
+<li>关闭主界面只隐藏窗口，小九和后台继续运行。小九下方「打开主界面」、托盘「打开拾光主界面」恢复同一个窗口。</li>
+<li>小九继续提供摸摸、拖动、hover 提示表、交流、汇报、提示语常驻。点击提示会把主窗口带到对应业务来源；导航不会确认提醒。</li>
+<li>首次正式启动默认登记 Windows 登录自启；自启参数为 <code>--autostart</code>，只创建小九窗口。「设置与数据 → 桌面小九」可关闭。</li>
+<li>托盘「退出拾光」才是完全退出。有本次桌面发起的在途请求/已到期后台执行时，可选继续后台运行或确认退出；没有执行则直接退出。</li>
+<li>设置页和启动失败页可打开桌面日志、后台日志；失败页可重试。</li>
+</ul>
+<h2>安装范围</h2>
+<p>这是 Windows 原生 Electron 壳，连接本机 WSL 内现有 PersonalAgent。不是把 WSL 中的 Node 窗口当作 Windows 桌面，也不另建桌面数据库。目前交付的是这台电脑的运行时目录与快捷方式，不是可在任意新电脑无依赖安装的发行包。</p>
+<pre><code class="language-bash"># 在已经可用的 WSL 项目中安装/更新；不复制个人资料或模型密钥
+npm run build
+python3 scripts/install-desktop.py
+</code></pre>
+<p>安装目录为 <code>.local-runtime/xiaojiu-desktop/44.7.0</code>；Windows 也可运行 <code>scripts/start-desktop.ps1</code>。安装脚本从 Electron 官方发布下载，并校验 SHA-256。运行时、本机路径配置、业务数据不提交 Git。程序沿用当前 WSL 发行版、Node 24 路径及本项目目录；移动项目或更新 Node 安装位置后重新运行安装脚本。</p>
+<p>首次正式启动会设置登录自启。以后覆盖更新桌面脚本保留用户的自启选择、登录与窗口位置。安装脚本需当前 Windows 用户、WSL 和 PowerShell 可用；没有额外收费模型调用。</p>
+<h2>实现与服务归属</h2>
+<pre><code class="language-mermaid">flowchart LR
+  shortcut[Windows 快捷方式 / 登录自启] --&gt; shell[Electron 主进程]
+  shell --&gt; main[现有 Web 主界面]
+  shell --&gt; pet[透明小九窗口]
+  shell --&gt; tray[系统托盘]
+  shell --&gt; helper[WSL 本机启动协调]
+  helper --&gt; control[loopback 控制通道 + 随机凭证]
+  control --&gt; api[同一 Express 后台]
+  main --&gt; api
+  pet --&gt; api
+  browser[普通浏览器] --&gt; api
+  api --&gt; sqlite[原 SQLite / 附件目录]
+  api --&gt; worker[原 BullMQ worker / 检索服务]
+</code></pre>
+<ul>
+<li><code>desktop/main.mjs</code> 管窗口、托盘、进程协调和自启；受限 <code>preload.cjs</code> 只暴露具体动作。Renderer 不拿 Node、文件路径执行权或本机控制凭证。</li>
+<li><code>scripts/desktop-backend.mjs</code> 校验真实项目路径、数据目录、控制协议版本、随机实例身份与 HTTP 健康响应；端口被占用但身份不明时显示错误，不杀未知进程、不另开数据库。</li>
+<li>后台控制通道只绑定 loopback，使用 <code>.data/desktop-runtime.json</code> 内随机凭证。它是进程管理 IPC，不新增面向各客户端的业务 HTTP 接口；业务协议保持 contracts v0.3.0，156 个操作、159 个 Schema。</li>
+<li>后台未启动时，协调器准备现有 Redis、已安装的 Qdrant 和已选择的本地 Qwen embedding，再启动原 API/worker。缺失或失败的可选服务保留现有能力状态提示/降级，不改为其他聊天模型。</li>
+<li>后台原来就存在：退出桌面保留它。桌面自己启动且可确认独占：才关闭 API/worker。一旦普通浏览器或其他客户端访问过，当前进程生命周期内保守视为共享；无法确认时保留。</li>
+<li>Redis、Qdrant、embedding 属于共享基础服务，不随桌面退出批量杀进程。异常退出遗留的后台也保守复用，不追认成新桌面独占。</li>
+</ul>
+<h2>退出与保存边界</h2>
+<pre><code class="language-mermaid">sequenceDiagram
+  participant U as 用户
+  participant D as 桌面主进程
+  participant B as 后台
+  participant W as Worker / 模型调用
+  U-&gt;&gt;D: 退出拾光
+  D-&gt;&gt;B: 查询本次桌面执行
+  alt 有执行且选择继续后台运行
+    D-&gt;&gt;D: 隐藏主窗口和小九，保留托盘
+  else 确认退出或没有执行
+    D-&gt;&gt;B: 退出本次桌面执行
+    B-&gt;&gt;B: 写恢复说明、撤销本次任务租约
+    B-&gt;&gt;W: 中止请求；迟到结果禁止完成提交
+    B--&gt;&gt;D: 保存进度；共享后台保留 / 独占后台关闭
+    D-&gt;&gt;D: 退出桌面窗口与托盘
+  end
+</code></pre>
+<ul>
+<li>请求上下文记录本次桌面来源；后台作业入队时记录来源所有权。停止只作用于本次来源的在途请求与已到期作业，不取消网页任务，也不删除未来约定提醒。</li>
+<li>Pi 模型调用与搭子循环接收取消信号；队列撤销租约后拒绝迟到提交。任务保留失败/停止说明及已有结果，搭子保留已取得来源和中途回答。不会把未完成执行标成完成。</li>
+<li>后台作业取消信号在租约心跳检查时传播。不能撤销供应商已经接收/计费的请求，也不承诺外部工具都能断点恢复；不支持取消的外部步骤可能收尾后才释放资源，但失效租约不能提交成功。</li>
+<li>下次启动，小九托盘提示上次执行需要继续；原任务及搭子会话保留重试/继续入口。确认退出不会自动追加模型预算。</li>
+<li>主窗口关闭不是取消操作；没有停止当前任务的副作用。</li>
+</ul>
+<h2>数据与界面刷新</h2>
+<p>共用原后台和数据库。记录列表沿用 4 秒变更游标检查、焦点刷新；小九提示沿用游标失效刷新和周期读取。已有编辑 revision 检查继续生效，外部修改不会替用户强行覆盖未保存编辑。各独立页面保留原有加载/刷新规则；没有声称所有页面都已改成 WebSocket 实时推送。</p>
+<h2>本轮必要验证</h2>
+<ul>
+<li>TypeScript / Vite 构建通过；仍有原有约 783 KB 主包大小提示。</li>
+<li>协议检查通过，业务契约未改变。</li>
+<li>3 条本机运行时检查：旧/共享后台保留；仅独占归属可关闭；仅本人到期任务取消、未来提醒和他人任务保留、迟到结果不能提交。</li>
+<li>Windows 原生 Electron 检查：双窗口连接同一后台、演示登录共享、小九提示表可见且在窗口内、关闭主窗口只隐藏、小九按钮恢复且不重复开窗、桌面设置入口、退出仍保留原 Web 后台。测试没有发起模型请求或改动业务记录。</li>
+<li>单独按 <code>--autostart</code> 启动核对仅显示小九；没有重启用户电脑验证完整 Windows 登录过程。</li>
+<li>实测发现图片覆盖打开主界面按钮，已约束图片尺寸并复查通过。</li>
+</ul>
+<h2>后续范围</h2>
+<p>签名安装包、自动升级、无 WSL 的后端发行包尚未交付；本轮不扩张到这些内容。其他模型、手机端和 skill/studio 编辑器仍不在本轮范围内。</p>
+<p>实现依据：<a href="https://www.electronjs.org/docs/latest/tutorial/security">Electron 安全指南</a>、<a href="https://www.electronjs.org/docs/latest/api/app#appsetloginitemsettingssettings-macos-windows">自启接口</a>、<a href="https://www.electronjs.org/docs/latest/api/base-window#winsetignoremouseeventsignore-options">窗口鼠标穿透</a>。</p></article></details></section>
 <section class="panel module-panel" id="RET" hidden><header class="page-head"><div class="eyebrow">MODULE 01 / RET · 基础能力</div><h1>超强检索</h1><p class="lead">让记录、要事与电脑资料，成为可以定位和引用的证据。</p><div class="tags"><span class="tag teal">目标设计</span><span class="tag">Spec + Plan · 7 项要求</span></div></header>
  <div class="module-facts"><div><small>文档记载的现状 · 非本次代码验收</small><p>已有复制、分段与混合检索首轮实现；完整过滤、索引状态、版本一致性及真实样本验收仍需补齐。</p></div><div><small>数据归属</small><p>资料清单 / libraryFile / 文本分段 / 索引状态</p></div><div><small>模块依赖</small><p>SET · REC；供 CHAT / MEM / RES / ACT 使用</p></div></div>
  <div class="tabs" role="tablist" aria-label="超强检索视图"><button role="tab" aria-selected="true" data-tab="design" id="RET-tab-design" aria-controls="RET-design">流程与时序</button><button role="tab" aria-selected="false" tabindex="-1" data-tab="plan" id="RET-tab-plan" aria-controls="RET-plan">实施计划</button><button role="tab" aria-selected="false" tabindex="-1" data-tab="source" id="RET-tab-source" aria-controls="RET-source">完整原文</button></div>
@@ -2961,7 +3045,7 @@ threadSummary 保存 covered message ids/revisions 或内容签名、版本、�
 <li>验收实际服务停启、待投递补发、worker 恢复与重复执行保护；普通记录保存不因 Redis 不可用丢数据。记录版本和诊断方法，不仅检查依赖是否安装。</li>
 </ul>
 <p>依据：<a href="../18-technology-stack-proposal.md">已确认技术栈方案与验收</a>。本节纳入后续 goal，不代表当前已安装或完成。</p></article></details></div></section><section class="panel module-panel" id="PET" hidden><header class="page-head"><div class="eyebrow">MODULE 10 / PET · 统一表达</div><h1>小九桌宠</h1><p class="lead">所有监督与提醒都由小九说出，hover 即可查看完整提示表。</p><div class="tags"><span class="tag teal">目标设计</span><span class="tag">Spec + Plan · 11 项要求</span></div></header>
- <div class="module-facts"><div><small>文档记载的现状 · 非本次代码验收</small><p>已有形象、拖动、反馈与短聊；全局提示表和统一业务提醒契约仍是待开发目标。</p></div><div><small>数据归属</small><p>提示展示 / 常驻开关 / 短聊 / 表情反馈；不拥有业务完成状态</p></div><div><small>模块依赖</small><p>SUP · ACT · EVT · REC · MEM · 记账等提供提醒事实</p></div></div>
+ <div class="module-facts"><div><small>文档记载的现状 · 非本次代码验收</small><p>已有统一提示表、反馈与短聊；Windows原生小九、主窗口、托盘与本机自启已接入。</p></div><div><small>数据归属</small><p>提示展示 / 常驻开关 / 短聊 / 表情反馈；不拥有业务完成状态</p></div><div><small>模块依赖</small><p>SUP · ACT · EVT · REC · MEM · 记账等提供提醒事实</p></div></div>
  <div class="tabs" role="tablist" aria-label="小九桌宠视图"><button role="tab" aria-selected="true" data-tab="design" id="PET-tab-design" aria-controls="PET-design">流程与时序</button><button role="tab" aria-selected="false" tabindex="-1" data-tab="plan" id="PET-tab-plan" aria-controls="PET-plan">实施计划</button><button role="tab" aria-selected="false" tabindex="-1" data-tab="source" id="PET-tab-source" aria-controls="PET-source">完整原文</button></div>
  <div class="tab-content" id="PET-design" role="tabpanel" aria-labelledby="PET-tab-design" data-content="design"><div class="rules"><div><span>01</span><p>源模块拥有时间、状态和确认规则；小九只聚合与表达，不建第二套调度。</p></div><div><span>02</span><p>hover 展示所有当前提示；无提示显示“无”，加载失败要说明简单原因；提示语按钮切换常驻。</p></div><div><span>03</span><p>交流用于生活心情，汇报只跳成果页；直接点角色摸摸，去掉喂食和独立摸摸入口。</p></div></div><section class="diagram-card"><div class="diagram-heading"><div><h3>用户流程 · 小九桌宠</h3><p>目标架构 · 具体状态与验收以原文为准</p></div><button class="expand" type="button" aria-label="放大用户流程 · 小九桌宠">放大 ↗</button></div><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 480" role="img" aria-label="小九桌宠流程"><title>小九桌宠流程</title><defs><marker id="arrow-22" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#66818f"/></marker></defs><style>text{font-family:system-ui,'Microsoft YaHei',sans-serif}.node{fill:#fff;stroke:#cad8df;stroke-width:1.4}.nt{font-size:17px;font-weight:650;fill:#172e3b}.ns{font-size:13px;fill:#526979}.edge{fill:none;stroke:#66818f;stroke-width:1.5}.msg{font-size:13px;fill:#334f60}</style><text x="30" y="28" font-size="13" fill="#526979">按编号阅读 · 上排向右，下排向左</text><rect class="node" x="30" y="62" width="310" height="91" rx="12"/><text x="48" y="87" font-size="11" fill="#0b837d" font-weight="700">01</text><text class="nt" x="48" y="111">业务源产生提示</text><text class="ns" x="48" y="134">时间、事实、来源版本和去重键</text><rect class="node" x="405" y="62" width="310" height="91" rx="12"/><text x="423" y="87" font-size="11" fill="#0b837d" font-weight="700">02</text><text class="nt" x="423" y="111">统一聚合有效提示</text><text class="ns" x="423" y="134">稍后 / 解决 / 取消状态同步</text><rect class="node" x="780" y="62" width="310" height="91" rx="12"/><text x="798" y="87" font-size="11" fill="#0b837d" font-weight="700">03</text><text class="nt" x="798" y="111">小九台词与标识</text><text class="ns" x="798" y="134">稳定模板；hover 不调用模型</text><rect class="node" x="780" y="272" width="310" height="91" rx="12"/><text x="798" y="297" font-size="11" fill="#0b837d" font-weight="700">04</text><text class="nt" x="798" y="321">hover / 常驻提示表</text><text class="ns" x="798" y="344">完整、可滚动、可键盘操作</text><rect class="node" x="405" y="272" width="310" height="91" rx="12"/><text x="423" y="297" font-size="11" fill="#0b837d" font-weight="700">05</text><text class="nt" x="423" y="321">前往源模块处理</text><text class="ns" x="423" y="344">确认、补充、改期或稍后</text><rect class="node" x="30" y="272" width="310" height="91" rx="12"/><text x="48" y="297" font-size="11" fill="#0b837d" font-weight="700">06</text><text class="nt" x="48" y="321">同步事实与表情</text><text class="ns" x="48" y="344">已处理退出；反馈不清空待办</text><path class="edge" marker-end="url(#arrow-22)" d="M340 108 H395"/><path class="edge" marker-end="url(#arrow-22)" d="M715 108 H770"/><path class="edge" marker-end="url(#arrow-22)" d="M935 153 V262"/><path class="edge" marker-end="url(#arrow-22)" d="M780 318 H725"/><path class="edge" marker-end="url(#arrow-22)" d="M405 318 H350"/><text class="msg" x="951" y="210">继续</text><text class="msg" x="30" y="448">人工确认与错误恢复详见 spec；流程图为目标设计。</text></svg></div></section><section class="diagram-card"><div class="diagram-heading"><div><h3>交互时序 · 小九桌宠</h3><p>实线：请求 / 操作；虚线：返回 · 等待与确认不能省略</p></div><button class="expand" type="button" aria-label="放大交互时序 · 小九桌宠">放大 ↗</button></div><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 604" role="img" aria-label="小九桌宠时序"><title>小九桌宠时序</title><defs><marker id="arrow-23" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#66818f"/></marker></defs><style>text{font-family:system-ui,'Microsoft YaHei',sans-serif}.node{fill:#fff;stroke:#cad8df;stroke-width:1.4}.nt{font-size:17px;font-weight:650;fill:#172e3b}.ns{font-size:13px;fill:#526979}.edge{fill:none;stroke:#66818f;stroke-width:1.5}.msg{font-size:13px;fill:#334f60}</style><rect x="29" y="15" width="232" height="43" rx="9" fill="#e4f3ef" stroke="#c9d9df"/><text x="145" y="42" text-anchor="middle" class="nt" style="font-size:15px">业务源模块</text><path d="M145 58 V574" stroke="#c1d0d7" stroke-dasharray="5 5"/><rect x="304" y="15" width="232" height="43" rx="9" fill="#eef3f7" stroke="#c9d9df"/><text x="420" y="42" text-anchor="middle" class="nt" style="font-size:15px">聚合服务</text><path d="M420 58 V574" stroke="#c1d0d7" stroke-dasharray="5 5"/><rect x="579" y="15" width="232" height="43" rx="9" fill="#eef3f7" stroke="#c9d9df"/><text x="695" y="42" text-anchor="middle" class="nt" style="font-size:15px">小九界面</text><path d="M695 58 V574" stroke="#c1d0d7" stroke-dasharray="5 5"/><rect x="854" y="15" width="232" height="43" rx="9" fill="#eef3f7" stroke="#c9d9df"/><text x="970" y="42" text-anchor="middle" class="nt" style="font-size:15px">用户</text><path d="M970 58 V574" stroke="#c1d0d7" stroke-dasharray="5 5"/><rect x="20" y="75" width="1080" height="52" rx="4" fill="#fff" opacity=".66"/><path class="edge" marker-end="url(#arrow-23)" d="M145 102 H420" /><text class="msg" x="282.5" y="92" text-anchor="middle">1. 提供到期 / 待确认等真实状态</text><circle cx="145" cy="102" r="3.5" fill="#0b837d"/><rect x="20" y="134" width="1080" height="52" rx="4" fill="#f2f6f8" opacity=".66"/><path class="edge" marker-end="url(#arrow-23)" d="M420 161 H695" /><text class="msg" x="557.5" y="151" text-anchor="middle">2. 返回去重提示表与待处理标识</text><circle cx="420" cy="161" r="3.5" fill="#0b837d"/><rect x="20" y="193" width="1080" height="52" rx="4" fill="#fff" opacity=".66"/><path class="edge" marker-end="url(#arrow-23)" d="M970 220 H695" /><text class="msg" x="832.5" y="210" text-anchor="middle">3. hover 或点击“提示语”</text><circle cx="970" cy="220" r="3.5" fill="#0b837d"/><rect x="20" y="252" width="1080" height="52" rx="4" fill="#f2f6f8" opacity=".66"/><path class="edge" marker-end="url(#arrow-23)" d="M695 279 H970" stroke-dasharray="5 4"/><text class="msg" x="832.5" y="269" text-anchor="middle">4. 展示全部提示；空 / 加载 / 错误区分</text><circle cx="695" cy="279" r="3.5" fill="#0b837d"/><rect x="20" y="311" width="1080" height="52" rx="4" fill="#fff" opacity=".66"/><path class="edge" marker-end="url(#arrow-23)" d="M970 338 H145" /><text class="msg" x="557.5" y="328" text-anchor="middle">5. 点击条目并在源模块处理</text><circle cx="970" cy="338" r="3.5" fill="#0b837d"/><rect x="20" y="370" width="1080" height="52" rx="4" fill="#f2f6f8" opacity=".66"/><path class="edge" marker-end="url(#arrow-23)" d="M145 397 H420" /><text class="msg" x="282.5" y="387" text-anchor="middle">6. 更新确认、取消或稍后状态</text><circle cx="145" cy="397" r="3.5" fill="#0b837d"/><rect x="20" y="429" width="1080" height="52" rx="4" fill="#fff" opacity=".66"/><path class="edge" marker-end="url(#arrow-23)" d="M420 456 H695" /><text class="msg" x="557.5" y="446" text-anchor="middle">7. 同步表与标识，不重复调度</text><circle cx="420" cy="456" r="3.5" fill="#0b837d"/><rect x="20" y="488" width="1080" height="52" rx="4" fill="#f2f6f8" opacity=".66"/><path class="edge" marker-end="url(#arrow-23)" d="M695 515 H970" stroke-dasharray="5 4"/><text class="msg" x="832.5" y="505" text-anchor="middle">8. 完成反馈 / 有依据的温和督促</text><circle cx="695" cy="515" r="3.5" fill="#0b837d"/></svg></div></section><aside class="callout"><strong>关键边界</strong><p>交流可以使用相关、已确认的通用长期记忆；不注入全量业务资料。未处理记忆红点按五轮期限更新；看过、摸摸仍不等于确认。</p></aside></div>
  <div class="tab-content" id="PET-plan" role="tabpanel" aria-labelledby="PET-tab-plan" data-content="plan" hidden><div class="section-label">IMPLEMENTATION / 来自当前 plan 的步骤原文</div><p class="muted">P0：正确性、状态和数据保护；P1：闭环与体验。以下是开发清单，未标记为已完成。</p><details class="step" open><summary><span class="step-number">01</span><span>PET-P01 · P0 · 统一提醒来源、去重与表达契约</span></summary><div class="prose"><ul>
@@ -3077,7 +3161,7 @@ threadSummary 保存 covered message ids/revisions 或内容签名、版本、�
 <li>对应 Q09/Q10：交流请求走 MEM 统一有效性过滤，只取相关已确认通用背景；缓存不能让已暂停记忆继续生效。无可用记忆时正常交流，读取失败如实说明，不伪造记得。</li>
 <li>验证全局相关记忆可用、候选/过期/暂停/项目专属记忆不可用；五轮清理与确认后红点及时同步，旧轮询不复活提示。聊天记录与业务提示表仍分离。</li>
 </ul>
-<h2>桌面版追加计划（2026-10-08，仅记录方案，待实施）</h2>
+<h2>桌面版追加计划（2026-10-08 确认，2026-10-09 本机版落地）</h2>
 <p>2026-10-08澄清：桌面壳复用现有前端、后端及数据存储，不重做一套桌面业务系统。双端同时打开时，先核对现有数据刷新/变更读取机制，仅补缺口；验收在网页保存后桌面读取同一对象、反向同理，并区分共用数据与实时UI更新。保留已有revision冲突与草稿保护规则，不因收到新数据覆盖未保存编辑。</p>
 <p>依据spec的“桌面版追加决策”和架构第9.4节实施；旧网页阶段排除桌面壳的条款不排除此后续阶段。</p>
 <ol>
@@ -3103,8 +3187,10 @@ threadSummary 保存 covered message ids/revisions 或内容签名、版本、�
 <p>退出范围定向验收：接入已运行后台后退出桌面壳，网页仍可用；桌面壳启动并独占后台时退出能够正常收尾并关闭；已转为共享的后台及其他入口的任务不被误停。具体识别方案在实施时设计。</p>
 </li>
 </ol>
-<p>本次只更新文档，不启动Electron开发或变更现有进程。</p></article></details></div>
- <div class="tab-content" id="PET-source" role="tabpanel" aria-labelledby="PET-tab-source" data-content="source" hidden><p class="muted">构建时嵌入原文快照，可离线阅读。原文件后续变化时，重新运行构建脚本同步。</p><details class="source"><summary><span>小九桌宠spec.md</span><small>原文快照 · SHA-256 b745f8ca51da</small></summary><div class="source-tools"><a href="%E5%B0%8F%E4%B9%9D%E6%A1%8C%E5%AE%A0spec.md">打开 Markdown 原文件 ↗</a></div><article class="prose"><h1>小九桌宠 spec</h1>
+<p>本次只更新文档，不启动Electron开发或变更现有进程。</p>
+<h2>2026-10-09 桌面实施状态</h2>
+<p>Windows 原生 Electron 壳已接入现有 Web/后台：独立小九、托盘、打开主界面、主窗口关闭隐藏、默认登录自启（只显示小九）、失败日志与重试、共享后台保护和执行来源隔离。详见 <a href="../28-desktop-xiaojiu-implementation.md">实际实施与使用</a>。现有网页继续可用；本次不扩展其他模型，仅使用 DeepSeek flash。通用签名安装包、自动升级及无 WSL 安装不在本次已完成范围。</p></article></details></div>
+ <div class="tab-content" id="PET-source" role="tabpanel" aria-labelledby="PET-tab-source" data-content="source" hidden><p class="muted">构建时嵌入原文快照，可离线阅读。原文件后续变化时，重新运行构建脚本同步。</p><details class="source"><summary><span>小九桌宠spec.md</span><small>原文快照 · SHA-256 aa90c428ad3d</small></summary><div class="source-tools"><a href="%E5%B0%8F%E4%B9%9D%E6%A1%8C%E5%AE%A0spec.md">打开 Markdown 原文件 ↗</a></div><article class="prose"><h1>小九桌宠 spec</h1>
 <p>版本：2026-09-28 · PET · 网页端与服务端 · 根据用户最新示意图和补充要求修订。</p>
 <p>对应 <a href="%E5%B0%8F%E4%B9%9D%E6%A1%8C%E5%AE%A0plan.md">plan</a> 与 <a href="README.md">总索引</a>。本文件是开发目标，尚未据此修改应用。最新要求覆盖旧版“仅维护轻陪伴、不接业务提醒”的限制。</p>
 <h2>1. 目标与责任</h2>
@@ -3194,7 +3280,9 @@ threadSummary 保存 covered message ids/revisions 或内容签名、版本、�
 <li>托盘主动退出时，有执行中的任务就提供「继续后台运行」与「确认退出」：前者收起界面并继续执行，后者停止当前执行并保留已保存进度，下次启动明确展示需恢复或重试的任务。无执行中任务时直接退出。</li>
 <li>退出不能把未完成任务标为成功；恢复按实际检查点能力处理，不承诺所有任务断点续跑。关闭主窗口本身不取消任务。</li>
 <li><strong>共享后台退出范围已确认（2026-10-08）</strong>：退出桌面壳保留原本已运行的共享后台，网页继续可用；只有桌面壳自己启动且独占的后台才随退出关闭。需核验启动归属与当前共享状态，不能误停其他入口的任务。</li>
-</ul></article></details><details class="source"><summary><span>小九桌宠plan.md</span><small>原文快照 · SHA-256 723a1ef2381c</small></summary><div class="source-tools"><a href="%E5%B0%8F%E4%B9%9D%E6%A1%8C%E5%AE%A0plan.md">打开 Markdown 原文件 ↗</a></div><article class="prose"><h1>小九桌宠 plan</h1>
+</ul>
+<h2>2026-10-09 桌面实施状态</h2>
+<p>Windows 原生 Electron 壳已接入现有 Web/后台：独立小九、托盘、打开主界面、主窗口关闭隐藏、默认登录自启（只显示小九）、失败日志与重试、共享后台保护和执行来源隔离。详见 <a href="../28-desktop-xiaojiu-implementation.md">实际实施与使用</a>。现有网页继续可用；本次不扩展其他模型，仅使用 DeepSeek flash。通用签名安装包、自动升级及无 WSL 安装不在本次已完成范围。</p></article></details><details class="source"><summary><span>小九桌宠plan.md</span><small>原文快照 · SHA-256 7d8c2c2fac76</small></summary><div class="source-tools"><a href="%E5%B0%8F%E4%B9%9D%E6%A1%8C%E5%AE%A0plan.md">打开 Markdown 原文件 ↗</a></div><article class="prose"><h1>小九桌宠 plan</h1>
 <p>版本：2026-09-28 · 对应 <a href="%E5%B0%8F%E4%B9%9D%E6%A1%8C%E5%AE%A0spec.md">spec</a> · 用户最新示意图与“所有监督提醒绑定小九”补充要求。</p>
 <p>本次只同步文档；以下为后续开发步骤，不代表已执行。替代旧版“只维护、不接业务提醒”的计划。</p>
 <h2>1. 目标与依赖</h2>
@@ -3272,7 +3360,7 @@ threadSummary 保存 covered message ids/revisions 或内容签名、版本、�
 <li>对应 Q09/Q10：交流请求走 MEM 统一有效性过滤，只取相关已确认通用背景；缓存不能让已暂停记忆继续生效。无可用记忆时正常交流，读取失败如实说明，不伪造记得。</li>
 <li>验证全局相关记忆可用、候选/过期/暂停/项目专属记忆不可用；五轮清理与确认后红点及时同步，旧轮询不复活提示。聊天记录与业务提示表仍分离。</li>
 </ul>
-<h2>桌面版追加计划（2026-10-08，仅记录方案，待实施）</h2>
+<h2>桌面版追加计划（2026-10-08 确认，2026-10-09 本机版落地）</h2>
 <p>2026-10-08澄清：桌面壳复用现有前端、后端及数据存储，不重做一套桌面业务系统。双端同时打开时，先核对现有数据刷新/变更读取机制，仅补缺口；验收在网页保存后桌面读取同一对象、反向同理，并区分共用数据与实时UI更新。保留已有revision冲突与草稿保护规则，不因收到新数据覆盖未保存编辑。</p>
 <p>依据spec的“桌面版追加决策”和架构第9.4节实施；旧网页阶段排除桌面壳的条款不排除此后续阶段。</p>
 <ol>
@@ -3298,7 +3386,9 @@ threadSummary 保存 covered message ids/revisions 或内容签名、版本、�
 <p>退出范围定向验收：接入已运行后台后退出桌面壳，网页仍可用；桌面壳启动并独占后台时退出能够正常收尾并关闭；已转为共享的后台及其他入口的任务不被误停。具体识别方案在实施时设计。</p>
 </li>
 </ol>
-<p>本次只更新文档，不启动Electron开发或变更现有进程。</p></article></details></div></section><section class="panel module-panel" id="FIN" hidden><header class="page-head"><div class="eyebrow">MODULE 11 / 记账原文 · 生活工具</div><h1>记账</h1><p class="lead">快速记收入和支出，确认分类后看清每月花费与生活预算。</p><div class="tags"><span class="tag teal">目标设计</span><span class="tag">用户编写的合并文档</span></div></header>
+<p>本次只更新文档，不启动Electron开发或变更现有进程。</p>
+<h2>2026-10-09 桌面实施状态</h2>
+<p>Windows 原生 Electron 壳已接入现有 Web/后台：独立小九、托盘、打开主界面、主窗口关闭隐藏、默认登录自启（只显示小九）、失败日志与重试、共享后台保护和执行来源隔离。详见 <a href="../28-desktop-xiaojiu-implementation.md">实际实施与使用</a>。现有网页继续可用；本次不扩展其他模型，仅使用 DeepSeek flash。通用签名安装包、自动升级及无 WSL 安装不在本次已完成范围。</p></article></details></div></section><section class="panel module-panel" id="FIN" hidden><header class="page-head"><div class="eyebrow">MODULE 11 / 记账原文 · 生活工具</div><h1>记账</h1><p class="lead">快速记收入和支出，确认分类后看清每月花费与生活预算。</p><div class="tags"><span class="tag teal">目标设计</span><span class="tag">用户编写的合并文档</span></div></header>
  <div class="module-facts"><div><small>文档记载的现状 · 非本次代码验收</small><p>采用用户编写的合并 spec &amp; plan。此图不声明实现状态，也不改写原文；AI 导入等细项计划有待补齐。</p></div><div><small>数据归属</small><p>Transaction / 分类 / 月度统计 / 生活预算 / 导入候选</p></div><div><small>模块依赖</small><p>SET · PET；原文单独定义记账范围</p></div></div>
  <div class="tabs" role="tablist" aria-label="记账视图"><button role="tab" aria-selected="true" data-tab="design" id="FIN-tab-design" aria-controls="FIN-design">流程与时序</button><button role="tab" aria-selected="false" tabindex="-1" data-tab="plan" id="FIN-tab-plan" aria-controls="FIN-plan">实施计划</button><button role="tab" aria-selected="false" tabindex="-1" data-tab="source" id="FIN-tab-source" aria-controls="FIN-source">完整原文</button></div>
  <div class="tab-content" id="FIN-design" role="tabpanel" aria-labelledby="FIN-tab-design" data-content="design"><div class="rules"><div><span>01</span><p>手工、OCR、Excel 导入；原始账单和截图保留。数额与来源相同的重复项等待用户核对，不自动跳过。</p></div><div><span>02</span><p>生活预算每月 2000 元，仅“美食、日用、花呗”计入；其他分类不进入该预算。</p></div><div><span>03</span><p>每月 1 日提醒导出、导入并复盘；15 日做月中检查。提醒通过小九展示。</p></div></div><section class="diagram-card"><div class="diagram-heading"><div><h3>用户流程 · 记账</h3><p>目标架构 · 具体状态与验收以原文为准</p></div><button class="expand" type="button" aria-label="放大用户流程 · 记账">放大 ↗</button></div><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 480" role="img" aria-label="记账流程"><title>记账流程</title><defs><marker id="arrow-24" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#66818f"/></marker></defs><style>text{font-family:system-ui,'Microsoft YaHei',sans-serif}.node{fill:#fff;stroke:#cad8df;stroke-width:1.4}.nt{font-size:17px;font-weight:650;fill:#172e3b}.ns{font-size:13px;fill:#526979}.edge{fill:none;stroke:#66818f;stroke-width:1.5}.msg{font-size:13px;fill:#334f60}</style><text x="30" y="28" font-size="13" fill="#526979">按编号阅读 · 上排向右，下排向左</text><rect class="node" x="30" y="62" width="310" height="91" rx="12"/><text x="48" y="87" font-size="11" fill="#0b837d" font-weight="700">01</text><text class="nt" x="48" y="111">记录或导入账单</text><text class="ns" x="48" y="134">手工 / 截图 / 用户导出 Excel</text><rect class="node" x="405" y="62" width="310" height="91" rx="12"/><text x="423" y="87" font-size="11" fill="#0b837d" font-weight="700">02</text><text class="nt" x="423" y="111">解析与分类建议</text><text class="ns" x="423" y="134">AI 帮助识别，不直接定账</text><rect class="node" x="780" y="62" width="310" height="91" rx="12"/><text x="798" y="87" font-size="11" fill="#0b837d" font-weight="700">03</text><text class="nt" x="798" y="111">用户核对类别与重复</text><text class="ns" x="798" y="134">原件保留；重复不自动丢弃</text><rect class="node" x="780" y="272" width="310" height="91" rx="12"/><text x="798" y="297" font-size="11" fill="#0b837d" font-weight="700">04</text><text class="nt" x="798" y="321">保存交易并计算</text><text class="ns" x="798" y="344">程序汇总；不让 AI 算总账</text><rect class="node" x="405" y="272" width="310" height="91" rx="12"/><text x="423" y="297" font-size="11" fill="#0b837d" font-weight="700">05</text><text class="nt" x="423" y="321">筛选与月度查看</text><text class="ns" x="423" y="344">收入、支出、结余、图表、排行</text><rect class="node" x="30" y="272" width="310" height="91" rx="12"/><text x="48" y="297" font-size="11" fill="#0b837d" font-weight="700">06</text><text class="nt" x="48" y="321">按月提醒复盘</text><text class="ns" x="48" y="344">1 日 / 15 日 → 小九提示</text><path class="edge" marker-end="url(#arrow-24)" d="M340 108 H395"/><path class="edge" marker-end="url(#arrow-24)" d="M715 108 H770"/><path class="edge" marker-end="url(#arrow-24)" d="M935 153 V262"/><path class="edge" marker-end="url(#arrow-24)" d="M780 318 H725"/><path class="edge" marker-end="url(#arrow-24)" d="M405 318 H350"/><text class="msg" x="951" y="210">继续</text><text class="msg" x="30" y="448">人工确认与错误恢复详见 spec；流程图为目标设计。</text></svg></div></section><section class="diagram-card"><div class="diagram-heading"><div><h3>交互时序 · 记账</h3><p>实线：请求 / 操作；虚线：返回 · 等待与确认不能省略</p></div><button class="expand" type="button" aria-label="放大交互时序 · 记账">放大 ↗</button></div><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 604" role="img" aria-label="记账时序"><title>记账时序</title><defs><marker id="arrow-25" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#66818f"/></marker></defs><style>text{font-family:system-ui,'Microsoft YaHei',sans-serif}.node{fill:#fff;stroke:#cad8df;stroke-width:1.4}.nt{font-size:17px;font-weight:650;fill:#172e3b}.ns{font-size:13px;fill:#526979}.edge{fill:none;stroke:#66818f;stroke-width:1.5}.msg{font-size:13px;fill:#334f60}</style><rect x="29" y="15" width="232" height="43" rx="9" fill="#e4f3ef" stroke="#c9d9df"/><text x="145" y="42" text-anchor="middle" class="nt" style="font-size:15px">用户</text><path d="M145 58 V574" stroke="#c1d0d7" stroke-dasharray="5 5"/><rect x="304" y="15" width="232" height="43" rx="9" fill="#eef3f7" stroke="#c9d9df"/><text x="420" y="42" text-anchor="middle" class="nt" style="font-size:15px">记账服务</text><path d="M420 58 V574" stroke="#c1d0d7" stroke-dasharray="5 5"/><rect x="579" y="15" width="232" height="43" rx="9" fill="#eef3f7" stroke="#c9d9df"/><text x="695" y="42" text-anchor="middle" class="nt" style="font-size:15px">AI / OCR</text><path d="M695 58 V574" stroke="#c1d0d7" stroke-dasharray="5 5"/><rect x="854" y="15" width="232" height="43" rx="9" fill="#eef3f7" stroke="#c9d9df"/><text x="970" y="42" text-anchor="middle" class="nt" style="font-size:15px">交易库 / 统计</text><path d="M970 58 V574" stroke="#c1d0d7" stroke-dasharray="5 5"/><rect x="20" y="75" width="1080" height="52" rx="4" fill="#fff" opacity=".66"/><path class="edge" marker-end="url(#arrow-25)" d="M145 102 H420" /><text class="msg" x="282.5" y="92" text-anchor="middle">1. 手动添加 / 上传截图或 Excel</text><circle cx="145" cy="102" r="3.5" fill="#0b837d"/><rect x="20" y="134" width="1080" height="52" rx="4" fill="#f2f6f8" opacity=".66"/><path class="edge" marker-end="url(#arrow-25)" d="M420 161 H695" /><text class="msg" x="557.5" y="151" text-anchor="middle">2. 提取账目与分类建议</text><circle cx="420" cy="161" r="3.5" fill="#0b837d"/><rect x="20" y="193" width="1080" height="52" rx="4" fill="#fff" opacity=".66"/><path class="edge" marker-end="url(#arrow-25)" d="M695 220 H420" stroke-dasharray="5 4"/><text class="msg" x="557.5" y="210" text-anchor="middle">3. 返回待确认候选</text><circle cx="695" cy="220" r="3.5" fill="#0b837d"/><rect x="20" y="252" width="1080" height="52" rx="4" fill="#f2f6f8" opacity=".66"/><path class="edge" marker-end="url(#arrow-25)" d="M420 279 H145" stroke-dasharray="5 4"/><text class="msg" x="282.5" y="269" text-anchor="middle">4. 展示原件、分类及重复项等待核对</text><circle cx="420" cy="279" r="3.5" fill="#0b837d"/><rect x="20" y="311" width="1080" height="52" rx="4" fill="#fff" opacity=".66"/><path class="edge" marker-end="url(#arrow-25)" d="M145 338 H420" /><text class="msg" x="282.5" y="328" text-anchor="middle">5. 确认或修正候选</text><circle cx="145" cy="338" r="3.5" fill="#0b837d"/><rect x="20" y="370" width="1080" height="52" rx="4" fill="#f2f6f8" opacity=".66"/><path class="edge" marker-end="url(#arrow-25)" d="M420 397 H970" /><text class="msg" x="695" y="387" text-anchor="middle">6. 校验后保存，按确认数据计算</text><circle cx="420" cy="397" r="3.5" fill="#0b837d"/><rect x="20" y="429" width="1080" height="52" rx="4" fill="#fff" opacity=".66"/><path class="edge" marker-end="url(#arrow-25)" d="M970 456 H420" stroke-dasharray="5 4"/><text class="msg" x="695" y="446" text-anchor="middle">7. 返回月度收支、预算和排行</text><circle cx="970" cy="456" r="3.5" fill="#0b837d"/><rect x="20" y="488" width="1080" height="52" rx="4" fill="#f2f6f8" opacity=".66"/><path class="edge" marker-end="url(#arrow-25)" d="M420 515 H145" stroke-dasharray="5 4"/><text class="msg" x="282.5" y="505" text-anchor="middle">8. 展示统计；月度提醒接小九</text><circle cx="420" cy="515" r="3.5" fill="#0b837d"/></svg></div></section><aside class="callout"><strong>关键边界</strong><p>按最新答复：退款流水不计，账户间转账计入，花呗按还款记录，当前不做其他信用还款；重复项人工核对且原件保留。用户原文不改，实施结合下方最新补充。</p></aside></div>

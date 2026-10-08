@@ -1,3 +1,4 @@
+import {navigateDesktop} from './desktop';
 import {contractGet} from './api';
 import type {components} from '../contracts/generated/types';
 import {useCallback,useEffect,useRef,useState} from 'react';
@@ -29,6 +30,7 @@ export function usePetReminders(cursor:number){
 }
 export type PetSourceTarget=Pick<PetReminder,'sourceKind'|'sourceId'|'actionTarget'>;
 export function openPetSource(item:PetSourceTarget){
+ if(navigateDesktop({page:item.sourceKind==='conversation'?'assistant':item.actionTarget.page,source:item}))return;
  if(item.sourceKind==='conversation'){
   sessionStorage.setItem('memoryDiscussion',JSON.stringify({id:item.sourceId}));location.hash='assistant';window.dispatchEvent(new Event('memory-discussion'));
  }else{

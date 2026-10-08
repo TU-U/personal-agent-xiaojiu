@@ -1,3 +1,4 @@
+import {executionContext} from '../core/execution-context.mjs';
 import {Agent} from '@earendil-works/pi-agent-core';
 import {createAssistantMessageEventStream} from '@earendil-works/pi-ai/utils/event-stream';
 import {all,get} from '../store.mjs';
@@ -28,6 +29,8 @@ export async function runChatAgent({id,query,scope,history=[],summary='',selecte
  if(active.has(id))throw chatFailure('此回答正在执行，请等待。','CHAT_RUNNING');
  const initial=chatRun(id);if(initial.status!=='running')return savedAnswer(id,scope);
  active.add(id);const budget=chatBudget(id),deadline=new AbortController(),timer=setTimeout(()=>deadline.abort(),Math.max(1,budget.remainingMs()));timer.unref();
+ const external=executionContext()?.signal;const abort=()=>deadline.abort(external.reason);if(external?.aborted)abort();else external?.addEventListener('abort',abort,{once:true});
+ const stoppedNotice=()=>external?.aborted?'桌面已确认退出；已保存分析可在本会话查看并继续。':'已达到本次 2 分钟上限。';
  const prior=initial.parentId?chatRun(initial.parentId)?.sources||[]:[];
  const sources=[...selectedSources,...prior.filter(old=>!selectedSources.some(s=>s.id===old.id&&s.kind===old.kind&&s.quote===old.quote))],notices=[];let lastError=null,answerText='';
  const update=patch=>writeChatRun({...chatRun(id),...patch});
@@ -69,15 +72,15 @@ export async function runChatAgent({id,query,scope,history=[],summary='',selecte
   answerText=final?.content.filter(c=>c.type==='text').map(c=>c.text).join('\n').trim()||'';
   if(!lastError&&final?.content.some(c=>c.type==='toolCall'))lastError=chatFailure('工具执行尚未形成最终回答，请查看已有结果。','CHAT_INCOMPLETE');
   if(!lastError){const quality=sources.length?validateGeneration(answerText,sources):{ok:answerText.length>=12&&!/\[\d+\]/.test(answerText),reason:'模型未给出有效正文或引用了不存在的资料'};if(!quality.ok)lastError=chatFailure(quality.reason+'；未将无效生成内容作为最终结论。','CHAT_QUALITY');}
-  if(deadline.signal.aborted&&!lastError)lastError=chatFailure('已达到本次 2 分钟上限。');
+  if(deadline.signal.aborted&&!lastError)lastError=chatFailure(stoppedNotice());
   let proposals={items:[],notice:'执行未完成，本轮尚未生成记忆候选。'};
   if(!lastError){step('提炼本轮记忆候选（仍需你确认）');proposals=await proposeTurnMemories(query,[],async(system,user,_schema,options)=>{const response=await call({systemPrompt:system,messages:[{role:'user',content:user,timestamp:Date.now()}]},options);return response.content;});}
   const stored=chatRun(id);if(stored.status==='stopped')lastError=lastError||chatFailure(stored.notice);
-  if(lastError){notices.push(deadline.signal.aborted?'已达到本次 2 分钟上限。':lastError.message);answerText=answerText?answerText+'\n\n> 此为中途输出，尚未完成最终核对。':partialBody(sources);}
+  if(lastError){notices.push(deadline.signal.aborted?stoppedNotice():lastError.message);answerText=answerText?answerText+'\n\n> 此为中途输出，尚未完成最终核对。':partialBody(sources);}
   update({status:lastError?'stopped':'completed',phase:lastError?'已暂停，等待你的选择':'回答完成',notice:[...new Set(notices)].join(' '),body:answerText,sources,proposals,finishedAt:Date.now()});
   return savedAnswer(id,scope);
- }catch(error){update({status:'stopped',phase:'已暂停，等待你的选择',notice:deadline.signal.aborted?'已达到本次 2 分钟上限。':error.message,body:partialBody(sources),sources,finishedAt:Date.now()});return savedAnswer(id,scope);}
- finally{clearTimeout(timer);active.delete(id);}
+ }catch(error){update({status:'stopped',phase:'已暂停，等待你的选择',notice:deadline.signal.aborted?stoppedNotice():error.message,body:partialBody(sources),sources,finishedAt:Date.now()});return savedAnswer(id,scope);}
+ finally{external?.removeEventListener('abort',abort);clearTimeout(timer);active.delete(id);}
 }
 function partialBody(sources){return sources.length?'本轮尚未完成分析，已取得以下资料：\n\n'+sources.map((s,i)=>`### ${s.title}\n\n${s.quote}\n\n[${i+1}]`).join('\n\n'):'本轮尚未取得可用回答。请查看停止原因；确认继续后会追加新一轮额度。';}
 function savedAnswer(id,scope){const run=chatRun(id);if(run.sources.some(s=>!validSource(s,scope)))throw chatFailure('中断后来源已变化，请重新提问。','CHAT_STALE');return {body:run.body||partialBody(run.sources),sources:run.sources,mode:run.status==='completed'?'model':'local',qualityNotice:run.notice,agentRun:chatRunView(id),proposals:run.proposals||{items:[],notice:'本轮尚未生成记忆候选。'},webSearch:run.sources.some(s=>s.kind==='web')};}
