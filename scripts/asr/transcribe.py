@@ -36,16 +36,32 @@ def decode_bounded(filename, max_seconds):
         raise ValueError('音轨为空')
     return np.concatenate(chunks)
 
-def run(args):
+def create_diarizer(root, speakers=-1, threshold=0.7):
+    import sherpa_onnx
+    config = sherpa_onnx.OfflineSpeakerDiarizationConfig(
+        segmentation=sherpa_onnx.OfflineSpeakerSegmentationModelConfig(
+            pyannote=sherpa_onnx.OfflineSpeakerSegmentationPyannoteModelConfig(model=str(root / 'segmentation.onnx')), num_threads=2),
+        embedding=sherpa_onnx.SpeakerEmbeddingExtractorConfig(model=str(root / 'speaker.onnx'), num_threads=2),
+        clustering=sherpa_onnx.FastClusteringConfig(num_clusters=speakers, threshold=threshold),
+        min_duration_on=0.3, min_duration_off=0.5)
+    if not config.validate():
+        raise ValueError('分离模型配置不可用')
+    diarizer = sherpa_onnx.OfflineSpeakerDiarization(config)
+    return diarizer
+
+def create_whisper(root, model):
     from faster_whisper import WhisperModel
+    return WhisperModel(str(root / ('whisper-' + model)), device='cpu', compute_type='int8',
+                        cpu_threads=4, local_files_only=True)
+
+def run(args):
     from alignment import align_segments
     root = pathlib.Path(__file__).resolve().parents[2] / '.local-runtime' / 'asr-models'
     emit('decoding')
     audio = decode_bounded(args.audio, args.max_seconds)
     duration = round(len(audio) / 16)
     emit('transcribing', durationMs=duration)
-    model = WhisperModel(str(root / ('whisper-' + args.model)), device='cpu', compute_type='int8',
-                         cpu_threads=4, local_files_only=True)
+    model = create_whisper(root, args.model)
     segments, info = model.transcribe(audio, language=args.language, beam_size=5, word_timestamps=True, vad_filter=True)
     transcript = []
     for segment in segments:
@@ -60,16 +76,7 @@ def run(args):
     turns = []
     diarization = {'state': 'completed'}
     try:
-        import sherpa_onnx
-        config = sherpa_onnx.OfflineSpeakerDiarizationConfig(
-            segmentation=sherpa_onnx.OfflineSpeakerSegmentationModelConfig(
-                pyannote=sherpa_onnx.OfflineSpeakerSegmentationPyannoteModelConfig(model=str(root / 'segmentation.onnx')), num_threads=2),
-            embedding=sherpa_onnx.SpeakerEmbeddingExtractorConfig(model=str(root / 'speaker.onnx'), num_threads=2),
-            clustering=sherpa_onnx.FastClusteringConfig(num_clusters=args.speakers, threshold=args.threshold),
-            min_duration_on=0.3, min_duration_off=0.5)
-        if not config.validate():
-            raise ValueError('分离模型配置不可用')
-        diarizer = sherpa_onnx.OfflineSpeakerDiarization(config)
+        diarizer = create_diarizer(root, args.speakers, args.threshold)
         turns = [{'startMs': round(t.start * 1000), 'endMs': round(t.end * 1000), 'speakerId': str(t.speaker)}
                  for t in diarizer.process(audio).sort_by_start_time()]
         if not turns:

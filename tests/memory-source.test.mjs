@@ -1,6 +1,6 @@
 import {test,after} from 'node:test';import assert from 'node:assert/strict';import {mkdtemp,rm} from 'node:fs/promises';import path from 'node:path';import os from 'node:os';
 const root=await mkdtemp(path.join(os.tmpdir(),'memory-source-'));Object.assign(process.env,{DATA_DIR:root,SEED_DEMO:'false',WORKER_MODE:'true'});
-const {db,save,remove,get}=await import('../server/store.mjs');const {memorySourceValid}=await import('../server/memory-source.mjs');const {memoryApplies}=await import('../server/retrieval-scope.mjs');const {patchMemory}=await import('../server/memory-state.mjs');
+const {db,save,remove,get}=await import('../server/store.mjs');const {memorySourceValid}=await import('../server/domain/memory/memory-source.mjs');const {memoryApplies}=await import('../server/retrieval/retrieval-scope.mjs');const {patchMemory}=await import('../server/domain/memory/memory-state.mjs');
 test('stale or removed note source immediately invalidates active memory without touching its vector/revision',async()=>{
  const note=save('note',{content:'来源'}),memory=save('memory',{content:'事实',status:'active',scope:'通用',sourceId:note.id,sourceRevision:note.revision});
  assert.equal(memoryApplies(memory),true);const changed=save('note',{...note,content:'新来源'},note.revision);assert.equal(memoryApplies(memory),false);assert.equal(get(memory.id,'memory').revision,memory.revision);
@@ -26,7 +26,7 @@ test('typed source revision survives activation, editing and restoration; later 
  const active=await patchMemory(memory.id,{revision:memory.revision,status:'active'},{check:async()=>null});
  assert.equal(active.sourceRevision,event.revision);
  const edit=await patchMemory(active.id,{revision:active.revision,content:'人工修订来源事实'});
- assert.equal(edit.sourceRevision,event.revision);assert.deepEqual(edit.sourceRef,memory.sourceRef);
+ assert.equal(edit.sourceRevision,event.revision);assert.deepEqual(edit.sourceRef,{...memory.sourceRef,revision:event.revision});
  const paused=await patchMemory(active.id,{revision:active.revision,status:'paused'});
  const restored=await patchMemory(paused.id,{revision:paused.revision,status:'active'},{check:async()=>null});
  assert.equal(restored.sourceRevision,event.revision);

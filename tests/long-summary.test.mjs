@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {splitSummaryText,summarizeLongText} from '../server/long-summary.mjs';
+import {splitSummaryText,summarizeLongText} from '../server/ai/long-summary.mjs';
 test('summary chunks retain every character, paragraph break and surrogate pair',()=>{
  const text='首段\n'+'字'.repeat(5998)+'😀'+'z'.repeat(5000)+'\n末尾重要待办';const chunks=splitSummaryText(text,6003);
  assert.equal(chunks.join(''),text);assert.ok(chunks.every(s=>s.length<=6003&&!/[\uD800-\uDBFF]$/.test(s)));

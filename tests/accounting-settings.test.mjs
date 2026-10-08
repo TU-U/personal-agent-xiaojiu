@@ -1,0 +1,21 @@
+import {test,after} from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+const dir=await mkdtemp(join(tmpdir(),'accounting-settings-'));Object.assign(process.env,{DATA_DIR:dir,SEED_DEMO:'false',WORKER_MODE:'true'});
+const {db,get}=await import('../server/store.mjs');
+const {updateAccountingBudget,currentAccountingCheck,completeAccountingCheck}=await import('../server/domain/accounting/accounting-settings.mjs');
+const {petReminders}=await import('../server/pet/pet-reminders.mjs');
+after(async()=>{db.close();await rm(dir,{recursive:true,force:true});});
+test('budget rejects stale edits; Shanghai monthly checks reach pet and leave only after explicit confirmation',()=>{
+ const first=updateAccountingBudget({revision:0,amount:'2000'}),second=updateAccountingBudget({revision:first.revision,amount:'2200'});
+ assert.throws(()=>updateAccountingBudget({revision:first.revision,amount:'1900'}),/其他页面/);assert.equal(get(second.id,'accountingBudget').amountCents,220000);
+ const clock=()=>Date.parse('2026-10-15T04:00:00Z');
+ const reminder=petReminders({clock}).items.find(i=>i.sourceKind==='accountingCheck');assert.equal(reminder.actionTarget.page,'accounting');assert.equal(reminder.occurrenceKey,'2026-10-15');
+ assert.equal(currentAccountingCheck({clock}).status,'pending');
+ const completed=completeAccountingCheck({day:'2026-10-15',confirmed:true},{clock});assert.equal(completed.status,'completed');assert.deepEqual(completeAccountingCheck({day:'2026-10-15',confirmed:true},{clock}),completed);
+ assert.equal(petReminders({clock}).items.some(i=>i.sourceKind==='accountingCheck'),false);
+ assert.equal(currentAccountingCheck({clock:()=>Date.parse('2026-11-01T04:00:00Z')}).status,'pending');
+ assert.equal(currentAccountingCheck({clock:()=>Date.parse('2026-11-02T04:00:00Z')}),null);
+});

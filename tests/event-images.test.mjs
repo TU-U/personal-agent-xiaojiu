@@ -1,7 +1,7 @@
 import {test,after} from 'node:test';import assert from 'node:assert/strict';
 import {mkdtemp,rm,writeFile,readFile,readdir,copyFile,mkdir} from 'node:fs/promises';import path from 'node:path';import os from 'node:os';
 const root=await mkdtemp(path.join(os.tmpdir(),'event-images-'));Object.assign(process.env,{DATA_DIR:root,SEED_DEMO:'false',WORKER_MODE:'true'});
-const {db,save,get,remove}=await import('../server/store.mjs');const {copyEventImages,discardEventImages,assertEventImageSource}=await import('../server/event-images.mjs');const {initializeEventLifecycle:create,editEventLifecycle:edit}=await import('../server/event-lifecycle.mjs');
+const {db,save,get,remove}=await import('../server/store.mjs');const {copyEventImages,discardEventImages,assertEventImageSource}=await import('../server/domain/events/event-images.mjs');const {initializeEventLifecycle:create,editEventLifecycle:edit}=await import('../server/domain/events/event-lifecycle.mjs');
 const uploads=path.join(root,'uploads');await mkdir(uploads,{recursive:true});
 async function note(prefix){const attachments=[];for(let i=0;i<2;i++){const key=prefix+i,bytes=Buffer.from('original-'+key);await writeFile(path.join(uploads,key),bytes);attachments.push({id:key,key,name:key+'.png',mime:'image/png',size:bytes.length});}return save('note',{title:prefix,content:'来源',attachments});}
 test('second copy failure cleans all staged files and preserves originals and saved event images',async()=>{

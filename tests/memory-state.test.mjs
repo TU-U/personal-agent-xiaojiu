@@ -4,7 +4,7 @@ import {mkdtemp,rm} from 'node:fs/promises';
 import os from 'node:os';import path from 'node:path';
 const root=await mkdtemp(path.join(os.tmpdir(),'memory-state-'));Object.assign(process.env,{DATA_DIR:root,SEED_DEMO:'false',WORKER_MODE:'true'});
 const {db,save,get,all}=await import('../server/store.mjs');
-const {patchMemory}=await import('../server/memory-state.mjs');
+const {patchMemory}=await import('../server/domain/memory/memory-state.mjs');
 const memory=(content,status='candidate')=>save('memory',{content,scope:'通用',status});
 const none={check:async()=>null};
 test('manual enable and paused restore check conflicts; only server-checked replacements may be applied',async()=>{

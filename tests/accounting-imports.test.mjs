@@ -1,0 +1,52 @@
+import {test,after} from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,rm,readFile,writeFile,readdir} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {randomUUID} from 'node:crypto';
+import {spawnSync} from 'node:child_process';
+import JSZip from 'jszip';
+const dir=await mkdtemp(join(tmpdir(),'accounting-batches-'));process.env.DATA_DIR=dir;process.env.SEED_DEMO='false';process.env.WORKER_MODE='true';
+const {db,all,get}=await import('../server/store.mjs');
+const {createAccountingImport,accountingImportView,accountingImportOriginal,listAccountingImports,reparseAccountingImport}=await import('../server/domain/accounting/accounting-imports.mjs');
+const {parseAccountingWorkbook}=await import('../server/domain/accounting/accounting-import-parser.mjs');
+const zip=new JSZip();zip.file('xl/workbook.xml','<workbook><sheets><sheet name="明细" r:id="rId1"/></sheets></workbook>');zip.file('xl/_rels/workbook.xml.rels','<Relationships><Relationship Id="rId1" Target="worksheets/sheet1.xml"/></Relationships>');
+const rows=[['交易时间','收/支','金额(元)','交易单号','当前状态'],['2026-10-08','支出','35.50','same-id','支付成功'],['2026-10-08','支出','35.50','same-id','支付成功'],['错误日期','未知','bad','bad-id','未知状态']];
+zip.file('xl/worksheets/sheet1.xml','<worksheet>'+rows.map((row,i)=>`<row r="${i+1}">${row.map((value,j)=>`<c r="${String.fromCharCode(65+j)}${i+1}" t="inlineStr"><is><t>${value}</t></is></c>`).join('')}</row>`).join('')+'</worksheet>');
+const bytes=await zip.generateAsync({type:'nodebuffer'}),file={originalname:'账单.xlsx',buffer:bytes};
+after(async()=>{db.close();await rm(dir,{recursive:true,force:true});});
+test('original and every parsed row persist before any transaction; replay is distinct from a new import',async()=>{
+ const body={opId:randomUUID()},first=await createAccountingImport(file,body);
+ assert.equal(first.status,'review');assert.equal(first.rows.length,3);assert.equal(first.totalRows,3);assert.equal(first.rows[2].status,'needs_review');assert.ok(first.rows[0].duplicateCandidates.length);assert.equal(first.original.key,undefined);
+ assert.equal(all('transaction').length,0);assert.deepEqual((await accountingImportOriginal(first.id)).bytes,bytes);
+ const replay=await createAccountingImport(file,body,{parse:()=>{throw new Error('must not parse again');}});assert.equal(replay.id,first.id);assert.equal(replay.revision,first.revision);
+ await assert.rejects(createAccountingImport({...file,buffer:Buffer.from('different')},body),/文件已变化/);
+ const next=await createAccountingImport(file,{opId:randomUUID()});assert.notEqual(next.id,first.id);assert.notEqual(get(next.id,'accountingImport').original.key,get(first.id,'accountingImport').original.key);
+ assert.equal(accountingImportView(first.id,{offset:1,limit:1}).rows[0].rowNumber,3);assert.throws(()=>accountingImportView(first.id,{offset:-1}),/分页/);
+ assert.ok(listAccountingImports().every(batch=>!('rows' in batch)&&!('key' in batch.original)));assert.equal(listAccountingImports({offset:1,limit:1}).length,1);assert.throws(()=>listAccountingImports({offset:-1}),/分页/);
+ const childEvidence=join(dir,'reopen-evidence.json');
+ const child=spawnSync(process.execPath,['--input-type=module','-e',`import {writeFileSync} from 'node:fs';import {accountingImportView,accountingImportOriginal} from './server/domain/accounting/accounting-imports.mjs';const v=accountingImportView(process.argv[1]);const f=await accountingImportOriginal(v.id);writeFileSync(process.argv[2],JSON.stringify({id:v.id,rows:v.totalRows,size:f.bytes.length}));`,first.id,childEvidence],{cwd:process.cwd(),env:process.env,encoding:'utf8',timeout:10000});
+ assert.equal(child.status,0,child.stderr);assert.deepEqual(JSON.parse(await readFile(childEvidence,'utf8')),{id:first.id,rows:3,size:bytes.length});
+});
+test('parse failures retain downloadable originals and explicit retries are versioned and idempotent',async()=>{
+ const failed=await createAccountingImport(file,{opId:randomUUID()},{parse:()=>{throw Object.assign(new Error('测试解析失败'),{status:400});}});
+ assert.equal(failed.status,'parse_failed');assert.match(failed.error,/测试解析失败/);assert.deepEqual((await accountingImportOriginal(failed.id)).bytes,bytes);
+ const request={opId:randomUUID(),revision:failed.revision},done=await reparseAccountingImport(failed.id,request);assert.equal(done.status,'review');assert.equal(done.totalRows,3);
+ assert.equal((await reparseAccountingImport(failed.id,request,{parse:()=>{throw new Error('unexpected');}})).revision,done.revision);
+ await assert.rejects(reparseAccountingImport(failed.id,{opId:randomUUID(),revision:failed.revision}),/版本已变化/);assert.equal(all('transaction').length,0);
+});
+test('concurrent upload replays the saved batch; stale parsing cannot overwrite a replacement result',async()=>{
+ let ready,release,calls=0;const entered=new Promise(resolve=>{ready=resolve;}),waiting=new Promise(resolve=>{release=resolve;}),body={opId:randomUUID()};
+ const first=createAccountingImport(file,body,{parse:async buffer=>{calls++;ready();await waiting;return parseAccountingWorkbook(buffer);}}).then(value=>({value}),error=>({error}));await entered;
+ const same=await createAccountingImport(file,body);assert.equal(same.status,'parsing');assert.equal(calls,1);
+ await assert.rejects(reparseAccountingImport(same.id,{opId:randomUUID(),revision:same.revision}),/仍在解析/);
+ const replacement=await reparseAccountingImport(same.id,{opId:randomUUID(),revision:same.revision},{now:same.parsingStartedAt+60001});assert.equal(replacement.status,'review');
+ release();assert.match((await first).error.message,/旧解析结果未覆盖/);assert.equal(accountingImportView(same.id).revision,replacement.revision);
+});
+test('missing and changed originals fail visibly; invalid uploads create neither files nor batches',async()=>{
+ const batch=await createAccountingImport(file,{opId:randomUUID()}),location=join(dir,'uploads',get(batch.id,'accountingImport').original.key),original=await readFile(location);await writeFile(location,'modified');
+ await assert.rejects(accountingImportOriginal(batch.id),/不一致/);await writeFile(location,original);await rm(location);await assert.rejects(accountingImportOriginal(batch.id),/暂时不可用/);
+ const before=(await readdir(join(dir,'uploads'))).length,count=all('accountingImport').length;
+ for(const badFile of [{...file,originalname:'x.csv'},{...file,buffer:Buffer.alloc(0)}])await assert.rejects(createAccountingImport(badFile,{opId:randomUUID()}));
+ await assert.rejects(createAccountingImport(file,{opId:'short'}));assert.equal((await readdir(join(dir,'uploads'))).length,before);assert.equal(all('accountingImport').length,count);
+});

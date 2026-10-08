@@ -1,6 +1,6 @@
 import {test,after} from 'node:test';import assert from 'node:assert/strict';import {mkdtemp,rm} from 'node:fs/promises';import os from 'node:os';import path from 'node:path';
 const root=await mkdtemp(path.join(os.tmpdir(),'supervision-schedule-'));Object.assign(process.env,{DATA_DIR:root,SEED_DEMO:'false',WORKER_MODE:'true'});
-const {db,save,get,setSetting}=await import('../server/store.mjs');const {scheduleRunAction:action}=await import('../server/supervision-schedule.mjs');
+const {db,save,get,setSetting}=await import('../server/store.mjs');const {scheduleRunAction:action}=await import('../server/pet/supervision/supervision-schedule.mjs');
 const at=Date.now(),clock=()=>at,iso=value=>new Date(value).toISOString();
 function fixture(){const task=save('workTask',{status:'running',supervisionStatus:'active',supervisionVersion:1,repeat:'once',requirement:'阅读',minutes:0});return save('workRun',{taskId:task.id,supervisionVersion:1,status:'open',day:'2026-09-29',logicalDay:'2026-09-29',scheduleVersion:1,scheduledStartAt:iso(at-5000),scheduledDueAt:iso(at-1000),evidenceRevision:2,seconds:40,timerAt:null,reminders:[]});}
 test('reschedule preserves logical day, evidence and duration; retries and stale edits cannot duplicate or overwrite',()=>{

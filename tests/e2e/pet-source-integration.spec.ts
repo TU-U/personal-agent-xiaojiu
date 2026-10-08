@@ -1,0 +1,24 @@
+import {test,expect} from '@playwright/test';
+test('six reminder sources coexist and accounting/research require source confirmation',async({page})=>{
+ test.skip(process.env.SHIGUANG_E2E_PET_SOURCES!=='1','Requires isolated controlled-date fixture');
+ await page.clock.setFixedTime(new Date('2026-10-15T04:00:00Z'));
+ await page.goto('/');await page.getByRole('button',{name:'进入演示空间'}).click();await expect(page.locator('.app-shell')).toBeVisible();
+ const result=await page.request.post('/api/v1/research-tasks',{data:{opId:crypto.randomUUID(),executionMode:'research',references:[],researchBrief:{topic:'统一提示调研',background:'',questions:['怎样学习事务？'],constraints:'',type:'learning',asOf:'',expectedOutput:'学习步骤',web:false}}});expect(result.ok()).toBe(true);const research=await result.json();
+ await expect.poll(async()=>(await (await page.request.get('/api/v1/research-tasks/'+research.id)).json()).status).toBe('draft');
+ await page.reload();const read=async()=> (await (await page.request.get('/api/v1/pet/reminders')).json());const initial=await read();expect(initial.items.map((i:any)=>i.sourceKind).sort()).toEqual(['accountingCheck','event','memory','todo','workRun','workTask'].sort());expect(initial.total).toBe(6);
+ const pet=page.getByRole('button',{name:/小九现在/}),table=page.getByLabel('小九提示表');await pet.hover();await expect(table.locator('article')).toHaveCount(6);await expect(page.getByLabel('6 项待处理提示')).toBeVisible();
+ expect((await read()).snapshot).toBe(initial.snapshot);
+ await table.getByRole('button',{name:'查看：月中账单检查',exact:true}).click();await expect(page).toHaveURL(/#accounting$/);expect((await read()).snapshot).toBe(initial.snapshot);
+ await page.getByRole('button',{name:'我已核对本次账单',exact:true}).click();await expect.poll(async()=>(await read()).total).toBe(5);await pet.hover();await expect(table.getByRole('button',{name:'查看：月中账单检查',exact:true})).toHaveCount(0);
+ await table.getByRole('button',{name:'查看：统一提示调研',exact:true}).click();const modal=page.getByRole('dialog',{name:'调研计划与进度'});await expect(modal.getByRole('button',{name:'确认此计划并开始调研'})).toBeVisible();expect((await (await page.request.get('/api/v1/research-tasks/'+research.id)).json()).status).toBe('draft');expect((await read()).total).toBe(5);
+ await modal.getByRole('button',{name:'确认此计划并开始调研'}).click();await expect(modal.getByRole('heading',{name:'调研报告',exact:true})).toBeVisible();await modal.getByRole('button',{name:'关闭窗口'}).click();await pet.hover();await expect(table.locator('article')).toHaveCount(5);
+ await table.getByRole('button',{name:'查看：统一提示调研',exact:true}).click();await modal.getByRole('button',{name:'我已查看本版报告',exact:true}).click();await expect(modal).toContainText('本版报告已查看');await modal.getByRole('button',{name:'关闭窗口'}).click();await pet.hover();await expect(table.locator('article')).toHaveCount(4);
+ const remaining=await read();expect(remaining.items.map((i:any)=>i.id).sort()).toEqual(initial.items.filter((i:any)=>!['accountingCheck','workTask'].includes(i.sourceKind)).map((i:any)=>i.id).sort());
+ const acknowledged=await (await page.request.get('/api/v1/research-tasks/'+research.id)).json();
+ const handoff=await page.request.post('/api/v1/research-tasks/'+research.id+'/action',{data:{opId:crypto.randomUUID(),action:'handoff',revision:acknowledged.revision,brief:'补充核对事务资料'}});expect(handoff.ok()).toBe(true);const waiting=await handoff.json();
+ const external=await page.request.post('/api/v1/research-tasks/'+research.id+'/action',{data:{opId:crypto.randomUUID(),action:'external',revision:waiting.revision,handoffId:waiting.handoff.id,text:'补充资料：回滚可以撤销未提交修改。',urls:[]}});expect(external.ok()).toBe(true);
+ await expect.poll(async()=>(await (await page.request.get('/api/v1/research-tasks/'+research.id)).json()).artifacts.length).toBe(2);
+ const latest=await (await page.request.get('/api/v1/research-tasks/'+research.id)).json();const stale=await page.request.post('/api/v1/research-tasks/'+research.id+'/action',{data:{opId:crypto.randomUUID(),action:'acknowledge_report',revision:latest.revision,artifactId:acknowledged.artifacts[0].id,artifactRevision:acknowledged.artifacts[0].revision,approved:true}});expect(stale.status()).toBe(409);
+ await page.evaluate(()=>window.dispatchEvent(new Event('business-changed')));await pet.hover();await expect(table.locator('article')).toHaveCount(5);await expect(table.getByRole('button',{name:'查看：统一提示调研',exact:true})).toBeVisible();
+ const checks=await (await page.request.get('/api/v1/accounting/checks')).json();expect(checks.current.status).toBe('completed');expect(checks.history[0].day).toBe('2026-10-15');
+});

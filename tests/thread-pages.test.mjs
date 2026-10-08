@@ -1,6 +1,6 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import {mkdtemp,rm} from 'node:fs/promises';import path from 'node:path';import os from 'node:os';import express from 'express';
 test('directory and history expose old topics with checked cursors and legacy identities',async()=>{
- const dir=await mkdtemp(path.join(os.tmpdir(),'shiguang-thread-pages-'));process.env.DATA_DIR=dir;process.env.SEED_DEMO='false';process.env.WORKER_MODE='true';const {save,db,get}=await import('../server/store.mjs');const {installSourceThreads,markThreadDeleted,threadUnavailable}=await import('../server/source-threads.mjs');
+ const dir=await mkdtemp(path.join(os.tmpdir(),'shiguang-thread-pages-'));process.env.DATA_DIR=dir;process.env.SEED_DEMO='false';process.env.WORKER_MODE='true';const {save,db,get}=await import('../server/store.mjs');const {installSourceThreads,markThreadDeleted,threadUnavailable}=await import('../server/agent/source-threads.mjs');
  const old=save('conversation',{query:'旧独立话题',body:'原文不变',createdAt:'2020-01-01T00:00:00Z'});
  const long=save('thread',{title:'长话题',status:'active'});for(let i=0;i<205;i++)save('conversation',{threadId:long.id,threadTitle:'长话题',query:'轮次'+i,body:'历史回答'+i,createdAt:new Date(1700000000000+i*1000).toISOString()});
  for(let i=0;i<33;i++)save('thread',{title:'空话题'+i,status:'active'});

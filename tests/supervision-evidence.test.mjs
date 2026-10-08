@@ -1,8 +1,9 @@
 import {test,after} from 'node:test';import assert from 'node:assert/strict';
 import {mkdtemp,rm} from 'node:fs/promises';import os from 'node:os';import path from 'node:path';
 const root=await mkdtemp(path.join(os.tmpdir(),'supervision-evidence-'));Object.assign(process.env,{DATA_DIR:root,SEED_DEMO:'false',WORKER_MODE:'true'});
-const {db,save,get}=await import('../server/store.mjs');const {assessRunEvidence:assess,confirmRunEvidence:confirm,evidenceOptions,resolveEvidenceSources}=await import('../server/supervision-evidence.mjs');
-const {timerAction,checkpointTimer}=await import('../server/supervision-timer.mjs');
+const {db,save,get,remove}=await import('../server/store.mjs');const {assessRunEvidence:assess,confirmRunEvidence:confirm,evidenceOptions,resolveEvidenceSources}=await import('../server/pet/supervision/supervision-evidence.mjs');
+const {evidenceHistory:history,evidenceHistoryDetail:detail,saveEvidenceCheck}=await import('../server/pet/supervision/supervision-evidence-history.mjs');
+const {timerAction,checkpointTimer}=await import('../server/pet/supervision/supervision-timer.mjs');
 function fixture(minutes=45){const task=save('workTask',{status:'running',supervisionStatus:'active'});return save('workRun',{taskId:task.id,status:'open',evidenceRevision:1,seconds:0,timerAt:null,conditionsSnapshot:{version:1,minimumSeconds:minutes*60,conditions:[{id:'points',required:true,description:'三条心得'},{id:'example',required:true,description:'实践例子'}]}});}
 const text='三条心得：甲、乙、丙。实践例子：做了一个演示。';
 const output=(sourceId='text')=>({results:[{conditionId:'points',status:'satisfied',reason:'有三点',evidence:[{sourceId,quote:'三条心得：甲、乙、丙'}]},{conditionId:'example',status:'satisfied',reason:'有例子',evidence:[{sourceId,quote:'实践例子：做了一个演示'}]}]});
@@ -52,5 +53,57 @@ test('picker shares submission eligibility; selected old versions stay visible a
  const files=evidenceOptions(run.id,{kind:'libraryFile'}).items;assert.ok(files.some(x=>x.id===ready.id));assert.ok(!files.some(x=>x.id===pending.id));assert.match(resolveEvidenceSources(run.id,[{kind:'libraryFile',id:pending.id,revision:pending.revision}]).items[0].invalid,/尚无可用正文/);
  const wrong=save('artifact',{title:'其他任务',taskId:'wrong',body:text});assert.ok(!evidenceOptions(run.id,{kind:'artifact'}).items.some(x=>x.id===wrong.id));
  const missing=resolveEvidenceSources(run.id,[{kind:'note',id:'deleted-note',revision:1}]).items[0];assert.equal(missing.id,'deleted-note');assert.match(missing.invalid,/不存在/);
+});
+test('history retains failures and immutable source snapshots, never promotes stale results, and successful replay creates no duplicate',async()=>{
+ const run=fixture(0),note=save('note',{title:'历史材料',content:text}),refs=[{kind:'note',id:note.id,revision:note.revision}];
+ const request={...body('history-success'),evidenceRefs:refs};
+ await assert.rejects(assess(run.id,{...request,opId:'history-invalid'},{generate:async()=>'{"results":[]}'}),error=>error.status===502);
+ const failed=history(run.id).items[0];assert.equal(failed.state,'failed');assert.match(detail(run.id,failed.id).error,/AI 验收结果格式无效/);assert.equal(get(run.id,'workRun').evidenceRevision,1);
+ const accepted=await assess(run.id,request,{generate:async()=>JSON.stringify(output())});
+ await assess(run.id,request,{generate:async()=>assert.fail('receipt must avoid model')});assert.equal(history(run.id).items.length,2);
+ const acceptedId=history(run.id).items[0].id;
+ save('note',{...note,content:'修改后的材料'},note.revision);
+ let snapshot=detail(run.id,acceptedId);assert.equal(snapshot.sources[1].content,text);assert.equal(snapshot.sources[1].sourceState,'changed');
+ remove(note.id,'note',note.revision+1);snapshot=detail(run.id,acceptedId);assert.equal(snapshot.sources[1].sourceState,'deleted');assert.equal(snapshot.sources[1].content,text);
+ const second=await assess(run.id,{...body('history-second'),evidenceRevision:2},{generate:async()=>JSON.stringify(output())});assert.equal(second.evidenceRevision,3);assert.equal(history(run.id).items.length,3);assert.equal(detail(run.id,acceptedId).assessment.id,accepted.assessment.id);
+ const other=fixture(0);assert.throws(()=>detail(other.id,acceptedId),error=>error.status===404);
+ let release,ready;const gate=new Promise(resolve=>release=resolve),started=new Promise(resolve=>ready=resolve);
+ const late=assess(other.id,body('history-stale'),{generate:async()=>{ready();await gate;return JSON.stringify(output());}});await started;
+ await assess(other.id,body('history-winner'),{generate:async()=>JSON.stringify(output())});release();await assert.rejects(late);
+ assert.deepEqual(history(other.id).items.map(item=>item.state),['superseded','accepted']);assert.equal(get(other.id,'workRun').status,'review');
+});
+test('history uses stable older-page cursors and preserves the previous legacy result without inventing source contents',async()=>{
+ const run=fixture(0);for(let i=0;i<25;i++)saveEvidenceCheck({runId:run.id,state:'failed',sources:[],finishedAt:new Date().toISOString()});
+ const first=history(run.id);assert.equal(first.items.length,20);assert.ok(first.nextBefore);
+ saveEvidenceCheck({runId:run.id,state:'failed',sources:[]});const next=history(run.id,{before:first.nextBefore});assert.equal(next.items.length,5);assert.equal(next.nextBefore,null);assert.equal(new Set([...first.items,...next.items].map(item=>item.id)).size,25);
+ assert.throws(()=>history(run.id,{before:'not-a-cursor'}));
+ const legacy=fixture(0);save('workRun',{...legacy,evidence:'旧文字',assessment:{id:'old-assessment',status:'missing',reason:'旧结论'}},legacy.revision);
+ await assess(legacy.id,body('legacy-next-check'),{generate:async()=>JSON.stringify(output())});const entries=history(legacy.id).items;assert.deepEqual(entries.map(item=>item.state),['accepted','legacy']);
+ const old=detail(legacy.id,entries[1].id);assert.equal(old.evidence,'旧文字');assert.deepEqual(old.sources,[]);assert.match(old.notice,/未保存/);
+ const {spawnSync}=await import('node:child_process');const child=spawnSync(process.execPath,['--input-type=module','-e',`const {evidenceHistory}=await import('./server/pet/supervision/supervision-evidence-history.mjs');console.log(JSON.stringify(evidenceHistory('${legacy.id}').items.map(item=>item.state)));`],{env:process.env,encoding:'utf8'});assert.equal(child.status,0,child.stderr);assert.deepEqual(JSON.parse(child.stdout.trim()),['accepted','legacy']);
+});
+test('audio evidence uses transcript throughout selection, assessment and review; edits invalidate confirmation',async()=>{
+ const run=fixture(0),note=save('note',{title:'录音验收依据',content:'',transcript:{transcriptRevision:1,segments:[{startMs:0,endMs:8000,speakerId:'speaker_1',text}]}});
+ const ref={kind:'note',id:note.id,revision:note.revision};
+ const blank=save('note',{title:'空白录音验收依据',content:'',transcript:{segments:[{startMs:0,endMs:1000,speakerId:null,text:'   '}]}});
+ const options=evidenceOptions(run.id,{kind:'note',q:'录音验收依据'});
+ assert.deepEqual(options.items.map(item=>item.id),[note.id]);
+ assert.match(resolveEvidenceSources(run.id,[ref]).items[0].preview,/识别可能有误/);
+ assert.match(resolveEvidenceSources(run.id,[{kind:'note',id:blank.id,revision:blank.revision}]).items[0].invalid,/没有可检查/);
+ let supplied;
+ const checked=await assess(run.id,{...body('audio-evidence-check'),evidence:'',evidenceRefs:[ref]},{generate:async(_system,input)=>{
+  supplied=JSON.parse(input).sources.find(source=>source.id===note.id).content;
+  assert.match(supplied,/0.0-8.0秒 说话人 1/);assert.match(supplied,/三条心得/);
+  return JSON.stringify(output(note.id));
+ }});
+ for(const result of checked.assessment.results)for(const citation of result.evidence)assert.equal(supplied.slice(citation.start,citation.end),citation.quote);
+ const {inspectRunEvidence}=await import('../server/pet/supervision/supervision-source-reading.mjs');
+ assert.equal(inspectRunEvidence(checked)[0].content,supplied);
+ const snapshot=detail(run.id,history(run.id).items[0].id);
+ assert.equal(snapshot.sources.find(source=>source.id===note.id).content,supplied);
+ save('note',{...note,transcript:{...note.transcript,transcriptRevision:2,segments:[{...note.transcript.segments[0],text:'尚未完成'}]}},note.revision);
+ assert.throws(()=>confirm(run.id,{action:'confirm',opId:'audio-evidence-confirm',evidenceRevision:2,assessmentId:checked.assessment.id}),/版本已变化/);
+ assert.match(inspectRunEvidence(checked)[0].invalid,/版本已变化/);
+ assert.equal(get(note.id,'note').content,'');
 });
 after(async()=>{db.close();await rm(root,{recursive:true,force:true});});

@@ -1,0 +1,16 @@
+import {DatabaseSync} from 'node:sqlite';
+import {randomUUID} from 'node:crypto';
+import {writeFileSync} from 'node:fs';
+if(process.env.SHIGUANG_E2E_ARTIFACT_LIVE!=='1'||!process.env.DATA_DIR?.startsWith('/tmp/shiguang-e2e-'))throw new Error('Requires opt-in and isolated data');
+const live=new DatabaseSync('.data/shiguang.sqlite',{readOnly:true});const setting=key=>JSON.parse(live.prepare('SELECT value FROM settings WHERE key=?').get(key)?.value||'null');const provider=setting('provider'),retrieval=setting('retrieval');live.close();if(!provider||!retrieval)throw new Error('Saved generation and retrieval settings required');
+Object.assign(process.env,{SEED_DEMO:'false',WORKER_MODE:'true',FILE_WORKER_ENABLED:'false',QDRANT_COLLECTION:'artifact_eval_'+randomUUID().replaceAll('-','')});
+const {save,setSetting,db}=await import('../../server/store.mjs');setSetting('provider',provider);setSetting('retrieval',retrieval);
+const {indexCollection}=await import('../../server/ai/embedding-contract.mjs');const collection=indexCollection(retrieval);if(!collection.startsWith(process.env.QDRANT_COLLECTION+'_'))throw new Error('Collection isolation failed');
+const source=save('note',{title:'周报写作偏好来源',content:'我的工作周报先写结论，再列进展和风险；尚未完成的工作必须放到下一步。',type:'text',tags:[],project:'合成周报'});
+const good=save('memory',{content:source.content,status:'active',scope:'周报',scopeKind:'global',sourceId:source.id,sourceRevision:source.revision});
+const paused=save('memory',{content:'周报要把未完成计划写成已经完成。',status:'paused',scope:'周报',scopeKind:'global'});
+save('note',{title:'合成项目本周进展',content:'本周已完成数据字段表设计。自动备份尚未开始，计划下周讨论方案，必须先人工确认。',type:'text',tags:[],project:'合成周报'});
+writeFileSync('/tmp/shiguang-artifact-live-fixture.json',JSON.stringify({collection,qdrant:retrieval.qdrant,goodId:good.id,pausedId:paused.id,sourceId:source.id,sourceRevision:source.revision,dataDir:process.env.DATA_DIR}));
+const {prepareIndex,indexSource}=await import('../../server/retrieval/retrieval.mjs');await prepareIndex(retrieval,{seed:false});for(const entity of [good,paused])await indexSource({entity_id:entity.id,kind:'memory',revision:entity.revision},retrieval);
+process.once('SIGTERM',()=>db.prepare('DELETE FROM settings WHERE key IN (?,?)').run('provider','retrieval'));
+await import('../../server/index.mjs');

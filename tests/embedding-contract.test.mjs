@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {qwenModel,qwenProfile,indexDescriptor,indexCollection,embeddingInput,checkedVector} from '../server/embedding-contract.mjs';
+import {qwenModel,qwenProfile,indexDescriptor,indexCollection,embeddingInput,checkedVector} from '../server/ai/embedding-contract.mjs';
 test('Qwen has a pinned distinct index, instructed queries, untouched documents and finite 1024-dimensional normalized vectors',()=>{
  const c={model:'qwen3-embedding-0.6b',indexProfile:qwenProfile};
  assert.equal(embeddingInput('上海读书活动',c,'query'),`Instruct: ${qwenModel.queryInstruction}\nQuery:上海读书活动`);

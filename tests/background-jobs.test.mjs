@@ -8,7 +8,7 @@ import { createServer } from 'node:net';
 import { once } from 'node:events';
 import path from 'node:path';
 import os from 'node:os';
-import { createJobRepository, createBackgroundQueue } from '../server/background-jobs.mjs';
+import { createJobRepository, createBackgroundQueue } from '../server/core/background-jobs.mjs';
 
 const input = key => ({key,kind:'parse',entityId:'source',revision:1,payload:{text:'资料'}});
 const waitFor = async fn => { for(let i=0;i<120;i++){if(await fn())return;await new Promise(r=>setTimeout(r,50));}throw new Error('状态等待超时'); };

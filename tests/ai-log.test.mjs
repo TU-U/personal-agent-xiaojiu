@@ -7,8 +7,8 @@ import path from 'node:path';
 const dir=mkdtempSync(path.join(os.tmpdir(),'shiguang-ai-log-'));
 process.env.DATA_DIR=dir;process.env.SEED_DEMO='false';
 const {setSetting,db}=await import('../server/store.mjs');
-const {complete}=await import('../server/engine.mjs');
-const {AI_LOG_FILE,recentAiEvents}=await import('../server/ai-log.mjs');
+const {complete}=await import('../server/ai/engine.mjs');
+const {AI_LOG_FILE,recentAiEvents}=await import('../server/core/ai-log.mjs');
 const originalFetch=globalThis.fetch,originalLog=console.log;
 const key='sk-testsecret000000000000';
 setSetting('provider',{baseUrl:'https://api.deepseek.com',model:'deepseek-flash',apiKey:key});
@@ -41,7 +41,7 @@ test('AI calls log prompts, result metadata and errors without exposing the key'
 after(()=>{globalThis.fetch=originalFetch;console.log=originalLog;db.close();rmSync(dir,{recursive:true,force:true});});
 
 test('logs redact arbitrary configured credentials, nested secrets and inline image bytes',async()=>{
- const {logAiEvent,registerAiSecret}=await import('../server/ai-log.mjs');
+ const {logAiEvent,registerAiSecret}=await import('../server/core/ai-log.mjs');
  const secret='opaque-secret-not-sk-123';registerAiSecret(secret);
  const result=logAiEvent({stage:'error',error:`upstream echoed ${secret}`,nested:{apiKey:'another-value',image:'data:image/png;base64,YWJjZGVm'},request:{Authorization:'Bearer token'}});
  const serialized=JSON.stringify(result);assert.equal(serialized.includes(secret),false);assert.equal(serialized.includes('another-value'),false);assert.equal(serialized.includes('YWJjZGVm'),false);

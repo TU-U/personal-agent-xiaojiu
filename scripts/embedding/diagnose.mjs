@@ -1,8 +1,8 @@
 process.env.WORKER_MODE='true';process.env.SEED_DEMO='false';
 const {readFile,writeFile}=await import('node:fs/promises');
-const {getIndexMigration}=await import('../../server/index-migration.mjs');
-const {embeddingInput}=await import('../../server/embedding-contract.mjs');
-const {lexicalVector}=await import('../../server/retrieval.mjs');
+const {getIndexMigration}=await import('../../server/retrieval/index/index-migration.mjs');
+const {embeddingInput}=await import('../../server/ai/embedding-contract.mjs');
+const {lexicalVector}=await import('../../server/retrieval/retrieval.mjs');
 const labels=JSON.parse(await readFile('artifacts/retrieval-questions-v1.json','utf8'));
 const m=getIndexMigration(process.argv[2]);if(!m)throw new Error('Migration ID required');
 const titles=new Map(labels.corpus.map(s=>[s.id,s.title]));

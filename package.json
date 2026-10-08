@@ -11,10 +11,17 @@
     "test:e2e": "playwright test",
     "check": "tsc -b",
     "predev": "node scripts/ensure-queue.mjs || true",
-    "prestart": "node scripts/ensure-queue.mjs || true"
+    "prestart": "node scripts/ensure-queue.mjs || true",
+    "lint": "npm run lint:accounting",
+    "lint:accounting": "eslint \"src/Accounting*.tsx\" \"src/accountingRequest.ts\" \"server/domain/accounting/accounting*.mjs\" \"tests/accounting*.test.mjs\" \"tests/e2e/accounting*.{ts,mjs}\" --max-warnings 0",
+    "contracts:generate": "node contracts/scripts/generate.mjs",
+    "contracts:check": "node contracts/scripts/generate.mjs --check && node scripts/check-contracts.mjs",
+    "contracts:inventory": "node scripts/check-contracts.mjs --write-inventory"
   },
   "dependencies": {
     "@langchain/langgraph": "^1.4.18",
+    "@langchain/langgraph-checkpoint": "^1.1.5",
+    "ajv": "8.20.0",
     "bullmq": "^6.3.9",
     "express": "^5.1.0",
     "ioredis": "^6.0.0",
@@ -31,12 +38,17 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.55.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "@vitejs/plugin-react": "^4.7.0",
     "concurrently": "^9.2.1",
+    "eslint": "^10.12.0",
+    "globals": "^16.5.0",
+    "openapi-typescript": "7.13.0",
     "typescript": "^5.9.2",
+    "typescript-eslint": "^8.71.1",
     "vite": "^6.3.5"
   }
 }

@@ -3,8 +3,8 @@ test('manual activation shows conflict evidence and requires explicit replacemen
  let old={id:'old-memory',revision:1,title:'旧记忆',content:'我住深圳',scope:'通用',status:'active',createdAt:'2026-09-29',updatedAt:'2026-09-29'};
  let candidate={...old,id:'new-memory',title:'新记忆',content:'我住广州',status:'candidate'};
  let requests=0;
- await page.route('**/api/bootstrap',async route=>{const response=await route.fetch();const data=await response.json();await route.fulfill({json:{...data,memories:[old,candidate]}});});
- await page.route('**/api/memories/new-memory',route=>{
+ await page.route('**/api/v1/bootstrap',async route=>{const response=await route.fetch();const data=await response.json();await route.fulfill({json:{...data,memories:[old,candidate]}});});
+ await page.route('**/api/v1/memories/new-memory',route=>{
   const body=route.request().postDataJSON();requests++;
   if(requests===1){candidate={...candidate,revision:2};return route.fulfill({status:409,json:{error:'发现记忆冲突，请核对新旧内容后选择。',current:{memory:candidate,conflicts:[{id:old.id,revision:old.revision,content:old.content,reason:'同一用户当前居住地发生变化'}]}}});}
   expect(body).toEqual({opId:expect.any(String),revision:2,status:'active',replace:[{id:old.id,revision:1}]});old={...old,revision:2,status:'paused'};candidate={...candidate,revision:3,status:'active'};return route.fulfill({json:candidate});

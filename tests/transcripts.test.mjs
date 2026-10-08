@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {validateTranscript,transcriptText} from '../server/transcripts.mjs';
+import {validateTranscript,transcriptText} from '../server/ai/transcripts.mjs';
 const result=()=>({durationMs:5000,language:'zh',model:'local/test',diarization:{state:'completed'},segments:[{startMs:0,endMs:1000,speakerId:'speaker_1',text:'保留原始内容。'},{startMs:1000,endMs:2000,speakerId:'speaker_2',text:'Keep the English words.'}]});
 test('transcript contract preserves text and allows honest partial diarization failure',()=>{
  const full=result();assert.deepEqual(validateTranscript(full),full);assert.match(transcriptText(full),/Keep the English/);

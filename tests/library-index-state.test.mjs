@@ -6,9 +6,9 @@ import os from 'node:os';
 const directory=mkdtempSync(path.join(os.tmpdir(),'library-index-status-'));
 Object.assign(process.env,{DATA_DIR:directory,SEED_DEMO:'false',WORKER_MODE:'true'});
 const {db,save,get,setSetting}=await import('../server/store.mjs');
-await import('../server/index-migration.mjs');
-const {indexCollection}=await import('../server/embedding-contract.mjs');
-const {libraryIndexState,retryLibraryIndex}=await import('../server/library-index-state.mjs');
+await import('../server/retrieval/index/index-migration.mjs');
+const {indexCollection}=await import('../server/ai/embedding-contract.mjs');
+const {libraryIndexState,retryLibraryIndex}=await import('../server/domain/library/library-index-state.mjs');
 const config={model:'test-embedding',qdrant:'http://qdrant.test',embedding:'http://embedding.test'};
 const collection=indexCollection(config);
 test('parsing ready is not indexing ready; configuration, receipts, errors and source revisions remain distinct',()=>{

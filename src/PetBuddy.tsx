@@ -16,7 +16,7 @@ import calmPet from '../assets/小九-端正坐好萌萌地看着你.png';
 import delightedPet from '../assets/小九-非常开心地看着你.png';
 
 type PetMood = 'calm' | 'curious' | 'shy' | 'happy' | 'giggle' | 'thinking' | 'groomed' | 'sullen' | 'tired' | 'sleepy';
-type PetEvent = 'HOVER' | 'PET' | 'CHAT' | 'CHAT_OK' | 'CHAT_ERROR' | 'NAP' | 'WAKE' | 'TIMEOUT' | 'OVERSTIMULATED';
+type PetEvent = 'HOVER' | 'PET' | 'CHAT' | 'CHAT_OK' | 'CHAT_ERROR' | 'NAP' | 'WAKE' | 'TIMEOUT' | 'OVERSTIMULATED' | 'COMPLETED' | 'CONCERN';
 const transitions: Record<PetMood, Partial<Record<PetEvent, PetMood>>> = {
   // Opening the panel is not alarming by itself; her default, calm portrait stays visible.
   calm: { PET: 'happy', CHAT: 'thinking', NAP: 'sleepy', OVERSTIMULATED: 'sullen' },
@@ -51,6 +51,8 @@ const moodNames: Record<PetMood, string> = {
 };
 
 function transition(mood: PetMood, event: PetEvent): PetMood {
+  if(event==='COMPLETED')return 'happy';
+  if(event==='CONCERN')return 'thinking';
   return transitions[mood][event] ?? mood;
 }
 
@@ -66,6 +68,9 @@ export default function PetBuddy() {
   const [jelly, setJelly] = useState(false);
   const [reply, setReply] = useState('光线暗一点，我会更安心。圆圆的玩具和温柔贴贴，我都喜欢。');
   const [showSpeech, setShowSpeech] = useState(false);
+  const [businessFeedback,setBusinessFeedback]=useState('');
+  const feedbackSeen=useRef<Set<string>|null>(null);
+  const moodVersion=useRef(0);
   const [messages, setMessages] = useState<PetChatMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [chatBusy, setChatBusy] = useState(false);
@@ -85,6 +90,8 @@ export default function PetBuddy() {
 
   function setPetMood(event: PetEvent) {
     if(moodTimer.current)clearTimeout(moodTimer.current);
+    moodVersion.current++;
+    if(!['COMPLETED','CONCERN','HOVER'].includes(event))setBusinessFeedback('');
     setMoodTick(value=>value+1);
     setMood(current => transition(current, event));
   }
@@ -102,10 +109,23 @@ export default function PetBuddy() {
   useEffect(() => {
     if (moodTimer.current) window.clearTimeout(moodTimer.current);
     if (mood !== 'calm') {
-      moodTimer.current = window.setTimeout(() => setPetMood('TIMEOUT'), mood === 'sleepy' ? 14_000 : 7_000);
+      const version=moodVersion.current;
+      moodTimer.current = window.setTimeout(() => {if(version===moodVersion.current)setPetMood('TIMEOUT');}, mood === 'sleepy' ? 14_000 : 7_000);
     }
     return () => { if (moodTimer.current) window.clearTimeout(moodTimer.current); };
   }, [mood,moodTick]);
+
+  useEffect(()=>{
+    if(reminders.error||!reminders.data?.feedback)return;
+    const events=reminders.data.feedback;
+    // First snapshot is a baseline, including after reload: do not celebrate old history.
+    if(!feedbackSeen.current){feedbackSeen.current=new Set(events.map(event=>event.id));return;}
+    const fresh=events.filter(event=>!feedbackSeen.current!.has(event.id));
+    events.forEach(event=>feedbackSeen.current!.add(event.id));
+    const event=fresh[0];if(!event||chatOpen||chatBusy)return;
+    setPetMood(event.kind==='completed'?'COMPLETED':'CONCERN');
+    setBusinessFeedback(event.message);keepHerAwake();
+  },[reminders.data,reminders.error,chatOpen,chatBusy]);
 
   useEffect(() => {
     if (!jelly) return;
@@ -265,7 +285,7 @@ export default function PetBuddy() {
         </header>
         <PetReminderTable state={reminders} onOpen={item=>{openPetReminder(item);dismiss();}}/>
         <div className="pet-personality">
-          <p>{reply}</p>
+          <p>{businessFeedback||reply}</p>
           <div className="pet-traits"><span><Moon size={12}/>喜欢暗一点</span><span><Circle size={12}/>圆圆的玩具</span><span><Heart size={12}/>温柔贴贴</span></div>
         </div>
         <div className="pet-actions" role="group" aria-label="和小九互动">
@@ -286,7 +306,7 @@ export default function PetBuddy() {
           <small className="pet-chat-hint">交流可参考相关、已确认的通用记忆；不会自动带入全部任务、要事或财务资料。提示表独立展示。</small>
         </div>}
       </section>
-      {!visible && showSpeech && reply && <span className="pet-buddy-speech" aria-live="polite">{reply}</span>}
+      {!visible && (businessFeedback||showSpeech&&reply) && <span className="pet-buddy-speech" aria-live="polite">{businessFeedback||reply}</span>}
       {reminders.error&&<span className="pet-pending-dot" role="status" aria-label="提示获取失败，请打开提示表重试">!</span>}
       {pendingCount>0&&<span className="pet-pending-dot" role="status" aria-label={`${pendingCount} 项待处理提示`}>{pendingCount}</span>}
       <button

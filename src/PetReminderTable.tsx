@@ -2,7 +2,8 @@ import {useCallback,useEffect,useRef,useState} from 'react';
 import {api} from './api';
 
 export type PetReminder={id:string;sourceKind:string;sourceId:string;sourceRevision:number;occurrenceKey:string;title:string;message:string;count:number;dueAt:string|null;actionTarget:{page:string;id:string;threadId?:string;runId?:string;history?:boolean;day?:string;occurrenceId?:string}};
-type Snapshot={snapshot:string;cursor:number;total:number;items:PetReminder[]};
+export type PetFeedback={id:string;kind:'completed'|'concern';at:string;message:string;taskId:string;runId:string};
+type Snapshot={feedback?:PetFeedback[];snapshot:string;cursor:number;total:number;items:PetReminder[]};
 export function usePetReminders(cursor:number){
  const [data,setData]=useState<Snapshot|null>(null),[error,setError]=useState(''),[loading,setLoading]=useState(true);
  const epoch=useRef(0),controller=useRef<AbortController|null>(null),inFlight=useRef(false);

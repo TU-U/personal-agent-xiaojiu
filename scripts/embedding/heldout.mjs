@@ -16,10 +16,10 @@ original.close();if(!migration)throw new Error('Ready source migration required'
 const config=JSON.parse(migration.target);
 const rows=JSON.parse(await readFile(path.join(privateRoot,'corpus.json'),'utf8'));
 const {db,getSetting,setSetting}=await import('../../server/store.mjs');
-const {prepareIndex,indexSource,searchIndex,scrollIndex}=await import('../../server/retrieval.mjs');
-const {indexCollection}=await import('../../server/embedding-contract.mjs');
-const {splitText}=await import('../../server/library.mjs');
-const {relevancePolicy}=await import('../../server/retrieval-relevance.mjs');
+const {prepareIndex,indexSource,searchIndex,scrollIndex}=await import('../../server/retrieval/retrieval.mjs');
+const {indexCollection}=await import('../../server/ai/embedding-contract.mjs');
+const {splitText}=await import('../../server/domain/library/library.mjs');
+const {relevancePolicy}=await import('../../server/retrieval/retrieval-relevance.mjs');
 if(relevancePolicy(config)?.minimumCosine!==0.45)throw new Error('Policy changed after held-out labels were frozen');
 for(const row of rows){
  const content=row.data.content||row.data.summary||'';

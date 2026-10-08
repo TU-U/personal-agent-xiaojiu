@@ -51,13 +51,16 @@ PersonalAgent/
 │   ├── Library*.tsx        # 资料库：清单、详情、筛选、批量操作
 │   ├── Assistant.tsx       # 搭子会话（智能问答）
 │   └── Memories.tsx / Events.tsx / TodoPanel.tsx ...
-├── server/             # 后端 Express 5 模块化单体（78 个模块）
-│   ├── index.mjs           # 组装入口：路由与模块挂载
-│   ├── store.mjs           # SQLite 权威数据层（revision/事务/游标）
-│   ├── engine.mjs          # AI 引擎：摘要/标签/问答/成果生成
-│   ├── retrieval*.mjs      # Qdrant 混合检索（dense+sparse+RRF）
-│   ├── pet-*.mjs / supervision-*.mjs   # 小九：提醒聚合 + 任务监督
-│   └── memory-*.mjs / library-*.mjs / event-*.mjs ...
+├── server/             # 后端 Express 5 模块化单体，按职责域组织
+│   ├── index.mjs / store.mjs  # 路由组装与 SQLite 权威数据层
+│   ├── core/              # 校验、认证、日志、备份/导出
+│   ├── consistency/       # 一致性规则及现有回归测试索引
+│   ├── ai/                # 模型调用、ASR、embedding 契约；web/ 搜索接入
+│   ├── retrieval/         # 混合检索；index/ 索引治理
+│   ├── jobs/              # 异步作业；workers/ 独立进程入口
+│   ├── domain/            # notes/events/library/memory/accounting/shared
+│   ├── agent/             # 会话、上下文、工具、成果；research/ 调研
+│   └── pet/               # 小九交互；supervision/ 监督引擎
 ├── mobile/ → 已分离     # Android 原生工程已独立为同级的 ../personalagent-android（Kotlin，复用同一套 API）
 ├── docs/               # 设计文档：产品、架构、验收、需求澄清
 │   └── diagrams/           # 架构图与流程图（本 README 配图来源）
@@ -67,6 +70,8 @@ PersonalAgent/
 ```
 
 **核心目录**：`src/`（前端）、`server/`（后端，一切业务逻辑所在）、`docs/`（设计决策的完整记录）。Android 原生工程在同级的 `../personalagent-android`，设计文档随迁至其 `docs/mobile/`，后端 `/api/mobile/v1/*` 路由保留在本项目中。
+
+服务端逐文件迁移记录见 [模块迁移表](docs/23-server-module-refactor.md)，跨模块写入规则见 [一致性说明](server/consistency/README.md)。启动入口仍是 `npm run dev` / `npm start`；本机模型配置位于 `server/ai/provider.local.mjs`（不入 Git），数据目录仍由 `DATA_DIR` 决定。
 
 ## 4. 核心工作流程
 
@@ -131,7 +136,14 @@ Agent 链路的核心是**上下文与证据驱动**：回答不是"模型直接
 
 已确定的技术演进决策（部分进行中）：
 
-- **接入层重构（进行中）**：模型适配器（chat/vision/embedding/ASR）将由管理后台导入的 **pi-agent** 统一接管，各供应商 adapter 收口到一处维护，Web 端只面对统一接入层；
-- **多端协议共享**：API 协议 Schema 抽取为**独立模块**，桌面端 / Web 端 / Android 端通过 **Git Submodule** 依赖同一份 Schema——协议版本集中管理，多端不漂移；
-- **语义化 API 版本**：请求路径统一带 `/v1/` 版本前缀，协议大变更时新旧版本可并行过渡，避免多端同步混乱；
+- **Pi接入层（方案已确认，待实施）**：采用 pi-ai + pi-agent-core，随应用升级，为搭子接入模型调用与Agent循环；不做页面安装通用插件。Qwen embedding与本地ASR适配器继续保留，不声称Pi已覆盖这两项能力；
+- **多端协议共享（首批已实施）**：Web与后端已消费本地独立仓库 `xiaojiu-contracts` 的协议，Submodule固定在 `v0.1.0`。57个操作已抽取本轮形状，92个仍待完整迁移，3个保持已退役；协议远端已发布，Android接入尚未完成；
+- **API版本兼容（首批已实施）**：152个操作已建立逐项路径映射，Web使用 `/api/v1/...`，旧入口保留；新旧路径复用业务校验、数据、事务和幂等回执；
 - **小九常驻桌面（规划）**：基于 Electron 将现有 Web 前端包装为桌面壳，透明窗口 + 系统托盘，小九常驻桌面——关掉浏览器后她仍在，情绪状态机与业务引擎保持解耦。
+
+
+## 协议开发与 Submodule
+
+Web与服务端开始共用 `contracts/`（独立仓库 `xiaojiu-contracts`）中的OpenAPI协议。当前协议0.1.0、API入口 `/api/v1`；旧入口继续兼容。公共类型从协议生成，修改协议后运行 `npm run contracts:generate`、`npm run contracts:check`，更新迁移清单用 `npm run contracts:inventory`。
+
+当前仅完成首批抽取，协议已发布到 [TU-U/xiaojiu-contracts](https://github.com/TU-U/xiaojiu-contracts)。新电脑可通过 `git clone --recurse-submodules https://github.com/TU-U/personal-agent-xiaojiu.git` 拉取应用与固定协议版本；初始化方法、剩余92个未完整抽取协议的操作及验证范围见[协议治理实施记录](docs/26-contract-governance-implementation.md)。

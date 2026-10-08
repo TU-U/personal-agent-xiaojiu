@@ -2,7 +2,7 @@ import {test} from 'node:test';import assert from 'node:assert/strict';
 import {mkdtemp,rm} from 'node:fs/promises';import os from 'node:os';import path from 'node:path';
 test('context preserves uncovered history, validates summary signatures, and rejects late/deleted results',async()=>{
  const dir=await mkdtemp(path.join(os.tmpdir(),'shiguang-context-'));process.env.DATA_DIR=dir;process.env.SEED_DEMO='false';process.env.WORKER_MODE='true';
- const {save,get,db,getSetting}=await import('../server/store.mjs');const {threadContext,assembleThreadContext,updateThreadContext}=await import('../server/thread-context.mjs');
+ const {save,get,db,getSetting}=await import('../server/store.mjs');const {threadContext,assembleThreadContext,updateThreadContext}=await import('../server/agent/thread-context.mjs');
  try{
   const thread=save('thread',{status:'active'}),turns=[];for(let i=0;i<15;i++)turns.push(save('conversation',{threadId:thread.id,query:'用户约束'+i,body:'助手建议'+i,references:[],sources:[],createdAt:new Date(1700000000000+i*1000).toISOString()}));
   assert.equal(threadContext(thread.id).uncoveredCount,9);assert.equal(assembleThreadContext(thread.id).history.length,15,'no silent six-turn gap');

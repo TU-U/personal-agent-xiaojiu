@@ -2,12 +2,12 @@ import {test,after} from 'node:test';import assert from 'node:assert/strict';
 import {mkdtemp,rm} from 'node:fs/promises';import path from 'node:path';import os from 'node:os';import {spawnSync} from 'node:child_process';
 const root=await mkdtemp(path.join(os.tmpdir(),'event-operation-'));Object.assign(process.env,{DATA_DIR:root,SEED_DEMO:'false',WORKER_MODE:'true'});
 const {db,get,remove}=await import('../server/store.mjs');
-const {initializeEventLifecycle:create,scheduleEventCheck:schedule,snoozeEventCheck:snooze,confirmEventCheck:confirm,endEvent:end,eventChecks,commitEventReview:review}=await import('../server/event-lifecycle.mjs');
-const {requestEventReview}=await import('../server/event-jobs.mjs');
+const {initializeEventLifecycle:create,scheduleEventCheck:schedule,snoozeEventCheck:snooze,confirmEventCheck:confirm,endEvent:end,eventChecks,commitEventReview:review}=await import('../server/domain/events/event-lifecycle.mjs');
+const {requestEventReview}=await import('../server/jobs/event-jobs.mjs');
 const past='2020-01-01T00:00:00.000Z',future='2099-01-01T00:00:00.000Z';
 test('schedule, confirm, snooze and end replay original receipts without duplicate checks or histories',()=>{
  let event=create({title:'操作重试',eventType:'long_term',priority:'normal'});const scheduleBody={opId:'schedule-once',revision:event.revision,dueAt:past};event=schedule(event.id,scheduleBody);assert.deepEqual(schedule(event.id,scheduleBody),event);
- const child=spawnSync(process.execPath,['--input-type=module','-e',`const {scheduleEventCheck}=await import('./server/event-lifecycle.mjs');console.log(scheduleEventCheck('${event.id}',${JSON.stringify(scheduleBody)}).currentOccurrenceId);`],{env:process.env,encoding:'utf8',timeout:15000});assert.equal(child.status,0,child.stderr);assert.equal(child.stdout.trim(),event.currentOccurrenceId);assert.equal(eventChecks(event.id).length,1);
+ const child=spawnSync(process.execPath,['--input-type=module','-e',`const {scheduleEventCheck}=await import('./server/domain/events/event-lifecycle.mjs');console.log(scheduleEventCheck('${event.id}',${JSON.stringify(scheduleBody)}).currentOccurrenceId);`],{env:process.env,encoding:'utf8',timeout:15000});assert.equal(child.status,0,child.stderr);assert.equal(child.stdout.trim(),event.currentOccurrenceId);assert.equal(eventChecks(event.id).length,1);
  assert.throws(()=>schedule(event.id,{...scheduleBody,dueAt:future}),e=>e.status===409);
  const confirmBody={opId:'confirm-once',revision:event.revision,occurrenceId:event.currentOccurrenceId};event=confirm(event.id,confirmBody);assert.deepEqual(confirm(event.id,confirmBody),event);
  event=schedule(event.id,{opId:'schedule-next',revision:event.revision,dueAt:future});const snoozeBody={opId:'snooze-once',revision:event.revision,occurrenceId:event.currentOccurrenceId,dueAt:'2099-02-01T00:00:00.000Z'};event=snooze(event.id,snoozeBody);assert.deepEqual(snooze(event.id,snoozeBody),event);assert.equal(get(event.currentOccurrenceId,'eventOccurrence').history.length,1);

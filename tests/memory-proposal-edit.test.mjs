@@ -1,6 +1,6 @@
 import {test,after} from 'node:test';import assert from 'node:assert/strict';import {mkdtemp,rm} from 'node:fs/promises';import path from 'node:path';import os from 'node:os';
 const root=await mkdtemp(path.join(os.tmpdir(),'memory-proposal-'));Object.assign(process.env,{DATA_DIR:root,SEED_DEMO:'false',WORKER_MODE:'true'});
-const {db,save,get,all,remove,transaction}=await import('../server/store.mjs');const {saveMemoryTurn}=await import('../server/memory-lifecycle.mjs');const {editMemoryProposal,reviewMemoryBatch}=await import('../server/memory-review.mjs');
+const {db,save,get,all,remove,transaction}=await import('../server/store.mjs');const {saveMemoryTurn}=await import('../server/domain/memory/memory-lifecycle.mjs');const {editMemoryProposal,reviewMemoryBatch}=await import('../server/domain/memory/memory-review.mjs');
 const turn=items=>transaction(()=>saveMemoryTurn({query:'用户陈述',body:'回复',memoryReview:'pending',memoryProposals:items.map(content=>({content}))}));
 test('editing proposal clears old conflict approval, preserves expiry and activates the selected scope',async()=>{
  const project=save('project',{name:'项目'});let t=turn(['草稿']);t=save('conversation',{...t,memoryProposals:[{content:'草稿',conflictId:'old',conflictCheckVersion:1,conflictRefs:[{id:'old',revision:1}]}]},t.revision);

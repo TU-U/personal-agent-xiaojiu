@@ -6,8 +6,8 @@ import os from 'node:os';
 const directory=mkdtempSync(path.join(os.tmpdir(),'library-task-links-'));
 Object.assign(process.env,{DATA_DIR:directory,SEED_DEMO:'false',WORKER_MODE:'true'});
 const {db,save,get,remove,setSetting}=await import('../server/store.mjs');
-const {linkLibraryTask,unlinkLibraryTask,taskLibraryReferences,installLibraryTaskLinks}=await import('../server/library-task-links.mjs');
-const {readLibrary}=await import('../server/task-tools.mjs');
+const {linkLibraryTask,unlinkLibraryTask,taskLibraryReferences,installLibraryTaskLinks}=await import('../server/domain/library/library-task-links.mjs');
+const {readLibrary}=await import('../server/agent/task-tools.mjs');
 test('linking pins source version without executing a task, retry is idempotent, stale/deleted sources stay visible and removable',()=>{
  const file=save('libraryFile',{title:'资料',sourcePath:'a.md',content:'正文',copyName:'a.md',status:'ready'});
  const task=save('workTask',{title:'学习',status:'draft',logs:[],plan:{steps:['阅读']},outputs:[]});
@@ -36,7 +36,7 @@ test('candidates are paginated; state/version/type checks reject stale or unauth
  const archived=save('libraryFile',{...file,status:'archived'},file.revision);assert.throws(()=>readLibrary(file.id,0,archived.revision),/有效正文/);
 });
 test('existing task loop receives linked source IDs, reads pinned text and retains read evidence in its report',async()=>{
- const {runWorkTask}=await import('../server/work-tasks.mjs');
+ const {runWorkTask}=await import('../server/pet/supervision/work-tasks.mjs');
  const file=save('libraryFile',{title:'关联材料',content:'关联材料中的明确事实',copyName:'linked.md',status:'ready',sourcePath:'linked.md'});
  const task=save('workTask',{title:'读取关联',goal:'依据关联材料归纳',status:'draft',logs:[],outputs:[],calls:0,plan:{steps:['阅读资料'],deliverable:'摘要'}});
  const linked=linkLibraryTask(file.id,{opId:'loop-evidence',taskId:task.id,taskRevision:task.revision,sourceRevision:file.revision});save('workTask',{...linked,status:'running'},linked.revision);

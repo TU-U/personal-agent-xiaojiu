@@ -6,7 +6,7 @@ import os from 'node:os';
 const directory=mkdtempSync(path.join(os.tmpdir(),'library-decisions-'));
 Object.assign(process.env,{DATA_DIR:directory,SEED_DEMO:'false',WORKER_MODE:'true'});
 const {db,save,get,getSetting,setSetting,remove}=await import('../server/store.mjs');
-const {decideLibraryBatch,libraryActions}=await import('../server/library-decisions.mjs');
+const {decideLibraryBatch,libraryActions}=await import('../server/domain/library/library-decisions.mjs');
 const ref=file=>({id:file.id,revision:file.revision});
 test('batch validation is atomic and reports every stale/missing/unsupported selection without touching valid rows',()=>{
  const valid=save('libraryFile',{title:'有效',status:'pending'}),stale=save('libraryFile',{title:'已变化',status:'pending'}),deleted=save('libraryFile',{title:'删除',status:'failed'}),ready=save('libraryFile',{title:'已完成',status:'ready'});

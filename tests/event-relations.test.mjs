@@ -1,7 +1,7 @@
 import {test,after} from 'node:test';import assert from 'node:assert/strict';import express from 'express';
 import {mkdtemp,rm} from 'node:fs/promises';import path from 'node:path';import os from 'node:os';
 const root=await mkdtemp(path.join(os.tmpdir(),'event-relations-'));Object.assign(process.env,{DATA_DIR:root,SEED_DEMO:'false',WORKER_MODE:'true'});
-const {db,save,get,remove}=await import('../server/store.mjs');const {validateEventRelations,installEventRelations}=await import('../server/event-relations.mjs');const {initializeEventLifecycle:create,editEventLifecycle:edit}=await import('../server/event-lifecycle.mjs');
+const {db,save,get,remove}=await import('../server/store.mjs');const {validateEventRelations,installEventRelations}=await import('../server/domain/events/event-relations.mjs');const {initializeEventLifecycle:create,editEventLifecycle:edit}=await import('../server/domain/events/event-lifecycle.mjs');
 test('manual relation validation refuses null, duplicates, wrong kinds, self and removed sources before writes',()=>{
  const task=save('workTask',{title:'任务',status:'draft'}),related=create({title:'其他要事',eventType:'one_off',priority:'normal'}),event=create({title:'主体',eventType:'long_term',priority:'high',relatedTaskIds:[task.id],relatedEventIds:[related.id]});
  for(const data of [{relatedEventIds:null},{relatedEventIds:[event.id]},{relatedEventIds:[related.id,related.id]},{relatedTaskIds:[related.id]},{relatedTaskIds:Array(11).fill(task.id)}])assert.throws(()=>validateEventRelations(data,event.id),e=>e.status===422);

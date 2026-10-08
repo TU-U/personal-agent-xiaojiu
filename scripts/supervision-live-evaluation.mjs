@@ -1,9 +1,9 @@
 import {DatabaseSync} from 'node:sqlite';import {mkdir,writeFile} from 'node:fs/promises';import path from 'node:path';
 const root=process.cwd(),stamp=new Date().toISOString().replace(/[:.]/g,'-'),live=new DatabaseSync(path.join(root,'.data/shiguang.sqlite'),{readOnly:true});
-const row=live.prepare("SELECT value FROM settings WHERE key='provider'").get();let provider=row?JSON.parse(row.value):null;live.close();if(!provider)provider=(await import('../server/provider.local.mjs')).default;
+const row=live.prepare("SELECT value FROM settings WHERE key='provider'").get();let provider=row?JSON.parse(row.value):null;live.close();if(!provider)provider=(await import('../server/ai/provider.local.mjs')).default;
 Object.assign(process.env,{DATA_DIR:path.join(root,'.data/evaluations','supervision-live-'+stamp),SEED_DEMO:'false',WORKER_MODE:'true'});
 const {db,save,setSetting}=await import('../server/store.mjs');setSetting('provider',provider);
-const {assessRunEvidence,confirmRunEvidence}=await import('../server/supervision-evidence.mjs');const {timerAction}=await import('../server/supervision-timer.mjs');
+const {assessRunEvidence,confirmRunEvidence}=await import('../server/pet/supervision/supervision-evidence.mjs');const {timerAction}=await import('../server/pet/supervision/supervision-timer.mjs');
 const output=path.join(root,'artifacts','supervision-live-'+stamp+'.json'),result={syntheticOnly:true,createdAt:new Date().toISOString(),model:provider.model,checks:[],ok:false};
 try{
  const task=save('workTask',{status:'running',supervisionStatus:'active'}),run=save('workRun',{taskId:task.id,status:'open',seconds:0,timerAt:null,evidenceRevision:1,conditionsSnapshot:{version:1,minimumSeconds:2700,conditions:[{id:'uses',kind:'evidence',required:true,description:'列出消息队列的三个用途'},{id:'example',kind:'evidence',required:true,description:'给出一个后台任务使用消息队列的具体例子'}]}});

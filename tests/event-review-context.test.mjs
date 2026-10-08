@@ -2,9 +2,9 @@ import {test,after} from 'node:test';import assert from 'node:assert/strict';
 import {mkdtemp,rm} from 'node:fs/promises';import path from 'node:path';import os from 'node:os';
 const root=await mkdtemp(path.join(os.tmpdir(),'event-context-'));Object.assign(process.env,{DATA_DIR:root,SEED_DEMO:'false',WORKER_MODE:'true'});
 const {db,save,get,remove}=await import('../server/store.mjs');
-const {initializeEventLifecycle:create,confirmEventCheck:confirm}=await import('../server/event-lifecycle.mjs');
-const {eventJobs,makeEventHandlers,reconcileEventJobs}=await import('../server/event-jobs.mjs');
-const {eventReviewContext,eventReviewStale}=await import('../server/event-review-context.mjs');
+const {initializeEventLifecycle:create,confirmEventCheck:confirm}=await import('../server/domain/events/event-lifecycle.mjs');
+const {eventJobs,makeEventHandlers,reconcileEventJobs}=await import('../server/jobs/event-jobs.mjs');
+const {eventReviewContext,eventReviewStale}=await import('../server/domain/events/event-review-context.mjs');
 const jobFor=id=>eventJobs.get(db.prepare('SELECT id FROM background_jobs WHERE entity_id=? ORDER BY rowid DESC LIMIT 1').get(id).id);
 const past='2020-01-01T00:00:00.000Z';
 test('source changed during model prevents commit; updated review later becomes stale and cannot be confirmed',async()=>{
@@ -27,3 +27,32 @@ test('actual linked plans, run evidence and artifacts affect signature; unrelate
 });
 test('high priority with no check has no stale review',()=>{assert.equal(eventReviewStale({priority:'high'},null),false);});
 after(async()=>{db.close();await rm(root,{recursive:true,force:true});});
+
+test('audio transcript and execution-specific conditions are reviewed and invalidate old suggestions',()=>{
+ let note=save('note',{title:'会议录音',content:'',transcript:{segments:[{startMs:0,endMs:2000,speakerId:'speaker_1',text:'必须先完成本地验证'}]}});
+ const task=save('workTask',{title:'验证',goal:'验证',outputs:[],status:'running'});
+ let run=save('workRun',{taskId:task.id,status:'open',day:'2026-10-08',conditionsSnapshot:{minimumSeconds:1800,conditions:[{id:'c1',description:'提交验证记录',required:true}]}});
+ const event=create({title:'检查验证计划',eventType:'one_off',priority:'high',dueAt:past,sourceNoteId:note.id,relatedTaskIds:[task.id]});
+ const before=eventReviewContext(event);assert.match(before.input.source.content,/必须先完成本地验证/);assert.match(before.input.source.content,/识别可能有误/);assert.equal(before.input.tasks[0].runs[0].conditionsSnapshot.minimumSeconds,1800);
+ note=save('note',{...note,transcript:{segments:[{startMs:0,endMs:2000,speakerId:'speaker_1',text:'先在测试库验证，不得更改线上数据'}]}},note.revision);
+ const changed=eventReviewContext(event);assert.notEqual(changed.snapshot.signature,before.snapshot.signature);
+ run=save('workRun',{...run,conditionsSnapshot:{...run.conditionsSnapshot,minimumSeconds:3600}},run.revision);
+ assert.notEqual(eventReviewContext(event).snapshot.signature,changed.snapshot.signature);
+ assert.equal(get(note.id,'note').content,'');assert.equal(get(event.id,'event').status,'open');
+});
+test('referenced execution evidence uses shared validity rules and contributes to review signatures',()=>{
+ let note=save('note',{title:'实践证据',content:'测试库回滚验证成功'});
+ const task=save('workTask',{title:'关联实践',outputs:[],status:'running'});
+ const otherArtifact=save('artifact',{title:'他人任务成果',taskId:'other-task',body:'不能采用的正文',mode:'model'});
+ const run=save('workRun',{taskId:task.id,day:'2026-10-08',status:'review',evidenceRefs:[{id:note.id,kind:'note',revision:note.revision},{id:otherArtifact.id,kind:'artifact',revision:otherArtifact.revision}]});
+ const event=create({title:'核对实践',eventType:'one_off',priority:'high',dueAt:past,relatedTaskIds:[task.id]});
+ const initial=eventReviewContext(event),evidence=initial.input.tasks[0].runs[0].evidenceSources;
+ assert.equal(evidence[0].content,note.content);assert.match(evidence[1].invalid,/不属于本任务/);assert.equal(evidence[1].content,undefined);
+ assert.ok(initial.snapshot.sources.some(s=>s.id===note.id&&s.revision===note.revision));
+ note=save('note',{...note,content:'实践尚未完成'},note.revision);
+ const changed=eventReviewContext(event);assert.notEqual(changed.snapshot.signature,initial.snapshot.signature);
+ assert.match(changed.input.tasks[0].runs[0].evidenceSources[0].invalid,/版本已变化/);assert.equal(changed.input.tasks[0].runs[0].evidenceSources[0].content,undefined);
+ assert.match(changed.snapshot.sources.find(s=>s.id===note.id).issue,/版本已变化/);
+ remove(note.id,'note',note.revision);const missing=eventReviewContext(event);assert.equal(missing.input.tasks[0].runs[0].evidenceSources[0].missing,true);assert.notEqual(missing.snapshot.signature,changed.snapshot.signature);
+ assert.equal(get(run.id,'workRun').status,'review');
+});

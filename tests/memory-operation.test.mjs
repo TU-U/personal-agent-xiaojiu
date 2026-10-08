@@ -1,10 +1,10 @@
 import {test,after} from 'node:test';import assert from 'node:assert/strict';import {mkdtemp,rm} from 'node:fs/promises';import path from 'node:path';import os from 'node:os';import {spawnSync} from 'node:child_process';
 const root=await mkdtemp(path.join(os.tmpdir(),'memory-operation-'));Object.assign(process.env,{DATA_DIR:root,SEED_DEMO:'false',WORKER_MODE:'true'});
-const {db,save,get,all,remove}=await import('../server/store.mjs');const {createMemory,patchMemory}=await import('../server/memory-state.mjs');
+const {db,save,get,all,remove}=await import('../server/store.mjs');const {createMemory,patchMemory}=await import('../server/domain/memory/memory-state.mjs');
 test('create replay survives a fresh process and different content cannot reuse the operation ID',()=>{
  const body={opId:'create-one-op',content:'可重试的事实',scope:'通用'},memory=createMemory(body);assert.equal(createMemory(body).id,memory.id);assert.equal(all('memory').length,1);
  assert.throws(()=>createMemory({...body,content:'不同内容'}),e=>e.status===409);
- const child=spawnSync(process.execPath,['--input-type=module','-e',`const {createMemory}=await import('./server/memory-state.mjs');const {db}=await import('./server/store.mjs');console.log(createMemory(${JSON.stringify(body)}).id);db.close();`],{env:process.env,encoding:'utf8',timeout:10000});assert.equal(child.status,0,child.stderr);assert.equal(child.stdout.trim(),memory.id);
+ const child=spawnSync(process.execPath,['--input-type=module','-e',`const {createMemory}=await import('./server/domain/memory/memory-state.mjs');const {db}=await import('./server/store.mjs');console.log(createMemory(${JSON.stringify(body)}).id);db.close();`],{env:process.env,encoding:'utf8',timeout:10000});assert.equal(child.status,0,child.stderr);assert.equal(child.stdout.trim(),memory.id);
  remove(memory.id,'memory',memory.revision);assert.throws(()=>createMemory(body),e=>e.status===410);
 });
 test('active editing and activation replay do not create another candidate or repeat checking',async()=>{

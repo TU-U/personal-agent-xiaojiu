@@ -1,3 +1,4 @@
+import {randomId} from './randomId';
 import {useState,useRef,useEffect} from 'react';
 import {Mic,Square,Upload} from 'lucide-react';
 import {api} from './api';
@@ -19,7 +20,7 @@ export default function Recorder({onClose,onSaved}:{onClose:()=>void;onSaved:(n:
    if(!mime)throw new Error('FORMAT');
    const current=new MediaRecorder(media,{mimeType:mime});recorder.current=current;chunks.current=[];let size=0;
    current.ondataavailable=e=>{if(e.data.size){chunks.current.push(e.data);size+=e.data.size;if(size>=24*1024*1024&&current.state==='recording'){setError('录音已接近上传大小上限，已停止，请先保存。');current.stop();}}};
-   current.onstop=()=>{media.getTracks().forEach(t=>t.stop());if(!mounted.current)return;const ext=mime.includes('mp4')?'m4a':mime.includes('ogg')?'ogg':'webm';file.current=new File(chunks.current,`语音记录-${new Date().toISOString().replace(/[:.]/g,'-')}.${ext}`,{type:mime});operation.current=crypto.randomUUID();if(urlRef.current)URL.revokeObjectURL(urlRef.current);urlRef.current=URL.createObjectURL(file.current);setUrl(urlRef.current);setState('recorded');};
+   current.onstop=()=>{media.getTracks().forEach(t=>t.stop());if(!mounted.current)return;const ext=mime.includes('mp4')?'m4a':mime.includes('ogg')?'ogg':'webm';file.current=new File(chunks.current,`语音记录-${new Date().toISOString().replace(/[:.]/g,'-')}.${ext}`,{type:mime});operation.current=randomId();if(urlRef.current)URL.revokeObjectURL(urlRef.current);urlRef.current=URL.createObjectURL(file.current);setUrl(urlRef.current);setState('recorded');};
    current.onerror=()=>{setError('录音设备中断，请试听已录部分后保存。');if(current.state==='recording')current.stop();};
    current.start(1000);started.current=Date.now();setSeconds(0);file.current=null;setState('recording');
   }catch(e){stream.current?.getTracks().forEach(t=>t.stop());if(!mounted.current)return;const cause=e as Error;setError(cause.name==='NotAllowedError'?'麦克风权限被拒绝，请在浏览器设置中允许后重试。':cause.name==='NotFoundError'?'没有找到麦克风，请连接设备或导入已有音频。':cause.message==='FORMAT'?'浏览器没有支持的录音格式，请导入已有音频。':'无法开始录音，请检查麦克风是否被其他应用占用。');setState(previous);}

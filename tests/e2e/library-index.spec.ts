@@ -3,9 +3,9 @@ test('file indexing failure is separate from parse readiness and retry updates t
  let retried=false,submitted:unknown;
  const failed={state:'failed',sourceRevision:7,retryable:true,message:'Embedding连接失败',completedChunks:2};
  const file={id:'index-file',revision:7,title:'已解析资料',sourcePath:'项目/a.md',status:'ready',reason:'正文已提取',content:'可阅读正文',copyName:'a.md',index:failed};
- await page.route('**/api/library/files?**',route=>route.fulfill({json:{items:[file],total:1,nextCursor:null}}));
- await page.route('**/api/library/index-file',route=>route.fulfill({json:file}));
- await page.route('**/api/library/index-file/index',route=>{
+ await page.route('**/api/v1/library/files?**',route=>route.fulfill({json:{items:[file],total:1,nextCursor:null}}));
+ await page.route('**/api/v1/library/index-file',route=>route.fulfill({json:file}));
+ await page.route('**/api/v1/library/index-file/index',route=>{
   if(route.request().method()==='POST'){retried=true;submitted=route.request().postDataJSON();return route.fulfill({json:{state:'queued',sourceRevision:7,retryable:false,message:'索引任务已排队'}});}
   return route.fulfill({json:retried?{state:'indexed',sourceRevision:7,indexedRevision:7,completedChunks:3,retryable:false,message:'当前版本已完成索引'}:failed});
  });

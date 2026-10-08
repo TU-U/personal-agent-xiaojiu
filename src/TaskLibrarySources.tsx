@@ -10,6 +10,6 @@ export default function TaskLibrarySources({taskId,revision,onChanged}:{taskId:s
  return <section><h3>关联资料</h3><ErrorBanner message={error}/>{error&&<button className="btn text" onClick={()=>setAttempt(n=>n+1)}>重新加载关联资料</button>}
   {!data&&!error&&<p role="status">正在加载关联资料…</p>}{data&&!data.items.length&&<p>尚未关联资料，可从资料库详情添加。</p>}
   {data?.items.map(ref=><article className="phase-card" key={ref.id}><strong>{ref.title} · 关联版本 {ref.revision}</strong><small>{ref.sourcePath}</small>{ref.issue&&<p role="alert">{ref.issue}</p>}<div className="phase-actions"><button className="btn text" onClick={()=>setDetail(ref)}>查看资料当前正文</button><button className="btn text" disabled={busy||!data.editable} onClick={()=>void unlink(ref.id)}>移除资料关联</button></div></article>)}
-  {detail&&<LibraryDetail source={detail} onClose={()=>setDetail(null)} onDiscuss={file=>{sessionStorage.setItem('libraryDiscussion',JSON.stringify({id:file.id,kind:'libraryFile',title:file.title,revision:file.revision}));location.hash='assistant';}}/>}
+  {detail&&<LibraryDetail source={detail} onClose={()=>setDetail(null)} onDiscuss={file=>{sessionStorage.setItem('libraryDiscussion',JSON.stringify({id:file.id,kind:'libraryFile',title:file.title,revision:file.revision}));location.hash='assistant';window.dispatchEvent(new Event('library-discussion'));}}/>}
  </section>;
 }

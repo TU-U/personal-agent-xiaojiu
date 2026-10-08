@@ -10,6 +10,7 @@ playwright-report/
 artifacts/*.log
 .local-model/
 server/provider.local.mjs
+server/ai/provider.local.mjs
 mobile/.expo/
 mobile/android/
 mobile/ios/

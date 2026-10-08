@@ -2,7 +2,7 @@ import {test,after} from 'node:test';import assert from 'node:assert/strict';
 import {mkdtemp,rm} from 'node:fs/promises';import os from 'node:os';import path from 'node:path';import {spawnSync} from 'node:child_process';
 const root=await mkdtemp(path.join(os.tmpdir(),'supervision-timer-'));Object.assign(process.env,{DATA_DIR:root,SEED_DEMO:'false',WORKER_MODE:'true'});
 const {db,save,get,transaction}=await import('../server/store.mjs');
-const {timerAction,checkpointTimer,recoverTimers,stopTaskTimers}=await import('../server/supervision-timer.mjs');
+const {timerAction,checkpointTimer,recoverTimers,stopTaskTimers}=await import('../server/pet/supervision/supervision-timer.mjs');
 const t0=Date.parse('2026-09-29T01:00:00Z');
 function fixture(){const task=save('workTask',{status:'paused',supervisionStatus:'active'});return save('workRun',{taskId:task.id,status:'open',seconds:12,timerAt:null,evidenceRevision:4});}
 test('repeated start/stop and fractional heartbeats count each interval once without changing evidence version',()=>{
@@ -17,7 +17,7 @@ test('repeated start/stop and fractional heartbeats count each interval once wit
 test('adjustment receipts survive new processes, reject altered payloads and preserve reasons',()=>{
  const run=fixture(),body={action:'adjust',opId:'adjust-once',minutes:45,reason:'离线阅读'};
  const first=timerAction(run.id,body,{clock:()=>t0});assert.equal(first.seconds,2712);
- const child=spawnSync(process.execPath,['--input-type=module','-e',`const {timerAction}=await import('./server/supervision-timer.mjs');timerAction(${JSON.stringify(run.id)},${JSON.stringify(body)});`],{env:process.env,encoding:'utf8',timeout:15000});assert.equal(child.status,0,child.stderr);
+ const child=spawnSync(process.execPath,['--input-type=module','-e',`const {timerAction}=await import('./server/pet/supervision/supervision-timer.mjs');timerAction(${JSON.stringify(run.id)},${JSON.stringify(body)});`],{env:process.env,encoding:'utf8',timeout:15000});assert.equal(child.status,0,child.stderr);
  assert.equal(get(run.id,'workRun').seconds,2712);assert.equal(get(run.id,'workRun').manualAdjustments.length,1);assert.equal(get(run.id,'workRun').manualAdjustments[0].reason,'离线阅读');
  assert.throws(()=>timerAction(run.id,{...body,minutes:46}),error=>error.status===409);
  for(const minutes of [0,-1,Infinity,NaN,1441,'45'])assert.throws(()=>timerAction(run.id,{...body,opId:'invalid-input',minutes}));

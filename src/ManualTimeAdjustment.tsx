@@ -1,0 +1,6 @@
+import {useState} from 'react';
+export default function ManualTimeAdjustment({busy,onSubmit}:{busy:boolean;onSubmit:(body:{minutes:number;reason:string;startedAt:string;endedAt:string})=>Promise<void>}){
+ const [start,setStart]=useState(''),[end,setEnd]=useState(''),[reason,setReason]=useState('');
+ const minutes=(Date.parse(end)-Date.parse(start))/60000,valid=Number.isFinite(minutes)&&minutes>=1&&minutes<=1440&&Date.parse(end)<=Date.now();
+ return <form onSubmit={async e=>{e.preventDefault();if(valid&&reason.trim())await onSubmit({minutes,reason,startedAt:new Date(start).toISOString(),endedAt:new Date(end).toISOString()});}}><h3>补记投入</h3><p>填写实际投入的起止时间。同一任务中已计时或已补记的区间不能重复累计。</p><fieldset disabled={busy}><label>补记开始时间<input type="datetime-local" required value={start} onChange={e=>setStart(e.target.value)}/></label><label>补记结束时间<input type="datetime-local" required value={end} onChange={e=>setEnd(e.target.value)}/></label><p>{valid?`本次补记 ${minutes} 分钟`:'请选择过去的有效区间，时长为 1–1440 分钟。'}</p><label>补记原因<input required maxLength={1000} placeholder="补记原因" value={reason} onChange={e=>setReason(e.target.value)}/></label><button className="btn secondary" disabled={!valid||!reason.trim()}>补记</button></fieldset></form>;
+}

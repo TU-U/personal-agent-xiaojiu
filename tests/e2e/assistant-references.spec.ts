@@ -4,8 +4,8 @@ test('a chat turn can cite an existing note and event on desktop and mobile',asy
  const suffix=Date.now()+Math.random().toString(36).slice(2,6);
  const noteTitle='海边记录 '+suffix,eventTitle='海边要事 '+suffix;
  await page.goto('/');await page.getByRole('button',{name:'进入演示空间'}).click();await expect(page.locator('.app-shell')).toBeVisible();
- expect((await page.request.post('/api/notes',{data:{title:noteTitle,content:'去海边前查询潮汐时间，带好雨具。',project:'生活',tags:[]}})).ok()).toBe(true);
- expect((await page.request.post('/api/events',{data:{title:eventTitle,summary:'出发前确认交通和潮汐。',project:'生活',tags:[],priority:'normal',dueAt:''}})).ok()).toBe(true);
+ expect((await page.request.post('/api/v1/notes',{data:{title:noteTitle,content:'去海边前查询潮汐时间，带好雨具。',project:'生活',tags:[]}})).ok()).toBe(true);
+ expect((await page.request.post('/api/v1/events',{data:{title:eventTitle,summary:'出发前确认交通和潮汐。',project:'生活',tags:[],priority:'normal',dueAt:''}})).ok()).toBe(true);
  await page.goto('/#assistant');
  await page.getByRole('button',{name:'引用记录或要事'}).click();
  const picker=page.getByRole('dialog',{name:'引用记录或要事'});

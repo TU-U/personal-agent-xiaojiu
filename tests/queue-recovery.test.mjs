@@ -7,7 +7,7 @@ import {once} from 'node:events';
 import {createServer} from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
-import {createJobRepository} from '../server/background-jobs.mjs';
+import {createJobRepository} from '../server/core/background-jobs.mjs';
 
 async function until(fn){for(let i=0;i<200;i++){if(await fn())return;await new Promise(r=>setTimeout(r,50));}throw new Error('恢复超时');}
 async function stop(child,signal='SIGTERM'){if(child&&child.exitCode===null&&child.signalCode===null){const exit=once(child,'exit');child.kill(signal);await exit;}}

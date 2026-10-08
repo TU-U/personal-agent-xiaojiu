@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {checkMemoryConflict} from '../server/memory-conflicts.mjs';
+import {checkMemoryConflict} from '../server/domain/memory/memory-conflicts.mjs';
 const memories=Array.from({length:105},(_,i)=>({id:'m'+i,content:'个人背景'+i,revision:1,scope:'通用',status:'active'}));
 const input=prompt=>JSON.parse(prompt.split('\n已有记忆：')[1].split('\n判断')[0]);
 test('hybrid ranks first but full database coverage includes old and unindexed memories without truncation',async()=>{

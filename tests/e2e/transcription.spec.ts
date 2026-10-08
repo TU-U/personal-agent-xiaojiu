@@ -13,8 +13,8 @@ test('real local transcription is visible, editable and keeps the original audio
  await panel.getByLabel('第 1 段说话人',{exact:true}).selectOption('speaker_2');
  await panel.getByLabel('第 1 段转写',{exact:true}).fill('人工核对后的第一段。');await panel.getByRole('button',{name:'保存转写修订'}).click();
  await expect(panel).toContainText('人工核对后的第一段。');await expect(panel).toContainText('人工修订');
- const response=await page.request.get('/api/bootstrap');const data=await response.json();const note=data.notes.find((n:{title:string})=>n.title==='1-two-speakers-en.wav');
+ const response=await page.request.get('/api/v1/bootstrap');const data=await response.json();const note=data.notes.find((n:{title:string})=>n.title==='1-two-speakers-en.wav');
  expect(note.transcript.transcriptRevision).toBe(2);expect(note.transcript.segments[0].speakerId).toBe('speaker_2');expect(note.transcriptOriginal.segments[0].speakerId).toBeNull();expect(note.transcriptOriginal.segments[0].text).not.toBe('人工核对后的第一段。');expect(note.attachments).toHaveLength(1);
- const stale=await page.request.patch(`/api/notes/${note.id}/transcript`,{data:{revision:note.revision-1,transcriptRevision:1,texts:['过期修订']}});expect(stale.status()).toBe(409);
+ const stale=await page.request.patch(`/api/v1/notes/${note.id}/transcript`,{data:{revision:note.revision-1,transcriptRevision:1,texts:['过期修订']}});expect(stale.status()).toBe(409);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
 });

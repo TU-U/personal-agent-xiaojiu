@@ -5,18 +5,23 @@ test('real timing and lost adjustment response preserve one auditable addition a
  await new Promise<void>(resolve=>model.listen(0,'127.0.0.1',resolve));const address=model.address() as {port:number};
  try{
   await page.goto('/#workTasks');await page.getByRole('button',{name:'进入演示空间'}).click();await expect(page.locator('.app-shell')).toBeVisible();
-  expect((await page.request.patch('/api/settings',{data:{provider:{baseUrl:`http://127.0.0.1:${address.port}`,model:'test-timer',apiKey:'test-key'}}})).ok()).toBe(true);
-  const created=await page.request.post('/api/work-tasks',{data:{goal:'投入补记重试测试',minutes:45,repeat:'once',time:'20:00',startTime:'09:00',requirement:'心得'}});expect(created.ok()).toBe(true);const task=await created.json();
-  expect((await page.request.post('/api/work-tasks/'+task.id+'/action',{data:{action:'start'}})).ok()).toBe(true);
-  const data=await (await page.request.get('/api/work-tasks')).json(),run=data.runs.find((r:any)=>r.taskId===task.id);expect(run).toBeTruthy();
+  expect((await page.request.patch('/api/v1/settings',{data:{provider:{baseUrl:`http://127.0.0.1:${address.port}`,model:'test-timer',apiKey:'test-key'}}})).ok()).toBe(true);
+  const created=await page.request.post('/api/v1/work-tasks',{data:{goal:'投入补记重试测试',minutes:45,repeat:'once',time:'20:00',startTime:'09:00',requirement:'心得'}});expect(created.ok()).toBe(true);const task=await created.json();
+  expect((await page.request.post('/api/v1/work-tasks/'+task.id+'/action',{data:{action:'start'}})).ok()).toBe(true);
+  const data=await (await page.request.get('/api/v1/work-tasks')).json(),run=data.runs.find((r:any)=>r.taskId===task.id);expect(run).toBeTruthy();
   await page.reload();const card=page.locator('.phase-card').filter({hasText:'本次完成要求：'}).filter({hasText:'投入补记重试测试'});
   await card.getByRole('button',{name:'开始计时',exact:true}).click();await card.getByRole('button',{name:'暂停计时',exact:true}).click();
   await card.getByText('投入记录 · 1 段计时 / 0 次补记',{exact:true}).click();await expect(card).toContainText('已保存');
-  const before=(await (await page.request.get('/api/work-tasks')).json()).runs.find((r:any)=>r.id===run.id);expect(before.timerAt).toBeNull();
-  let sent:any,requests=0;await page.route('**/api/work-runs/'+run.id+'/action',async route=>{requests++;const body=route.request().postDataJSON();if(requests===1){sent=body;expect(typeof body.opId).toBe('string');const response=await route.fetch();expect(response.ok()).toBe(true);return route.abort('failed');}expect(body).toEqual(sent);return route.fulfill({response:await route.fetch()});});
-  await card.getByRole('button',{name:'提交证据 / 调整',exact:true}).click();const dialog=page.getByRole('dialog',{name:'本次执行证据'});await dialog.getByPlaceholder('分钟',{exact:true}).fill('5');await dialog.getByPlaceholder('补记原因',{exact:true}).fill('离线读书');await dialog.getByRole('button',{name:'补记',exact:true}).click();await expect(dialog).toContainText('连接暂时中断');
+  const before=(await (await page.request.get('/api/v1/work-tasks')).json()).runs.find((r:any)=>r.id===run.id);expect(before.timerAt).toBeNull();
+  let sent:any,requests=0;await page.route('**/api/v1/work-runs/'+run.id+'/action',async route=>{requests++;const body=route.request().postDataJSON();if(requests===1){sent=body;expect(typeof body.opId).toBe('string');const response=await route.fetch();expect(response.ok()).toBe(true);return route.abort('failed');}expect(body).toEqual(sent);return route.fulfill({response:await route.fetch()});});
+  await card.getByRole('button',{name:'提交证据 / 调整',exact:true}).click();const dialog=page.getByRole('dialog',{name:'本次执行证据'});await dialog.getByLabel('补记开始时间',{exact:true}).fill('2020-01-01T09:00');await dialog.getByLabel('补记结束时间',{exact:true}).fill('2020-01-01T09:05');await dialog.getByPlaceholder('补记原因',{exact:true}).fill('离线读书');await dialog.getByRole('button',{name:'补记',exact:true}).click();await expect(dialog).toContainText('连接暂时中断');
   await page.reload();await page.getByRole('button',{name:'重试任务操作',exact:true}).click();await expect(page.getByRole('button',{name:'重试任务操作',exact:true})).toHaveCount(0);expect(requests).toBe(2);
-  const after=(await (await page.request.get('/api/work-tasks')).json()).runs.find((r:any)=>r.id===run.id);expect(after.seconds).toBe(before.seconds+300);expect(after.manualAdjustments).toHaveLength(1);expect(after.evidenceRevision).toBe(before.evidenceRevision);
-  await page.getByText('投入记录 · 1 段计时 / 1 次补记',{exact:true}).click();await expect(page.locator('.phase-panel')).toContainText('原因：离线读书');
- }finally{await page.request.patch('/api/settings',{data:{provider:{baseUrl:'',model:'',clearKey:true}}}).catch(()=>{});model.closeAllConnections();await new Promise<void>(resolve=>model.close(()=>resolve()));}
+  const after=(await (await page.request.get('/api/v1/work-tasks')).json()).runs.find((r:any)=>r.id===run.id);expect(after.seconds).toBe(before.seconds+300);expect(after.manualAdjustments).toHaveLength(1);expect(after.evidenceRevision).toBe(before.evidenceRevision);
+  await page.getByText('投入记录 · 1 段计时 / 1 次补记',{exact:true}).click();await expect(card).toContainText('原因：离线读书');
+  await page.unroute('**/api/v1/work-runs/'+run.id+'/action');
+  await card.getByRole('button',{name:'提交证据 / 调整',exact:true}).click();
+  await dialog.getByLabel('补记开始时间',{exact:true}).fill('2020-01-01T09:03');await dialog.getByLabel('补记结束时间',{exact:true}).fill('2020-01-01T09:08');await dialog.getByPlaceholder('补记原因',{exact:true}).fill('核对重复投入');await dialog.getByRole('button',{name:'补记',exact:true}).click();
+  await expect(dialog.getByRole('alert')).toContainText('已有补记重叠');await expect(dialog.getByLabel('补记开始时间',{exact:true})).toHaveValue('2020-01-01T09:03');await expect(dialog.getByPlaceholder('补记原因',{exact:true})).toHaveValue('核对重复投入');
+  const unchanged=(await (await page.request.get('/api/v1/work-tasks')).json()).runs.find((r:any)=>r.id===run.id);expect(unchanged.seconds).toBe(after.seconds);expect(unchanged.manualAdjustments).toHaveLength(1);
+ }finally{await page.request.patch('/api/v1/settings',{data:{provider:{baseUrl:'',model:'',clearKey:true}}}).catch(()=>{});model.closeAllConnections();await new Promise<void>(resolve=>model.close(()=>resolve()));}
 });

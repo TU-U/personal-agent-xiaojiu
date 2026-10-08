@@ -4,7 +4,7 @@ import {DatabaseSync} from 'node:sqlite';
 import {mkdtemp,mkdir,writeFile,readFile,rm,access} from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import {createBackup,verifyBackup,restoreBackup} from '../server/backups.mjs';
+import {createBackup,verifyBackup,restoreBackup} from '../server/core/backups/backups.mjs';
 
 async function fixture(){
  const root=await mkdtemp(path.join(os.tmpdir(),'shiguang-backup-')),dataDir=path.join(root,'data');await mkdir(path.join(dataDir,'uploads'),{recursive:true});await mkdir(path.join(dataDir,'library'));

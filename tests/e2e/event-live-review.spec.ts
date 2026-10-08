@@ -1,0 +1,25 @@
+import {test,expect} from '@playwright/test';
+import {writeFile} from 'node:fs/promises';
+test('real high review and ordinary reminder remain manual; archived basis survives a changed source',async({page})=>{
+ test.skip(process.env.SHIGUANG_E2E_EVENT_LIVE!=='1','Uses one authorized real generation on synthetic materials');
+ await page.goto('/#events');await page.getByRole('button',{name:'进入演示空间'}).click();await expect(page.locator('.app-shell')).toBeVisible();
+ const data=await(await page.request.get('/api/v1/bootstrap')).json();
+ const high=data.events.find((e:any)=>e.title==='合成高等级活动复核'),normal=data.events.find((e:any)=>e.title==='合成普通活动提醒');
+ expect(high.reviewText).toBeTruthy();expect(high.reviewNotice).toBe('');expect(normal.reviewText).toBe('');expect(high.status).toBe('open');expect(normal.status).toBe('open');
+ expect(high.reviewText).toContain('260');expect(high.reviewText).toContain('200');expect(high.reviewText).toMatch(/未预订|尚未.*预订|未.*预[订定]/);expect(high.reviewText).toContain('确认');expect(high.reviewText).not.toMatch(/截止时间为2020|截止时间2020|事项已逾期/);
+ const card=page.locator('#event-'+high.id),ordinary=page.locator('#event-'+normal.id);
+ await expect(card.locator('.event-review')).toContainText(high.reviewText);await expect(ordinary.locator('.event-review')).toHaveCount(0);
+ const pet=page.getByRole('button',{name:/小九现在/}),table=page.getByLabel('小九提示表');await pet.hover();await expect(table).toContainText(high.title);await expect(table).toContainText(normal.title);
+ await card.getByText('本次复核依据',{exact:true}).click();await expect(card).toContainText('合成活动预算依据 · 版本 1');
+ await card.getByRole('button',{name:'检查历史 / 安排'}).click();let dialog=page.getByRole('dialog',{name:'检查历史与安排'});
+ await dialog.getByLabel('稍后检查时间').fill('2099-01-01T10:00');await dialog.getByRole('button',{name:'确认改期'}).click();
+ await expect(dialog.getByText(/调整约定时间/)).toBeVisible();await dialog.getByRole('button',{name:'关闭窗口'}).click();
+ const source=data.notes.find((n:any)=>n.id===high.sourceNoteId);
+ const changed=await page.request.patch('/api/v1/notes/'+source.id,{data:{revision:source.revision,title:source.title,content:'修订后预算300元，另行等待人工决定。',tags:[]}});expect(changed.ok()).toBe(true);
+ await page.reload();await card.getByRole('button',{name:'检查历史 / 安排'}).click();dialog=page.getByRole('dialog',{name:'检查历史与安排'});
+ await dialog.getByText(/调整约定时间/).click();const archived=dialog.locator('details').filter({has:page.locator('summary').getByText(/调整约定时间/)});
+ await expect(archived).toContainText('以下为保留的历史结果，不是当前检查结论。');await expect(archived).toContainText('260');
+ await archived.getByText('当时的复核依据',{exact:true}).click();await expect(archived).toContainText('合成活动预算依据 · 版本 1');await expect(archived).not.toContainText('修订后预算300元');
+ const checks=await(await page.request.get('/api/v1/events/'+high.id+'/checks')).json();
+ await writeFile('/tmp/shiguang-event-live-result.json',JSON.stringify({checkedAt:new Date().toISOString(),high,normal,checks,scope:'Actual text generation + browser/API; handlers invoked directly in isolated fixture, queue transport not retested'},null,2));
+});

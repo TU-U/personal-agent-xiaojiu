@@ -3,8 +3,8 @@ const {readFile,writeFile,access}=await import('node:fs/promises');
 const {createHash}=await import('node:crypto');
 const {performance}=await import('node:perf_hooks');
 const {get,all}=await import('../../server/store.mjs');
-const {searchIndex,retrievalConfig}=await import('../../server/retrieval.mjs');
-const {getIndexMigration}=await import('../../server/index-migration.mjs');
+const {searchIndex,retrievalConfig}=await import('../../server/retrieval/retrieval.mjs');
+const {getIndexMigration}=await import('../../server/retrieval/index/index-migration.mjs');
 const destination=process.argv[3]||'artifacts/retrieval-baseline-v1.json';
 try{await access(destination);throw new Error('Refusing to overwrite prior evaluation artifact: '+destination);}catch(error){if(error.code!=='ENOENT')throw error;}
 const raw=await readFile('artifacts/retrieval-questions-v1.json','utf8'),labels=JSON.parse(raw);

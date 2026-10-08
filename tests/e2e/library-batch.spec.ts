@@ -2,11 +2,11 @@ import {test,expect} from '@playwright/test';
 test('selection survives filtering, stale rows stay removable, and refresh retries the same uncertain operation',async({page})=>{
  const requests:{opId:string;action:string;items:{id:string;revision:number}[]}[]=[];
  let done=false;
- await page.route('**/api/library/files?**',route=>{
+ await page.route('**/api/v1/library/files?**',route=>{
   const failed=new URL(route.request().url()).searchParams.get('status')==='failed';
   return route.fulfill({json:{items:done?[]:[{id:failed?'b':'a',revision:1,title:failed?'待重试B':'待判断A',status:failed?'failed':'pending',sourcePath:failed?'旧/B.txt':'新/A.txt',reason:'待处理',availableActions:['copy','skip']}],total:done?0:1,nextCursor:null}});
  });
- await page.route('**/api/library/decisions',async route=>{
+ await page.route('**/api/v1/library/decisions',async route=>{
   requests.push(route.request().postDataJSON());
   if(requests.length===1)return route.fulfill({status:409,json:{error:'本批未执行，请检查已选清单。',current:{invalid:[{id:'a',reason:'资料已删除'}]}}});
   if(requests.length===2)return route.abort('connectionfailed');

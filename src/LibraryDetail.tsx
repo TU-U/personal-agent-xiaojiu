@@ -1,3 +1,4 @@
+import {API_BASE} from './api';
 import LibraryTaskPicker from './LibraryTaskPicker';
 import LibraryMetadataEditor from './LibraryMetadataEditor';
 import LibraryIndexStatus from './LibraryIndexStatus';
@@ -24,7 +25,7 @@ export default function LibraryDetail({source,onClose,onDiscuss,onUpdated}:{onUp
    {requested&&!located&&<p role="alert">{!sameVersion?'资料版本已变化，以下显示当前正文；旧命中位置不再适用，请重新检索。':'命中片段与当前正文不一致，未作定位；请重新检索。'}</p>}
    {located&&<p role="status">已定位正文字符 {source.start!+1}–{source.end}。位置按提取文本计算，不代表原文件页码。</p>}
    <div className="phase-actions"><button className="btn secondary" onClick={()=>setEditing(true)}>编辑资料信息</button><button className="btn secondary" onClick={()=>onDiscuss(file)}>引用这份资料继续讨论</button>
-    {file.copyName&&<a className="btn text" href={'/api/library/'+encodeURIComponent(file.id)+'/file'}>下载副本</a>}
+    {file.copyName&&<a className="btn text" href={(API_BASE + "/library/")+encodeURIComponent(file.id)+'/file'}>下载副本</a>}
     <button className="btn text" onClick={()=>setRaw(value=>!value)}>{raw?'切换 Markdown 阅读':'查看提取原文'}</button>
     {located&&raw&&<button className="btn text" onClick={()=>{marker.current?.scrollIntoView({block:'center'});marker.current?.focus({preventScroll:true});}}>返回命中段落</button>}
    </div>

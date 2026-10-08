@@ -1,6 +1,6 @@
 import {test,after} from 'node:test';import assert from 'node:assert/strict';import {mkdtemp,rm} from 'node:fs/promises';import path from 'node:path';import os from 'node:os';
 const root=await mkdtemp(path.join(os.tmpdir(),'memory-scope-'));Object.assign(process.env,{DATA_DIR:root,SEED_DEMO:'false',WORKER_MODE:'true'});
-const {db,save,get,remove}=await import('../server/store.mjs');const {createMemory,patchMemory}=await import('../server/memory-state.mjs');const {memoryScopesOverlap,memoryScopeIssue}=await import('../server/memory-scope.mjs');const {memoryApplies}=await import('../server/retrieval-scope.mjs');
+const {db,save,get,remove}=await import('../server/store.mjs');const {createMemory,patchMemory}=await import('../server/domain/memory/memory-state.mjs');const {memoryScopesOverlap,memoryScopeIssue}=await import('../server/domain/memory/memory-scope.mjs');const {memoryApplies}=await import('../server/retrieval/retrieval-scope.mjs');
 test('scope requires existing stable objects; unknown kind, nonempty global ID and missing object are rejected',()=>{
  const project=save('project',{name:'同名'}),thread=save('thread',{title:'话题',status:'active'});
  for(const range of [{scopeKind:'global',scopeId:project.id},{scopeKind:'project',scopeId:'missing'},{scopeKind:'thread',scopeId:'missing'},{scopeKind:'magic'}])assert.throws(()=>createMemory({content:'事实',scope:'通用',...range}));

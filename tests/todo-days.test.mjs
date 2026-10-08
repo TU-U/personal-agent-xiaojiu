@@ -4,7 +4,7 @@ import {mkdtemp,rm} from 'node:fs/promises';
 import os from 'node:os';import path from 'node:path';
 test('carry uses Shanghai dates and source identity, preserves history, and rejects stale or invalid actions',async()=>{
  const dir=await mkdtemp(path.join(os.tmpdir(),'shiguang-todo-days-'));process.env.DATA_DIR=dir;process.env.SEED_DEMO='false';process.env.WORKER_MODE='true';
- const {save,get,all,remove,db}=await import('../server/store.mjs');const {calendarDay,validDay,carryTodo}=await import('../server/todo-days.mjs');
+ const {save,get,all,remove,db}=await import('../server/store.mjs');const {calendarDay,validDay,carryTodo}=await import('../server/domain/notes/todo-days.mjs');
  try{
   assert.equal(calendarDay('2026-09-28T15:59:59Z'),'2026-09-28');assert.equal(calendarDay('2026-09-28T16:00:00Z'),'2026-09-29');assert.equal(validDay('2026-02-30'),false);assert.equal(validDay('2028-02-29'),true);
   const now=new Date('2026-09-29T05:00:00Z'),a=save('todo',{title:'同名待办',day:'2026-09-28',done:false}),b=save('todo',{title:'同名待办',day:'2026-09-28',done:false});

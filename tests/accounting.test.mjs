@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import JSZip from 'jszip';
-import {amountToCents,parseWechatWorkbook,suggestCategories,validateTransaction} from '../server/accounting.mjs';
+import {amountToCents,accountingAmount,parseWechatWorkbook,suggestCategories,validateTransaction} from '../server/domain/accounting/accounting.mjs';
 
 test('ledger amounts use exact integer cents and reject invalid precision',()=>{
  assert.equal(amountToCents('35.5'),3550);assert.equal(amountToCents('5000'),500000);assert.equal(amountToCents('0.01'),1);
@@ -31,4 +31,35 @@ test('AI category suggestions are constrained to the supplied category lists and
  const result=await suggestCategories(rows,async(_system,prompt)=>prompt.includes('美食')?'[{"index":0,"category":"美食"}]':'[{"index":0,"category":"工资"}]',()=>true);
  assert.deepEqual(result.rows.map(x=>[x.category,x.categorySource]),[['美食','AI'],['工资','AI']]);
  const fallback=await suggestCategories(rows,async()=>null,()=>false);assert.equal(fallback.rows.every(x=>x.categorySource==='待确认'),true);assert.ok(fallback.notice.includes('未连接'));
+});
+
+
+test('conflicting money representations and malformed explicit fields cannot silently fall back',()=>{
+ const base={type:'expense',amount:'35.50',category:'美食',date:'2026-10-08',note:'晚饭'};
+ assert.equal(validateTransaction({...base,amountCents:3550}).amountCents,3550);
+ assert.throws(()=>validateTransaction({...base,amountCents:3551}),/不一致/);
+ for(const amountCents of ['3550',null,NaN,1.2,-1,0,100000000001])assert.throws(()=>validateTransaction({...base,amountCents}),/金额/);
+ for(const amount of [null,'',{},'1e3','35.501'])assert.throws(()=>validateTransaction({...base,amount,amountCents:3550}),/金额/);
+ assert.throws(()=>accountingAmount({amount:'2000',amountCents:100}),/不一致/);
+ const old={...validateTransaction(base),id:'keep-id',revision:4,createdAt:'old-time'};
+ const edited=validateTransaction({note:'新备注',revision:4},old);assert.equal(edited.amountCents,3550);assert.equal(edited.id,'keep-id');assert.equal(edited.createdAt,'old-time');
+ for(const extra of [{confirmed:true},{id:'replace-id'},{amountCents:null},{category:null}])assert.throws(()=>validateTransaction({...extra},old));
+ for(const input of [null,[],42])assert.throws(()=>validateTransaction(input),/格式无效/);
+});
+test('decimal parsing never rounds unsafe values into an accepted integer',()=>{
+ assert.equal(amountToCents('90071992547409.91'),Number.MAX_SAFE_INTEGER);
+ assert.equal(amountToCents('90071992547409.90'),Number.MAX_SAFE_INTEGER-1);
+ assert.equal(amountToCents('90071992547409.92'),null);
+ assert.equal(amountToCents({toString:()=> '1.00'}),null);
+ assert.equal(accountingAmount({amount:'1000000000.00'}),100000000000);
+ assert.throws(()=>accountingAmount({amount:'1000000000.01'}),/10 亿元/);
+});
+test('invalid AI authority, duplicate indices and missing results remain pending with visible reasons',async()=>{
+ const rows=[{type:'expense',amountCents:100,note:'晚饭',category:'其他支出',categorySource:'待确认'}];
+ for(const raw of ['null','[{"index":0,"category":"美食","confirmed":true}]','[{"index":0,"category":"美食"},{"index":0,"category":"日用"}]','[{"index":9,"category":"美食"}]','[{"index":0,"category":"工资"}]','nonsense','[]']){
+  const result=await suggestCategories(rows,async()=>raw,()=>true);
+  assert.equal(result.rows[0].categorySource,'待确认',raw);assert.ok(result.notice.length>0,raw);assert.equal(result.rows[0].category,'其他支出');
+ }
+ const failed=await suggestCategories(rows,async()=>{throw new Error('provider down');},()=>true);assert.match(failed.notice,/调用未成功/);
+ const partial=await suggestCategories([...rows,...rows],async()=> '[{"index":0,"category":"美食"}]',()=>true);assert.equal(partial.rows[0].categorySource,'AI');assert.equal(partial.rows[1].categorySource,'待确认');assert.match(partial.notice,/结果不完整/);
 });

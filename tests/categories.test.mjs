@@ -5,7 +5,7 @@ import os from 'node:os';import path from 'node:path';
 import express from 'express';
 test('categories and project IDs preserve sources and manual correction is atomic and idempotent',async()=>{
  const directory=await mkdtemp(path.join(os.tmpdir(),'shiguang-categories-'));process.env.DATA_DIR=directory;process.env.SEED_DEMO='false';process.env.WORKER_MODE='true';
- const {db,save,get,all}=await import('../server/store.mjs');const {installCategories,ensureCategories,categories,setCategories}=await import('../server/categories.mjs');
+ const {db,save,get,all}=await import('../server/store.mjs');const {installCategories,ensureCategories,categories,setCategories}=await import('../server/domain/notes/categories.mjs');
  const app=express();app.use(express.json());installCategories(app);app.use((e,req,res,next)=>res.status(e.status||500).json({error:e.message}));const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));const base=`http://127.0.0.1:${server.address().port}/api`;
  const call=async(url,method='GET',body)=>{const r=await fetch(base+url,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});return {status:r.status,data:await r.json()};};
  try{

@@ -4,8 +4,8 @@ import {mkdtemp,writeFile,rm} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import path from 'node:path';
 import os from 'node:os';
-import {decodeLibraryText} from '../server/library-extract.mjs';
-import {parseLibraryCopy as extractLibraryFile} from '../server/library-parser.mjs';
+import {decodeLibraryText} from '../server/domain/library/library-extract.mjs';
+import {parseLibraryCopy as extractLibraryFile} from '../server/domain/library/library-parser.mjs';
 const root=await mkdtemp(path.join(os.tmpdir(),'library-extract-'));
 function pdf(stream){
  const objects=['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>',`<< /Length ${Buffer.byteLength(stream)} >>\nstream\n${stream}\nendstream`,'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'];

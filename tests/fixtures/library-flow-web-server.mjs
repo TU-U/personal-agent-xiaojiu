@@ -1,0 +1,11 @@
+import {mkdirSync,writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+if(!process.env.DATA_DIR)throw new Error('An isolated DATA_DIR is required');
+process.env.SEED_DEMO='false';process.env.FILE_WORKER_ENABLED='false';
+process.env.COMPUTER_FILES_ROOT=join(process.env.DATA_DIR,'synthetic-source');
+mkdirSync(join(process.env.COMPUTER_FILES_ROOT,'study'),{recursive:true});
+writeFileSync(join(process.env.COMPUTER_FILES_ROOT,'study','scan-flow.md'),'# 合成学习资料\n'+'前文阅读说明。\n'.repeat(1800)+'\n灯塔验收定位词：先阅读，再讨论，尚未执行。\n');
+const {setSetting}=await import('../../server/store.mjs');
+setSetting('provider',{baseUrl:'',model:'',apiKey:''});
+setSetting('retrieval',{qdrant:'',embedding:'',model:'',apiKey:''});
+await import('../../server/index.mjs');

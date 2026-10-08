@@ -2,9 +2,9 @@ import {test,expect} from '@playwright/test';
 test('opens long document at exact hit, preserves Markdown reading, and refuses stale or mismatched positions',async({page})=>{
  const prefix='前文记录\n'.repeat(1700),hit='这里是需要定位的尾部关键段落',content=prefix+hit+'\n# 后续内容';
  let revision=4,body=content;
- await page.route('**/api/library/files?**',route=>route.fulfill({json:{items:[],total:0,nextCursor:null}}));
- await page.route('**/api/library/search?**',route=>route.fulfill({json:{mode:'hybrid',results:[{id:'location',title:'长文资料',revision:4,sourcePath:'项目/长文.md',start:prefix.length,end:prefix.length+hit.length,text:hit}]}}));
- await page.route('**/api/library/location',route=>route.fulfill({json:{id:'location',title:'长文资料',revision,sourcePath:'项目/长文.md',status:'ready',copyName:'local.md',content:body}}));
+ await page.route('**/api/v1/library/files?**',route=>route.fulfill({json:{items:[],total:0,nextCursor:null}}));
+ await page.route('**/api/v1/library/search?**',route=>route.fulfill({json:{mode:'hybrid',results:[{id:'location',title:'长文资料',revision:4,sourcePath:'项目/长文.md',start:prefix.length,end:prefix.length+hit.length,text:hit}]}}));
+ await page.route('**/api/v1/library/location',route=>route.fulfill({json:{id:'location',title:'长文资料',revision,sourcePath:'项目/长文.md',status:'ready',copyName:'local.md',content:body}}));
  await page.goto('/');await page.getByRole('button',{name:'进入演示空间'}).click();await page.getByRole('button',{name:'资料库',exact:true}).click();
  const library=page.getByRole('dialog',{name:'个人资料库'});
  await library.getByLabel('搜索资料正文').fill('尾部关键');await library.getByRole('button',{name:'检索',exact:true}).click();

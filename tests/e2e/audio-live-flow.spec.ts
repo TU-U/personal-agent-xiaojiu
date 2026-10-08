@@ -1,0 +1,37 @@
+import {test,expect} from '@playwright/test';
+import {resolve} from 'node:path';
+import {writeFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+test.use({permissions:['microphone'],launchOptions:{args:['--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream','--use-file-for-fake-audio-capture='+resolve('.local-runtime/asr-models/1-two-speakers-en.wav')]}});
+test('recording original, real local ASR, human revision and real summary',async({page})=>{
+ test.skip(process.env.SHIGUANG_E2E_AUDIO_LIVE!=='1','Real services require explicit opt-in');test.setTimeout(150000);
+ await page.goto('/');await page.getByRole('button',{name:'进入演示空间'}).click();
+ await page.getByRole('button',{name:'语音记录',exact:true}).click();
+ const recorder=page.getByRole('dialog');await recorder.getByRole('button',{name:'开始录音',exact:true}).click();
+ await expect(recorder.getByRole('timer')).toHaveText('00:16',{timeout:20000});
+ await recorder.getByRole('button',{name:'结束录音',exact:true}).click();await expect(recorder.locator('audio')).toBeVisible();
+ await recorder.getByRole('button',{name:'保存录音',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'记录详情',exact:true})).toBeVisible();
+ const audio=page.locator('.note-detail audio');await expect(audio).toBeVisible();
+ const originalUrl=await audio.getAttribute('src');expect(originalUrl).toBeTruthy();
+ const original=await page.request.get(originalUrl!);expect(original.ok()).toBe(true);
+ const bytes=await original.body();expect(bytes.length).toBeGreaterThan(1000);
+ const panel=page.getByLabel('录音转写');await panel.getByLabel('识别语言').selectOption('en');
+ await panel.getByLabel('说话人数').selectOption('2');await panel.getByRole('button',{name:'开始转写',exact:true}).click();
+ await expect(panel.getByText('转写任务已结束',{exact:true})).toBeVisible({timeout:100000});
+ const recognized=await panel.locator('.transcript-segment p').allTextContents();expect(recognized.join(' ')).toMatch(/pencil|black lead|writes best/i);
+ await panel.getByRole('button',{name:'修订转写与说话人'}).click();
+ // A synthetic human correction makes use of the reviewed revision observable.
+ const corrected='人工核对备注：本次录音是英文朗读练习，复习时间为周五晚上八点，尚未完成复习。';
+ await panel.getByLabel('第 1 段转写',{exact:true}).fill(corrected);await panel.getByLabel('第 1 段说话人',{exact:true}).selectOption('speaker_1');
+ await panel.getByRole('button',{name:'保存转写修订'}).click();await expect(panel).toContainText(corrected);
+ const summaryResponse=page.waitForResponse(r=>r.url().endsWith('/summarize')&&r.request().method()==='POST');
+ await page.getByRole('button',{name:'AI 归纳',exact:true}).click();const response=await summaryResponse;expect(response.ok()).toBe(true);
+ const note=await response.json();expect(note.summaryMode).toBe('ai');expect(note.summaryTranscriptRevision).toBe(2);
+ expect(note.summary).toMatch(/周五|星期五/);expect(note.summary).toMatch(/未完成|尚未|待复习/);
+ expect(note.transcriptOriginal.segments[0].text).not.toBe(corrected);
+ await expect(page.locator('.note-summary')).toContainText(note.summary);
+ await page.getByText('本次归纳读取范围',{exact:true}).click();await expect(page.locator('.note-summary')).toContainText('图片 0 张');
+ expect(await (await page.request.get(originalUrl!)).body()).toEqual(bytes);
+ writeFileSync('/tmp/shiguang-audio-live-flow.json',JSON.stringify({at:new Date().toISOString(),noteId:note.id,originalBytes:bytes.length,originalSha256:createHash('sha256').update(bytes).digest('hex'),recognized,correction:corrected,transcriptRevision:note.transcript.transcriptRevision,summary:note.summary,summaryInputs:note.summaryInputs,limitations:'Chromium fake microphone replays a public English sample; the correction is synthetic. Not a physical microphone, Chinese accuracy or long recording benchmark.'},null,2));
+});

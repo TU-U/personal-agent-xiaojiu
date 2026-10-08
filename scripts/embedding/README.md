@@ -12,7 +12,7 @@ node scripts/embedding/check.mjs
 
 `model.json` 固定官方 GGUF 仓库 revision、Q8_0 文件 SHA-256、大小、1024 维、last pooling、L2 normalization、查询指令和分段版本。下载保留 `.partial` 可续传，校验成功后才替换目标文件。运行库沿用项目已有 llama.cpp b10964（b29c606e2）。本机该二进制没有可用 GPU 设备，采用4线程CPU，服务上下文上限8192 token；超过上限拒绝，不代表采用模型的全部32K能力。
 
-查询使用 `Instruct: …\nQuery:…`，文档保持原文；不要在调用方和服务端重复添加指令。协议实现位于 `server/embedding-contract.mjs`。显式 `indexProfile: qwen3-local-v1` 才启用Qwen预处理及版本化集合；未配置profile的BGE继续兼容旧集合。集合身份包含权重校验值、量化、维度、预处理、分段、运行库和范围payload版本，不只取模型名称。任何已有集合维度或向量配置不匹配时拒绝混写。
+查询使用 `Instruct: …\nQuery:…`，文档保持原文；不要在调用方和服务端重复添加指令。协议实现位于 `server/ai/embedding-contract.mjs`。显式 `indexProfile: qwen3-local-v1` 才启用Qwen预处理及版本化集合；未配置profile的BGE继续兼容旧集合。集合身份包含权重校验值、量化、维度、预处理、分段、运行库和范围payload版本，不只取模型名称。任何已有集合维度或向量配置不匹配时拒绝混写。
 
 `check.mjs` 仅用公开合成句子，输出 `artifacts/qwen-embedding-check.json`：维度、原始向量范数、短文/长段耗时、CPU进程内存、两道中英文语义样题和超限拒绝。它不是RET-A05的50–200份代表资料/20题验收，不据此自动切换生产索引。
 
@@ -37,7 +37,7 @@ node scripts/embedding/migrate.mjs verify <迁移ID>
 Qwen新点采用来源版本参与的ID，保护新版点不被旧worker迟到写覆盖；已有同版本旧ID仍可读取，下次来源修订时清理。该变化不改变模型向量空间，不需要重算未变化的全文向量。
 
 
-Qwen相关性门槛：`server/retrieval-relevance.mjs` 中的0.45余弦值为当前本地基线校准值。检索从Qdrant取回dense向量，核对维度/有限非零值并独立计算余弦；融合高分不能绕过门槛。低相关候选剔除后继续有界补查，耗尽时返回`evidenceStatus: insufficient`及资料不足提示。向量缺失或异常报错，不冒充确定无资料。该值不是事实可信度，相关候选仍不保证能回答问题；新独立样本未通过前不切换模型。
+Qwen相关性门槛：`server/retrieval/retrieval-relevance.mjs` 中的0.45余弦值为当前本地基线校准值。检索从Qdrant取回dense向量，核对维度/有限非零值并独立计算余弦；融合高分不能绕过门槛。低相关候选剔除后继续有界补查，耗尽时返回`evidenceStatus: insufficient`及资料不足提示。向量缺失或异常报错，不冒充确定无资料。该值不是事实可信度，相关候选仍不保证能回答问题；新独立样本未通过前不切换模型。
 
 对照报告分别保留在`retrieval-baseline-v1.json`和`retrieval-calibration-v1.json`，新的评测需显式传第三个输出路径参数，脚本拒绝覆盖已有结果。分路诊断为`node scripts/embedding/diagnose.mjs <迁移ID>`；记录dense/sparse排名供定位，不输出文档正文中的口令。
 

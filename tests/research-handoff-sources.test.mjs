@@ -1,0 +1,24 @@
+import {test,after} from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {join} from 'node:path';
+import {tmpdir} from 'node:os';
+const dir=await mkdtemp(join(tmpdir(),'research-handoff-'));
+process.env.DATA_DIR=dir;process.env.SEED_DEMO='false';process.env.WORKER_MODE='true';
+const {db,save}=await import('../server/store.mjs');
+const {researchHandoffBrief}=await import('../server/agent/research/research-tasks.mjs');
+after(async()=>{db.close();await rm(dir,{recursive:true,force:true});});
+test('handoff selects late relevant passages from saved source snapshots and preserves user edits',()=>{
+ const long='无关背景。\n'.repeat(2000)+'\n事务回滚：失败时撤销全部修改。\n';
+ const short='  # 标题\n1. 原文\r\n保留换行';
+ const task={id:'handoff-test',researchBrief:{topic:'数据库学习',questions:['事务回滚是什么？'],background:'已有实践经验',constraints:'只在本地运行',asOf:'今天',expectedOutput:'学习路径'}};
+ save('researchInput',{id:'research-input:'+task.id,taskId:task.id,sources:[{id:'long',kind:'note',title:'数据库笔记',revision:3,content:long},{id:'short',kind:'libraryFile',title:'文件',revision:2,content:short}],context:[]});
+ const brief=researchHandoffBrief(task);
+ assert.match(brief,/事务回滚：失败时撤销全部修改/);assert.match(brief,/版本3/);assert.match(brief,/并非全文/);assert.ok(brief.includes(short));assert.ok(brief.length<64000);
+ assert.match(brief,/只在本地运行/);assert.match(brief,/学习路径/);
+ const range=/\[原文位置 (\d+)–(\d+)\]\n([\s\S]*?)(?=\n\n\[原文位置 |\n2\. 资料文件)/g;
+ let found=0;for(const match of brief.matchAll(range)){found++;assert.equal(match[3],long.slice(Number(match[1])-1,Number(match[2])));}assert.ok(found>0);
+ assert.equal(researchHandoffBrief({...task,handoff:{state:'waiting',text:'用户已编辑的接力内容'}}),'用户已编辑的接力内容');
+ const preview=researchHandoffBrief({...task,researchBrief:{...task.researchBrief,topic:'astronomy',questions:['nebula?']}});
+ assert.match(preview,/分布式预览，不保证相关/);
+});

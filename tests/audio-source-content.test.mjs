@@ -1,0 +1,23 @@
+import {test,after} from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+const dir=await mkdtemp(join(tmpdir(),'audio-source-content-'));Object.assign(process.env,{DATA_DIR:dir,SEED_DEMO:'false',WORKER_MODE:'true'});
+const {db,save}=await import('../server/store.mjs');
+const {noteReadableText,sourceReading}=await import('../server/domain/shared/source-content.mjs');
+const {searchNotes,evidenceFor}=await import('../server/ai/engine.mjs');
+const {validateResearchSources}=await import('../server/agent/research/research-tasks.mjs');
+const {validateRetrievedEvidence}=await import('../server/agent/research/research-retrieval.mjs');
+after(async()=>{db.close();await rm(dir,{recursive:true,force:true});});
+test('audio transcript is usable research/search evidence while original text stays separate and edits invalidate old citations',()=>{
+ const note=save('note',{title:'会议录音',type:'audio',status:'ready',content:'',tags:[],project:'',transcript:{transcriptRevision:1,segments:[{startMs:0,endMs:2000,speakerId:'speaker_1',text:'下周讨论火星温室计划。'}]}});
+ const text=noteReadableText(note);assert.match(text,/0.0-2.0秒 说话人 1/);assert.match(text,/识别可能有误/);assert.equal(note.content,'');
+ assert.equal(searchNotes('火星温室',{},[note]).length,1);assert.match(evidenceFor('火星温室',[note])[0].quote,/火星温室/);
+ assert.equal(validateResearchSources([{id:note.id,kind:'note',revision:note.revision}])[0].content,text);
+ const reading=sourceReading(note,'note');assert.equal(reading.field,'transcriptContent');
+ const evidence={sourceId:note.id,kind:'note',title:note.title,revision:note.revision,sourceField:reading.field,start:0,end:text.length,quote:text,selectionMethod:'hybrid_search'};
+ validateRetrievedEvidence([evidence],{});
+ save('note',{...note,transcript:{...note.transcript,transcriptRevision:2,segments:[{...note.transcript.segments[0],text:'改为月球温室计划。'}]}},note.revision);
+ assert.throws(()=>validateRetrievedEvidence([evidence],{}),/已修改/);
+});

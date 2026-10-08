@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {parseMemoryConflict,parseMemoryProposals} from '../server/memory-output.mjs';
+import {parseMemoryConflict,parseMemoryProposals} from '../server/domain/memory/memory-output.mjs';
 const memory={id:'known',content:'用户住深圳',revision:3,status:'active'};
 test('only explicit valid null counts as no conflict',()=>{
  assert.equal(parseMemoryConflict('{"conflictId":null}',[memory]),null);

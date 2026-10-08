@@ -1,6 +1,6 @@
 import {test,after} from 'node:test';import assert from 'node:assert/strict';import {mkdtempSync,rmSync} from 'node:fs';import os from 'node:os';import path from 'node:path';
 const dir=mkdtempSync(path.join(os.tmpdir(),'shiguang-engine-'));process.env.DATA_DIR=dir;process.env.SEED_DEMO='false';
-const {tokens,searchNotes,evidenceFor,validateGeneration,renderExtractiveSections,providerConfig}=await import('../server/engine.mjs');const {db,setSetting}=await import('../server/store.mjs');
+const {tokens,searchNotes,evidenceFor,validateGeneration,renderExtractiveSections,providerConfig}=await import('../server/ai/engine.mjs');const {db,setSetting}=await import('../server/store.mjs');
 const fixtures=[{id:'1',title:'支付接口验收',content:'星河项目已经完成支付接口验收，回调重试还有风险。',tags:['工作'],project:'星河',createdAt:'2026-09-22',pinned:false},{id:'2',title:'三个生活问题',content:'散步时想到的三个小问题，生活需要留白。',tags:['生活'],project:'',createdAt:'2026-09-21',pinned:true},{id:'3',title:'读书笔记',content:'写作时先思考读者，再整理提纲。',tags:['阅读'],project:'成长',createdAt:'2026-09-20'}];
 test('Chinese word segmentation does not cross grammatical boundaries',()=>{assert.equal(tokens('木卫二冰层下的三叠纪珊瑚').includes('的三'),false);assert.equal(evidenceFor('木卫二冰层下的三叠纪珊瑚',fixtures).length,0);});
 test('relevant Chinese queries and project filters retrieve the expected note',()=>{assert.equal(searchNotes('支付接口',{},fixtures)[0].id,'1');assert.equal(searchNotes('写作',{},fixtures)[0].id,'3');assert.equal(searchNotes('接口',{project:'成长'},fixtures).length,0);});

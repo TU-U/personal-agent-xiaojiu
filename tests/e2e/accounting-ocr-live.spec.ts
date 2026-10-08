@@ -1,0 +1,21 @@
+import {test,expect} from '@playwright/test';
+import {readFile,writeFile} from 'node:fs/promises';
+test('real receipt OCR retains original and waits for final human confirmation before accounting',async({page})=>{
+ test.skip(process.env.SHIGUANG_E2E_ACCOUNTING_LIVE!=='1','Requires explicit saved-model opt-in');test.setTimeout(90000);
+ const bytes=await readFile('tests/fixtures/synthetic-receipt.png');
+ await page.goto('/#accounting');await page.getByRole('button',{name:'进入演示空间'}).click();await expect(page.locator('.app-shell')).toBeVisible();
+ await page.getByRole('button',{name:'导入账单 / 截图',exact:true}).click();const modal=page.getByRole('dialog',{name:'账单导入与核对'});
+ await modal.locator('input[type=file]').setInputFiles({name:'synthetic-receipt.png',mimeType:'image/png',buffer:bytes});
+ const row=modal.locator('.account-import-rows article');await expect(row).toHaveCount(1,{timeout:65000});
+ await expect(modal.getByRole('img',{name:'已保存的账单原图，点击下载'})).toBeVisible();
+ const original=await modal.getByRole('link',{name:'下载原账单',exact:true}).getAttribute('href');expect(await(await page.request.get(original!)).body()).toEqual(bytes);
+ const read=async()=>(await(await page.request.get('/api/v1/transactions')).json()).transactions;
+ await expect(row.getByLabel('本行决定')).toHaveValue('pending');expect(await read()).toHaveLength(0);
+ await row.getByLabel('本行决定').selectOption('include');
+ await expect(row.getByLabel('金额（元）',{exact:true})).toHaveValue('35.50');await expect(row.getByLabel('发生日期',{exact:true})).toHaveValue('2026-10-08');await expect(row.getByRole('combobox',{name:/^收支方向/})).toHaveValue('expense');await expect(row.getByRole('combobox',{name:/^分类/})).toHaveValue('美食');
+ await row.getByRole('checkbox',{name:'我已核对本行提示及原件'}).check();await modal.getByRole('button',{name:'核对本次决定（1 行）',exact:true}).click();await expect(modal.getByRole('heading',{name:'最后核对'})).toBeVisible();expect(await read()).toHaveLength(0);
+ await modal.getByRole('button',{name:'确认保存本次决定',exact:true}).click();await expect(row).toContainText('已入账');const saved=await read();expect(saved).toHaveLength(1);expect(saved[0].amountCents).toBe(3550);expect(saved[0].category).toBe('美食');
+ expect(await(await page.request.get(original!)).body()).toEqual(bytes);
+ await modal.getByRole('button',{name:'关闭窗口'}).click();await page.getByRole('combobox',{name:'日期范围',exact:true}).selectOption('all');await expect(page.locator('.accounting-filter-stats')).toContainText('¥35.50');
+ await writeFile('/tmp/shiguang-accounting-ocr-live-result.json',JSON.stringify({checkedAt:new Date().toISOString(),transactions:saved,originalBytes:bytes.length,scope:'Synthetic English receipt; actual saved vision/text fallback model, browser, API and database; human approval simulated through UI'},null,2));
+});

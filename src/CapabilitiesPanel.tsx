@@ -1,3 +1,4 @@
+import WorkerStatus from './WorkerStatus';
 import {useEffect,useState} from 'react';
 import {Plug,Save} from 'lucide-react';
 import {api,post,patch} from './api';
@@ -13,6 +14,7 @@ export default function CapabilitiesPanel(){
  async function save(kind:string,shared=false){setBusy('save-'+kind);setError('');try{await patch('/settings',kind==='vision'?{visionProvider:shared?null:{baseUrl:visionUrl,model:visionModel,apiKey:visionKey}}:{retrieval:{embedding:embeddingUrl,model:embeddingModel,qdrant:qdrantUrl,apiKey:embeddingKey}});setVisionKey('');setEmbeddingKey('');await load(shared);}catch(e){setError((e as Error).message);}finally{setBusy('');}}
  return <section className="settings-panel" aria-busy={!!busy}>
  <h2><Plug size={20}/>分别检查每项能力</h2><p className="panel-description">测试使用已保存的配置。每项单独显示结果，连接成功不代表识别或检索质量已经通过验收。</p><ErrorBanner message={error}/>
+ <WorkerStatus/>
  {!items.length&&!error&&<Spinner label="正在读取能力配置…"/>}
  {items.map(item=><div className="subtle-notice" key={item.id}><strong>{item.label}</strong><p>{item.configured?'已配置':'未配置或尚未接入'} · {item.source}</p><p role="status">{item.test?(item.test.ok?'本项测试成功':'本项测试失败：'+item.test.error):'尚未测试当前配置'}</p>{item.test?.checkedAt&&<small>测试时间：{new Date(item.test.checkedAt).toLocaleString('zh-CN')}</small>}{item.test?.detail&&<p>{Object.entries(item.test.detail).map(([key,value])=>`${key==='response'?'返回':key==='dimensions'?'向量维数':key==='model'?'模型':key==='collections'?'集合数量':key==='results'?'结果数量':key==='notice'?'说明':key}：${String(value)}`).join('；')}</p>}{item.notice&&<p className="field-help">{item.notice}</p>}<button className="btn secondary" disabled={!!busy||!item.configured} onClick={()=>void test(item.id)}>{busy===item.id?<Spinner label="测试中…"/>:`测试${item.label}`}</button></div>)}
  <details><summary>单独配置图片分析模型</summary><form onSubmit={event=>{event.preventDefault();void save('vision');}}><label>图片模型接口地址<input type="url" value={visionUrl} onChange={e=>setVisionUrl(e.target.value)}/></label><label>图片模型名称<input value={visionModel} onChange={e=>setVisionModel(e.target.value)}/></label><label>图片模型密钥<input type="password" autoComplete="off" value={visionKey} onChange={e=>setVisionKey(e.target.value)} placeholder="留空保留已有独立密钥"/></label><div className="button-row"><button className="btn secondary" disabled={!!busy}><Save size={16}/>保存图片模型</button><button type="button" className="btn text" disabled={!!busy} onClick={()=>void save('vision',true)}>沿用文本模型配置</button></div></form></details>

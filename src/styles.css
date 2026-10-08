@@ -737,3 +737,28 @@ html[data-theme="brutalist"] .accounting-type-switch button,html[data-theme="bru
 .pet-reminder-list button:focus-visible,[id^="todo-"]:focus-visible,[id^="memory-"]:focus-visible,[id^="event-"]:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 .pet-source-prompt{display:block;font-size:13px;line-height:1.6;color:var(--accent);overflow-wrap:anywhere;margin:7px 0}
 .home-todos .pet-source-prompt{padding:0 10px}.home-todos button .pet-source-prompt{padding:0;text-align:left}
+
+/* Persistent accounting import review */
+.account-import-panel { padding: 24px; display: grid; gap: 24px; min-width: 0; }
+.account-import-panel h2, .account-import-panel h3, .account-import-panel p { overflow-wrap: anywhere; }
+.account-import-panel .phase-actions, .account-import-batches { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.account-import-batches { margin-top: 16px; }
+.account-import-batches .btn { white-space: normal; text-align: left; overflow-wrap: anywhere; max-width: 100%; }
+.account-import-rows { display: grid; gap: 20px; }
+.account-import-rows article, .account-import-confirm { border: 1px solid currentColor; border-radius: 12px; padding: 20px; min-width: 0; }
+.account-import-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 20px; }
+.account-import-panel label { min-width: 0; }
+.account-import-panel input:not([type=checkbox]), .account-import-panel select, .account-import-panel textarea { display: block; width: 100%; max-width: 100%; box-sizing: border-box; margin-top: 8px; }
+.account-import-panel pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 240px; overflow-y: auto; }
+.account-import-panel summary { cursor: pointer; padding: 10px 0; }
+.account-import-panel .import-error { color: #a1321f; }
+.account-import-panel small.import-error { display: block; }
+.account-import-panel .accounting-import-notice { flex-wrap: wrap; overflow-wrap: anywhere; }
+.account-import-confirm { display: grid; gap: 12px; }
+@media (max-width: 700px) {
+ .account-import-panel { padding: 16px; }
+ .account-import-fields { grid-template-columns: minmax(0, 1fr); }
+ .account-import-rows article, .account-import-confirm { padding: 14px; }
+}
+
+.accounting-page [hidden] { display: none !important; }

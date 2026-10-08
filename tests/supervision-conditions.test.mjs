@@ -1,6 +1,6 @@
 import {test,after} from 'node:test';import assert from 'node:assert/strict';import {mkdtemp,rm} from 'node:fs/promises';import os from 'node:os';import path from 'node:path';
 const root=await mkdtemp(path.join(os.tmpdir(),'supervision-conditions-'));Object.assign(process.env,{DATA_DIR:root,SEED_DEMO:'false',WORKER_MODE:'true'});
-const {db,save,get,all}=await import('../server/store.mjs');const {updateSupervisionConditions:update}=await import('../server/supervision-conditions.mjs');const {ensureSupervisionRuns:ensure}=await import('../server/supervision-runs.mjs');
+const {db,save,get,all}=await import('../server/store.mjs');const {updateSupervisionConditions:update}=await import('../server/pet/supervision/supervision-conditions.mjs');const {ensureSupervisionRuns:ensure}=await import('../server/pet/supervision/supervision-runs.mjs');
 const condition=(id,description)=>({id,description,kind:'evidence',required:true});
 const task=()=>save('workTask',{title:'读书',status:'draft',supervisionStatus:'draft',supervisionVersion:1,planVersion:1,minutes:30,repeat:'daily',requirement:'三条心得'});
 const body=(opId='conditions-first')=>({opId,planVersion:1,minutes:45,conditions:[condition('points','三条心得'),condition('example','一个实践例子')]});

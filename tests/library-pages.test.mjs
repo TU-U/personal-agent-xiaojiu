@@ -6,8 +6,8 @@ import path from 'node:path';
 const directory=mkdtempSync(path.join(os.tmpdir(),'library-pages-'));
 Object.assign(process.env,{DATA_DIR:directory,SEED_DEMO:'false',WORKER_MODE:'true'});
 const {db,save,get}=await import('../server/store.mjs');
-const {libraryPage,libraryStatus,libraryKeywordSearch}=await import('../server/library.mjs');
-const {parseLibraryQuery,libraryCandidateIds}=await import('../server/library-filters.mjs');
+const {libraryPage,libraryStatus,libraryKeywordSearch}=await import('../server/domain/library/library.mjs');
+const {parseLibraryQuery,libraryCandidateIds}=await import('../server/domain/library/library-filters.mjs');
 test('library pages include sources older than 500, filter before pagination and reject stale or cross-filter cursors',()=>{
  for(let i=0;i<537;i++)save('libraryFile',{title:'资料'+i,content:'不应泄漏整段正文'.repeat(300),sourcePath:'项目/'+i+'.txt',status:i<7?'failed':'ready'});
  const visited=[];let cursor;

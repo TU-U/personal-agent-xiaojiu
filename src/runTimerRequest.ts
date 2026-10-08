@@ -3,7 +3,7 @@ const key='shiguang-pending-run-timer';
 type Pending={path:string;body:Record<string,unknown>};
 let inFlight:Promise<unknown>|null=null;
 const changed=()=>window.dispatchEvent(new Event('run-timer-change'));
-export function pendingRunTimerRequest():Pending|null{try{const value=JSON.parse(sessionStorage.getItem(key)||'null');return value&&/^\/work-runs\/[a-zA-Z0-9-]+\/action$/.test(value.path)&&['start','stop','adjust','evidence','confirm','snooze','skip'].includes(value.body?.action)&&typeof value.body?.opId==='string'?value:null;}catch{return null;}}
+export function pendingRunTimerRequest():Pending|null{try{const value=JSON.parse(sessionStorage.getItem(key)||'null');return value&&/^\/work-runs\/[a-zA-Z0-9-]+\/action$/.test(value.path)&&['start','stop','adjust','evidence','confirm','snooze','skip','retry-reminder'].includes(value.body?.action)&&typeof value.body?.opId==='string'?value:null;}catch{return null;}}
 export function retryRunTimerRequest():Promise<unknown>{
  if(inFlight)return inFlight;
  const pending=pendingRunTimerRequest();if(!pending)return Promise.reject(new Error('没有待确认的任务操作。'));

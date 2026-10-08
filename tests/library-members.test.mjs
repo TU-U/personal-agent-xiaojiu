@@ -8,8 +8,8 @@ const root=await mkdtemp(path.join(os.tmpdir(),'library-members-')),source=path.
 await mkdir(source);
 Object.assign(process.env,{DATA_DIR:path.join(root,'data'),COMPUTER_FILES_ROOT:source,SEED_DEMO:'false',WORKER_MODE:'true'});
 const {db,all,get,save,remove,getSetting}=await import('../server/store.mjs');
-const {scanLibrary,libraryKeywordSearch,libraryRoot}=await import('../server/library.mjs');
-const {migrateLegacyDuplicates}=await import('../server/library-members.mjs');
+const {scanLibrary,libraryKeywordSearch,libraryRoot}=await import('../server/domain/library/library.mjs');
+const {migrateLegacyDuplicates}=await import('../server/domain/library/library-members.mjs');
 const digest=text=>createHash('sha256').update(text).digest('hex');
 async function scan(){await scanLibrary('');for(let i=0;i<300;i++){const job=getSetting('libraryJob');if(job.status==='failed')throw new Error(job.error);if(job.status==='done')return;await new Promise(r=>setTimeout(r,10));}throw new Error('scan timeout');}
 test('same bytes preserve independent project members, shared copy survives source archive/deletion and repeated scans',async()=>{

@@ -1,3 +1,4 @@
+import {randomId} from './randomId';
 import ImportCategory from './ImportCategory';
 import {useEffect,useState,useRef} from 'react';
 import {ArrowLeft,FileText,Folder,FolderOpen,Search} from 'lucide-react';
@@ -22,7 +23,7 @@ export default function ComputerFiles({onClose,onImported}:{onClose:()=>void;onI
  useEffect(()=>{void load('');},[]);
  async function importItem(item:ComputerItem){
   setImporting(item.path);setCategoryLocked(true);setError('');
-  try{const opId=importOperations.current.get(item.path)||crypto.randomUUID();importOperations.current.set(item.path,opId);const note=await post<Note>('/computer-files/import',{path:item.path,opId,...(category?{categoryId:category}:{})});await onImported(note);onClose();}
+  try{const opId=importOperations.current.get(item.path)||randomId();importOperations.current.set(item.path,opId);const note=await post<Note>('/computer-files/import',{path:item.path,opId,...(category?{categoryId:category}:{})});await onImported(note);onClose();}
   catch(cause){setError((cause as Error).message);if(cause instanceof ApiError&&[400,404,413,415,422].includes(cause.status))setCategoryLocked(false);}
   finally{setImporting('');}
  }

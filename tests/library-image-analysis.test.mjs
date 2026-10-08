@@ -7,7 +7,7 @@ import path from 'node:path';
 const root=await mkdtemp(path.join(os.tmpdir(),'library-image-'));
 Object.assign(process.env,{DATA_DIR:root,SEED_DEMO:'false',WORKER_MODE:'true'});
 const {db,get,save,remove,setSetting}=await import('../server/store.mjs');
-const {analyzeLibraryImage,libraryRoot}=await import('../server/library.mjs');
+const {analyzeLibraryImage,libraryRoot}=await import('../server/domain/library/library.mjs');
 await mkdir(libraryRoot,{recursive:true});
 const bytes=Buffer.from('isolated image fixture'),hash=createHash('sha256').update(bytes).digest('hex');
 await writeFile(path.join(libraryRoot,'fixture.png'),bytes);

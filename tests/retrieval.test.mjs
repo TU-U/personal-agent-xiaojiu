@@ -11,7 +11,7 @@ process.env.QDRANT_URL = 'http://qdrant.test';
 process.env.EMBEDDING_BASE_URL = 'http://embedding.test/v1';
 process.env.EMBEDDING_MODEL = 'test-embedding';
 const { db, save, remove, get } = await import('../server/store.mjs');
-const { hybridSearch, lexicalVector, indexPending } = await import('../server/retrieval.mjs');
+const { hybridSearch, lexicalVector, indexPending,searchIndex,retrievalConfig } = await import('../server/retrieval/retrieval.mjs');
 const originalFetch = globalThis.fetch;
 const originalLog = console.log;
 console.log = () => {};
@@ -194,9 +194,57 @@ test('answer passes current thread and stable project to retrieval and explains 
  const wrongProject=save('memory',{title:'其他项目',content:'偏好详尽说明',status:'active',scope:'通用',scopeKind:'project',scopeId:other.id});
  const inThread=save('memory',{title:'话题背景',content:'讨论排版偏好',status:'active',scope:'通用',scopeKind:'thread',scopeId:thread.id});
  const wrongThread=save('memory',{title:'其他话题',content:'讨论其他偏好',status:'active',scope:'通用',scopeKind:'thread',scopeId:otherThread.id});
- await indexPending();const {answer}=await import('../server/engine.mjs');
+ await indexPending();const {answer}=await import('../server/ai/engine.mjs');
  const result=await answer('排版偏好','',[],[],[],'',{threadId:thread.id,projectId:p.id});
  assert.ok(result.sources.some(s=>s.id===inProject.id&&s.scopeId===p.id));assert.ok(result.sources.some(s=>s.id===inThread.id&&s.scopeKind==='thread'));assert.ok(!result.sources.some(s=>[wrongProject.id,wrongThread.id].includes(s.id)));
+});
+test('read-only scoped search filters both Qdrant and SQL without writing index state',async()=>{
+ const selected=save('note',{title:'已选资料',content:'数据库事务'}),other=save('note',{title:'其他资料',content:'数据库事务'});
+ await indexPending();const before=db.prepare('SELECT total_changes() AS n').get().n;
+ const start=calls.length,found=await searchIndex('数据库事务',{},retrievalConfig(),{readOnly:true,sourceIds:[selected.id]});
+ assert.deepEqual([...new Set(found.map(s=>s.id))],[selected.id]);assert.ok(!found.some(s=>s.id===other.id));
+ assert.equal(db.prepare('SELECT total_changes() AS n').get().n,before);
+ const query=calls.slice(start).find(c=>c.target.endsWith('/points/query'));
+ assert.ok(query.payload.filter.must.some(f=>f.key==='entityId'&&f.match.any.includes(selected.id)));
+ for(const p of query.payload.prefetch)assert.deepEqual(p.filter,query.payload.filter);
+ assert.ok(!calls.slice(start).some(c=>c.method==='PUT'));
+ const count=calls.length;assert.deepEqual(await searchIndex('x',{},retrievalConfig(),{readOnly:true,sourceIds:[]}),[]);assert.equal(calls.length,count);
+ await assert.rejects(searchIndex('x',{},retrievalConfig(),{readOnly:true,sourceIds:'wrong'}),/来源范围无效/);
+});
+test('read-only search refuses missing or incompatible collections without creating one',async()=>{
+ const start=calls.length;collectionExists=false;
+ try{await assert.rejects(searchIndex('事务',{},retrievalConfig(),{readOnly:true}),/404/);assert.ok(!calls.slice(start).some(c=>c.method==='PUT'));}
+ finally{collectionExists=true;}
+ collectionDimensions=4;try{await assert.rejects(searchIndex('事务',{},retrievalConfig(),{readOnly:true}),/配置不匹配/);}finally{collectionDimensions=3;}
+});
+test('read-only evidence rejects corrupted quotes and locators even at the current revision',async()=>{
+ const source=save('note',{title:'原文校验',content:'事务原文应保持一致。'});await indexPending();
+ const point=[...points.values()].find(p=>p.payload.entityId===source.id),valid=structuredClone(point);
+ try{
+  for(const patch of [{text:'伪造引文'},{start:-1},{end:source.content.length+1},{start:0.5},{end:0}]){
+   queryPoints=[{...valid,payload:{...valid.payload,...patch}}];
+   assert.deepEqual(await searchIndex('事务',{},retrievalConfig(),{readOnly:true,sourceIds:[source.id]}),[]);
+  }
+  queryPoints=[valid];const result=await searchIndex('事务',{},retrievalConfig(),{readOnly:true,sourceIds:[source.id]});assert.equal(result[0].content,source.content);
+ }finally{queryPoints=null;}
+});
+test('caller cancellation survives embedding and prevents subsequent index requests',async()=>{
+ const controller=new AbortController(),reason=new Error('research cancelled'),start=calls.length;
+ intercept=async target=>{if(target.endsWith('/embeddings'))controller.abort(reason);};
+ try{await assert.rejects(searchIndex('事务',{},retrievalConfig(),{readOnly:true,signal:controller.signal}),error=>error===reason);assert.ok(calls.slice(start).every(c=>c.target.endsWith('/embeddings')));}
+ finally{intercept=null;}
+ const before=calls.length;await assert.rejects(searchIndex('事务',{},retrievalConfig(),{readOnly:true,signal:controller.signal}),error=>error===reason);assert.equal(calls.length,before);
+});
+test('caller cancellation reaches a pending response body',async()=>{
+ const previous=globalThis.fetch,controller=new AbortController(),reason=new Error('body cancelled');let ready;
+ const started=new Promise(resolve=>{ready=resolve;});
+ globalThis.fetch=async (_url,options)=>new Response(new ReadableStream({start(stream){options.signal.addEventListener('abort',()=>stream.error(options.signal.reason),{once:true});ready();}}));
+ try{const pending=searchIndex('事务',{},retrievalConfig(),{readOnly:true,signal:controller.signal});await started;controller.abort(reason);await assert.rejects(pending,error=>error===reason);}finally{globalThis.fetch=previous;}
+});
+test('ordinary search also cancels collection inspection before index initialization writes',async()=>{
+ const controller=new AbortController(),reason=new Error('stop collection inspection'),before=db.prepare('SELECT total_changes() AS n').get().n,start=calls.length;
+ intercept=async target=>{if(target.includes('/collections/'))controller.abort(reason);};
+ try{await assert.rejects(searchIndex('事务',{},retrievalConfig(),{signal:controller.signal}),error=>error===reason);assert.equal(db.prepare('SELECT total_changes() AS n').get().n,before);assert.ok(!calls.slice(start).some(c=>c.method==='PUT'||c.target.endsWith('/points/query')));}finally{intercept=null;}
 });
 test('Chinese lexical features preserve exact terms', () => {
   const a = lexicalVector('杭州 展览');
@@ -208,3 +256,17 @@ test('Chinese lexical features preserve exact terms', () => {
 });
 
 after(() => { globalThis.fetch = originalFetch; console.log = originalLog; db.close(); rmSync(dir, { recursive: true, force: true }); });
+
+test('embedding contract rejection is logged as error instead of a successful response',async()=>{
+ const {setSetting,getSetting}=await import('../server/store.mjs');
+ const {testEmbedding}=await import('../server/retrieval/retrieval.mjs');
+ const {recentAiEvents}=await import('../server/core/ai-log.mjs');
+ const previous=getSetting('retrieval',null);
+ try{
+  setSetting('retrieval',{qdrant:'http://qdrant.test',embedding:'http://embedding.test/v1',model:'qwen3-embedding-0.6b',indexProfile:'qwen3-local-v1'});
+  await assert.rejects(testEmbedding(),/Embedding维度不符/);
+  const error=recentAiEvents().find(e=>e.kind==='embedding'&&e.stage==='error'&&e.error.includes('维度不符'));
+  assert.ok(error);assert.equal(error.dimensions,3);
+  assert.equal(recentAiEvents().some(e=>e.callId===error.callId&&e.stage==='response'),false);
+ }finally{setSetting('retrieval',previous);}
+});

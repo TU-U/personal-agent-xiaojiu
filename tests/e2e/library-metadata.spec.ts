@@ -2,11 +2,11 @@ import {test,expect} from '@playwright/test';
 test('invalid project remains removable, failed save preserves draft, and uncertain retry reuses the request before reopening',async({page})=>{
  let file={id:'metadata',revision:1,title:'原资料.md',sourcePath:'项目/原资料.md',content:'# 保留正文',status:'ready',reason:'已解析',copyName:'a.md',tags:['原标签'],projectId:'deleted-project',project:'旧项目标签'};
  const requests:Record<string,unknown>[]=[];
- await page.route('**/api/projects',route=>route.fulfill({json:{items:[]}}));
- await page.route('**/api/library/files?**',route=>route.fulfill({json:{items:[file],total:1,nextCursor:null}}));
- await page.route('**/api/library/metadata',route=>route.fulfill({json:file}));
- await page.route('**/api/library/metadata/index',route=>route.fulfill({json:{state:'queued',sourceRevision:file.revision,retryable:false,message:'等待当前版本索引'}}));
- await page.route('**/api/library/metadata/metadata',route=>{
+ await page.route('**/api/v1/projects',route=>route.fulfill({json:{items:[]}}));
+ await page.route('**/api/v1/library/files?**',route=>route.fulfill({json:{items:[file],total:1,nextCursor:null}}));
+ await page.route('**/api/v1/library/metadata',route=>route.fulfill({json:file}));
+ await page.route('**/api/v1/library/metadata/index',route=>route.fulfill({json:{state:'queued',sourceRevision:file.revision,retryable:false,message:'等待当前版本索引'}}));
+ await page.route('**/api/v1/library/metadata/metadata',route=>{
   const body=route.request().postDataJSON();requests.push(body);
   if(requests.length===1)return route.fulfill({status:422,json:{error:'所选项目已失效，请重新选择或取消项目关联。'}});
   if(requests.length===2){file={...file,title:body.title,tags:body.tags,projectId:body.projectId,revision:2};return route.abort('connectionfailed');}

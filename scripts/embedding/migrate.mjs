@@ -1,9 +1,9 @@
 // Administrative CLI only: do not seed or change unrelated running task states.
 const output=console.log.bind(console);console.log=(...args)=>console.error(...args);
 process.env.WORKER_MODE='true';process.env.SEED_DEMO='false';
-const {createQwenMigration,migrationStatus,retryIndexMigration}=await import('../../server/index-migration.mjs');
-const {verifyIndexMigration}=await import('../../server/index-verification.mjs');
-const {activateIndex,rollbackIndex}=await import('../../server/index-switch.mjs');
+const {createQwenMigration,migrationStatus,retryIndexMigration}=await import('../../server/retrieval/index/index-migration.mjs');
+const {verifyIndexMigration}=await import('../../server/retrieval/index/index-verification.mjs');
+const {activateIndex,rollbackIndex}=await import('../../server/retrieval/index/index-switch.mjs');
 const [action,id]=process.argv.slice(2);
 try{
  if(action==='create')output(JSON.stringify(createQwenMigration(),null,2));

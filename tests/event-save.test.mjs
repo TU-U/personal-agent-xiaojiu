@@ -1,0 +1,23 @@
+import {test,after} from 'node:test';import assert from 'node:assert/strict';
+import {mkdtemp,rm,mkdir,writeFile,readdir,readFile} from 'node:fs/promises';import {join} from 'node:path';import {tmpdir} from 'node:os';import {randomUUID} from 'node:crypto';
+const dir=await mkdtemp(join(tmpdir(),'event-save-'));process.env.DATA_DIR=dir;process.env.SEED_DEMO='false';process.env.WORKER_MODE='true';
+const {db,save,get,all,remove}=await import('../server/store.mjs');
+const {saveEventRequest}=await import('../server/domain/events/event-save.mjs');const {copyEventImages}=await import('../server/domain/events/event-images.mjs');
+const uploads=join(dir,'uploads');await mkdir(uploads,{recursive:true});
+const options={prepare:(body,old)=>({...old,...body})};
+after(async()=>{db.close();await rm(dir,{recursive:true,force:true});});
+test('concurrent creation replays one event and cleans only unused image copies; editing and deletion replay safely',async()=>{
+ const bytes=Buffer.from('fixture image bytes');await writeFile(join(uploads,'original'),bytes);
+ const note=save('note',{title:'来源',attachments:[{id:'img',key:'original',name:'image.png',mime:'image/png',size:bytes.length}]});
+ const body={opId:randomUUID(),title:'要事',summary:'内容',eventType:'one_off',priority:'normal',dueAt:'',sourceNoteId:note.id};
+ let copied=0,release;const gate=new Promise(resolve=>{release=resolve;});
+ const copy=async source=>{const images=await copyEventImages(source);if(++copied===2)release();await gate;return images;};
+ const [a,b]=await Promise.all([saveEventRequest(null,body,{...options,copy}),saveEventRequest(null,body,{...options,copy})]);
+ assert.equal(a.id,b.id);assert.equal(all('event').length,1);assert.equal((await readdir(uploads)).length,2);assert.deepEqual(await readFile(join(uploads,a.images[0].key)),bytes);
+ assert.equal((await saveEventRequest(null,body,options)).id,a.id);assert.equal((await readdir(uploads)).length,2);
+ await assert.rejects(()=>saveEventRequest(null,{...body,title:'不同内容'},options),/不同内容/);
+ const edit={opId:randomUUID(),revision:a.revision,title:'编辑后'};
+ const updated=await saveEventRequest(a.id,edit,options),replayed=await saveEventRequest(a.id,edit,options);assert.equal(updated.revision,replayed.revision);assert.equal(get(a.id,'event').revision,updated.revision);
+ const before=(await readdir(uploads)).sort();await assert.rejects(()=>saveEventRequest(null,{...body,opId:randomUUID(),priority:'invalid'},options));assert.deepEqual((await readdir(uploads)).sort(),before);
+ remove(a.id,'event',updated.revision);await assert.rejects(()=>saveEventRequest(null,body,options),/已删除/);assert.equal(all('event').length,0);
+});

@@ -1,0 +1,31 @@
+import {test,expect} from '@playwright/test';
+test('scan an isolated directory, search the copied body, locate the tail and cite it in chat',async({page})=>{
+ test.skip(process.env.SHIGUANG_E2E_LIBRARY_FLOW!=='1','Requires isolated synthetic source mapping');
+ await page.goto('/');await page.getByRole('button',{name:'进入演示空间'}).click();
+ await expect(page.locator('.app-shell')).toBeVisible();
+ await page.getByRole('button',{name:'资料库',exact:true}).click();
+ const library=page.getByRole('dialog',{name:'个人资料库'});
+ await library.getByLabel('资料来源目录').fill('study');
+ await library.getByRole('button',{name:'扫描并接入',exact:true}).click();
+ await expect(library.getByText(/本次接入完成 · 已发现 1 · 已复制 1 · 正文可检索 1/)).toBeVisible();
+ await library.getByLabel('搜索资料正文').fill('灯塔验收定位词');
+ const searching=page.waitForResponse(r=>r.url().includes('/api/v1/library/search?'));
+ await library.getByRole('button',{name:'检索',exact:true}).click();
+ const result=await (await searching).json();expect(result.mode).toBe('keyword');
+ const hit=result.results[0];expect(hit.start).toBeGreaterThan(10000);expect(hit.text).toContain('灯塔验收定位词');
+ await library.getByRole('button',{name:'scan-flow.md',exact:true}).first().click();
+ const detail=page.getByRole('dialog',{name:'scan-flow.md',exact:true});
+ await expect(detail.getByLabel('命中段落')).toContainText('灯塔验收定位词');
+ await expect(detail.getByLabel('命中段落')).toBeFocused();
+ const file=await (await page.request.get('/api/v1/library/'+hit.id)).json();
+ const expected='# 合成学习资料\n'+'前文阅读说明。\n'.repeat(1800)+'\n灯塔验收定位词：先阅读，再讨论，尚未执行。\n';
+ expect(file.content).toBe(expected);expect(file.content.slice(hit.start,hit.end)).toBe(hit.text);
+ const copy=await page.request.get('/api/v1/library/'+hit.id+'/file');expect(await copy.body()).toEqual(Buffer.from(expected));
+ await detail.getByRole('button',{name:'引用这份资料继续讨论',exact:true}).click();
+ await expect(page.getByLabel('本轮引用的资料').getByRole('button',{name:'移除引用：scan-flow.md',exact:true})).toBeVisible();
+ await expect(page.getByRole('textbox',{name:'向助手提问',exact:true})).not.toBeEmpty();
+ // The discussion entry must retain this actual copied source, not a new note.
+ await page.reload();
+ const still=await (await page.request.get('/api/v1/library/'+hit.id)).json();
+ expect(still.revision).toBe(file.revision);expect(still.copyName).toBe(file.copyName);
+});

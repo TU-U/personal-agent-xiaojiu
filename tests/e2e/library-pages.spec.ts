@@ -3,7 +3,7 @@ test('library pagination preserves loaded rows on error and rejects late respons
  let moreAttempts=0,release:()=>void=()=>{},entered:()=>void=()=>{};
  const gate=new Promise<void>(r=>release=r),started=new Promise<void>(r=>entered=r);
  const row=(id:string,title:string,status='ready')=>({id,revision:1,title,status,sourcePath:'项目/'+id+'.txt',reason:'已解析'});
- await page.route('**/api/library/files?**',async route=>{
+ await page.route('**/api/v1/library/files?**',async route=>{
   const query=new URL(route.request().url()).searchParams;
   if(query.get('status')==='failed')return route.fulfill({json:{items:[row('failed-old','失败旧资料','failed')],total:1,nextCursor:null}});
   if(query.get('cursor')==='c2'){entered();await gate;return route.fulfill({json:{items:[row('late','旧筛选迟到资料')],total:531,nextCursor:null}});}
@@ -34,9 +34,9 @@ test('library pagination preserves loaded rows on error and rejects late respons
 test('combined scope is sent to list and search and a late search cannot replace the new scope',async({page})=>{
  let release:()=>void=()=>{},entered:()=>void=()=>{};
  const gate=new Promise<void>(r=>release=r),started=new Promise<void>(r=>entered=r);
- await page.route('**/api/projects',route=>route.fulfill({json:{items:[{id:'project-a',name:'项目A'}]}}));
- await page.route('**/api/library/files?**',route=>route.fulfill({json:{items:[],total:0,nextCursor:null}}));
- await page.route('**/api/library/search?**',async route=>{entered();await gate;await route.fulfill({json:{mode:'hybrid',results:[{id:'old',title:'旧范围检索结果',text:'旧内容',start:0,end:3}]}});});
+ await page.route('**/api/v1/projects',route=>route.fulfill({json:{items:[{id:'project-a',name:'项目A'}]}}));
+ await page.route('**/api/v1/library/files?**',route=>route.fulfill({json:{items:[],total:0,nextCursor:null}}));
+ await page.route('**/api/v1/library/search?**',async route=>{entered();await gate;await route.fulfill({json:{mode:'hybrid',results:[{id:'old',title:'旧范围检索结果',text:'旧内容',start:0,end:3}]}});});
  await page.goto('/');await page.getByRole('button',{name:'进入演示空间'}).click();
  await page.getByRole('button',{name:'资料库',exact:true}).click();
  const dialog=page.getByRole('dialog',{name:'个人资料库'});

@@ -2,7 +2,7 @@ import {test,after} from 'node:test';import assert from 'node:assert/strict';
 import {mkdtemp,rm} from 'node:fs/promises';import path from 'node:path';import os from 'node:os';import {spawnSync} from 'node:child_process';
 const root=await mkdtemp(path.join(os.tmpdir(),'supervision-runs-'));Object.assign(process.env,{DATA_DIR:root,SEED_DEMO:'false',WORKER_MODE:'true'});
 const {db,save,get,all}=await import('../server/store.mjs');
-const {migrateSupervisionRuns,ensureSupervisionRuns,runRequirements,recordSupervisionCalendar}=await import('../server/supervision-runs.mjs');
+const {migrateSupervisionRuns,ensureSupervisionRuns,runRequirements,recordSupervisionCalendar}=await import('../server/pet/supervision/supervision-runs.mjs');
 const clock=day=>()=>Date.parse(day+'T04:00:00Z');
 const template={title:'读书',status:'running',repeat:'daily',minutes:45,requirement:'写三条心得',time:'20:00',startTime:'09:00'};
 test('migration preserves legacy evidence and states, records uncertainty and is repeatable',()=>{
@@ -19,7 +19,7 @@ test('daily identity survives template edits and process restart; later days use
  task=save('workTask',{...task,minutes:90,requirement:'写五条心得',time:'21:00',planVersion:2},task.revision);
  ensureSupervisionRuns({clock:clock('2026-09-29')});assert.equal(all('workRun').filter(run=>run.taskId===task.id).length,1);
  const first=get(before.id,'workRun');assert.equal(first.conditionsSnapshot.minimumSeconds,2700);assert.equal(first.scheduledDueAt,'2026-09-29T20:00:00+08:00');
- const child=spawnSync(process.execPath,['--input-type=module','-e',"const {ensureSupervisionRuns}=await import('./server/supervision-runs.mjs');ensureSupervisionRuns({clock:()=>Date.parse('2026-09-29T04:00:00Z')});"],{env:process.env,encoding:'utf8',timeout:15000});assert.equal(child.status,0,child.stderr);
+ const child=spawnSync(process.execPath,['--input-type=module','-e',"const {ensureSupervisionRuns}=await import('./server/pet/supervision/supervision-runs.mjs');ensureSupervisionRuns({clock:()=>Date.parse('2026-09-29T04:00:00Z')});"],{env:process.env,encoding:'utf8',timeout:15000});assert.equal(child.status,0,child.stderr);
  assert.equal(all('workRun').filter(run=>run.taskId===task.id).length,1);
  ensureSupervisionRuns({clock:clock('2026-09-30')});const next=all('workRun').find(run=>run.taskId===task.id&&run.day==='2026-09-30');assert.equal(next.conditionsSnapshot.minimumSeconds,5400);assert.equal(next.conditionsSnapshot.conditions[0].description,'写五条心得');
 });
@@ -45,7 +45,7 @@ test('offline days use known historical templates; pause gaps are excluded and b
  for(let i=0;i<4;i++)ensureSupervisionRuns({clock:clock('2027-01-10')});runs=all('workRun').filter(run=>run.taskId===task.id);assert.equal(runs.length,68);assert.equal(new Set(runs.map(run=>run.day)).size,runs.length);assert.ok(runs.some(run=>run.day==='2027-01-10'));
 });
 test('condition change is recorded before an outage and applies only from the following day',async()=>{
- const {updateSupervisionConditions}=await import('../server/supervision-conditions.mjs');
+ const {updateSupervisionConditions}=await import('../server/pet/supervision/supervision-conditions.mjs');
  const task=save('workTask',{...template,supervisionVersion:1,supervisionStatus:'active',planVersion:1});ensureSupervisionRuns({clock:clock('2027-02-01')});
  updateSupervisionConditions(task.id,{opId:'calendar-condition-change',planVersion:1,minutes:90,conditions:[{id:'new',kind:'evidence',required:true,description:'新的学习要求'}]},{clock:clock('2027-02-01')});
  ensureSupervisionRuns({clock:clock('2027-02-04')});const runs=all('workRun').filter(run=>run.taskId===task.id);assert.equal(runs.length,4);assert.equal(runs.find(run=>run.day==='2027-02-01').conditionsSnapshot.minimumSeconds,2700);

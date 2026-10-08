@@ -1,0 +1,20 @@
+import {test,after} from 'node:test';import assert from 'node:assert/strict';
+import {mkdtemp,rm} from 'node:fs/promises';import {join} from 'node:path';import {tmpdir} from 'node:os';
+const dir=await mkdtemp(join(tmpdir(),'work-context-'));process.env.DATA_DIR=dir;process.env.SEED_DEMO='false';process.env.WORKER_MODE='true';
+const {db,save,get,all}=await import('../server/store.mjs');
+const {createWorkTask}=await import('../server/pet/supervision/work-tasks.mjs');
+after(async()=>{db.close();await rm(dir,{recursive:true,force:true});});
+test('ordinary plan receives selected sources and thread constraints; changed input cannot commit',async()=>{
+ const note=save('note',{title:'数据库笔记',content:'无关内容\n'.repeat(1500)+'事务回滚需要原子性。',status:'ready'});
+ const turn=save('conversation',{query:'必须在本地学习',body:'尚未确认的练习建议',references:[],sources:[]});
+ const body={goal:'学习事务回滚',threadId:turn.id,references:[{kind:'note',id:note.id,revision:note.revision}],requirement:'提交总结'};
+ const plan=JSON.stringify({goal:body.goal,conditions:'本地练习',steps:['核对资料'],deliverable:'学习总结'});let prompt;
+ const task=await createWorkTask(body,{generate:async(_,input)=>{prompt=JSON.parse(input);return plan;}});
+ assert.match(prompt.sourceContext.sources[0].quote,/事务回滚需要原子性/);assert.equal(prompt.sourceContext.history[0].query,turn.query);assert.equal(prompt.requirement,body.requirement);
+ assert.equal(task.status,'draft');assert.equal(task.references[0].revision,note.revision);assert.deepEqual(task.sourceContext,prompt.sourceContext);
+ const count=all('workTask').length;
+ await assert.rejects(()=>createWorkTask(body,{generate:async()=>{save('note',{...get(note.id,'note'),content:'修改后的资料'},note.revision);return plan;}}),/引用.*已变化/);
+ assert.equal(all('workTask').length,count);assert.match(get(task.id,'workTask').sourceContext.sources[0].quote,/事务回滚需要原子性/);
+ await assert.rejects(()=>createWorkTask({...body,references:[]},{generate:async()=>{save('conversation',{...get(turn.id,'conversation'),query:'约束变化'},turn.revision);return plan;}}),/话题背景已变化/);
+ assert.equal(all('workTask').length,count);
+});

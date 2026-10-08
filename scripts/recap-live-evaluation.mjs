@@ -1,9 +1,9 @@
 import {DatabaseSync} from 'node:sqlite';import {mkdir,writeFile} from 'node:fs/promises';import path from 'node:path';
 const root=process.cwd(),stamp=new Date().toISOString().replace(/[:.]/g,'-'),live=new DatabaseSync(path.join(root,'.data/shiguang.sqlite'),{readOnly:true});
-const row=live.prepare("SELECT value FROM settings WHERE key='provider'").get();let provider=row?JSON.parse(row.value):null;live.close();if(!provider)provider=(await import('../server/provider.local.mjs')).default;
+const row=live.prepare("SELECT value FROM settings WHERE key='provider'").get();let provider=row?JSON.parse(row.value):null;live.close();if(!provider)provider=(await import('../server/ai/provider.local.mjs')).default;
 Object.assign(process.env,{DATA_DIR:path.join(root,'.data/evaluations','recap-live-'+stamp),SEED_DEMO:'false',WORKER_MODE:'true'});
 const {db,save,setSetting}=await import('../server/store.mjs');setSetting('provider',provider);
-const {dailySupervisionRecap,generateSupervisionRecap}=await import('../server/supervision-recap.mjs');
+const {dailySupervisionRecap,generateSupervisionRecap}=await import('../server/pet/supervision/supervision-recap.mjs');
 const output=path.join(root,'artifacts','recap-live-'+stamp+'.json'),result={syntheticOnly:true,createdAt:new Date().toISOString(),model:provider.model,checks:[],ok:false};
 try{
  const task=save('workTask',{title:'学习消息队列'}),day='2026-09-29';

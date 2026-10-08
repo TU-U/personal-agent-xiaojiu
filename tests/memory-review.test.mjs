@@ -1,8 +1,8 @@
 import {test,after} from 'node:test';import assert from 'node:assert/strict';
 import {mkdtemp,rm} from 'node:fs/promises';import path from 'node:path';import os from 'node:os';
 const root=await mkdtemp(path.join(os.tmpdir(),'memory-review-'));Object.assign(process.env,{DATA_DIR:root,SEED_DEMO:'false',WORKER_MODE:'true'});
-const {db,save,get,all,remove,transaction}=await import('../server/store.mjs');const {reviewMemoryBatch}=await import('../server/memory-review.mjs');
-const {saveMemoryTurn}=await import('../server/memory-lifecycle.mjs');
+const {db,save,get,all,remove,transaction}=await import('../server/store.mjs');const {reviewMemoryBatch}=await import('../server/domain/memory/memory-review.mjs');
+const {saveMemoryTurn}=await import('../server/domain/memory/memory-lifecycle.mjs');
 const turn=items=>transaction(()=>saveMemoryTurn({query:'用户事实',body:'回复',memoryProposals:items.map(content=>({content})),memoryReview:'pending'}));
 const none={check:async()=>null};
 test('selected batch commits once; replay after lost response neither rechecks nor duplicates',async()=>{

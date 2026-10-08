@@ -1,0 +1,24 @@
+import {test,after} from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+const dir=await mkdtemp(join(tmpdir(),'accounting-ocr-'));process.env.DATA_DIR=dir;process.env.SEED_DEMO='false';process.env.WORKER_MODE='true';
+const {db,all,get}=await import('../server/store.mjs');
+const {createAccountingImport,reparseAccountingImport,accountingImportOriginal}=await import('../server/domain/accounting/accounting-imports.mjs');
+const {parseAccountingScreenshot}=await import('../server/domain/accounting/accounting-ocr.mjs');
+const {previewAccountingReview,commitAccountingReview}=await import('../server/domain/accounting/accounting-import-review.mjs');
+after(async()=>{db.close();await rm(dir,{recursive:true,force:true});});
+test('screenshot survives model failure, missing fields remain blank, and corrected confirmation retains original linkage',async()=>{
+ const buffer=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aN1sAAAAASUVORK5CYII=','base64');
+ const deps={providerAvailable:()=>true,complete:async()=>'not JSON'};
+ const parse=(bytes,original)=>parseAccountingScreenshot(bytes,original.mime,deps);
+ const b=await createAccountingImport({originalname:'receipt.png',buffer},{opId:'screenshot-upload'},{parse});
+ assert.equal(b.status,'parse_failed');assert.deepEqual((await accountingImportOriginal(b.id)).bytes,buffer);assert.equal(all('transaction').length,0);
+ deps.complete=async()=>JSON.stringify({type:'expense',amount:'',date:'',category:'',note:'午餐',merchant:'餐厅',sourceRef:'',channel:'wechat',kind:'ordinary',status:'success'});
+ const parsed=await reparseAccountingImport(b.id,{opId:'screenshot-reparse',revision:b.revision},{parse});
+ assert.equal(parsed.rows[0].draft.date,'');assert.equal(parsed.rows[0].draft.category,'');assert.equal(parsed.rows[0].draft.amountCents,null);
+ const review=previewAccountingReview(b.id,{opId:'screenshot-review',revision:parsed.revision,choices:[{rowId:'row-1',decision:'include',acceptWarnings:true,draft:{type:'expense',amount:'35.50',category:'美食',date:'2026-10-08',note:'午餐',merchant:'餐厅',channel:'wechat',sourceRef:''}}]});
+ const result=commitAccountingReview(b.id,{opId:'screenshot-commit',revision:review.revision,reviewId:review.reviewId,reviewToken:review.reviewToken,approved:true,duplicateAcknowledgements:[]});
+ const tx=get(result.transactionIds[0],'transaction');assert.equal(tx.amountCents,3550);assert.equal(tx.importBatchId,b.id);assert.equal(tx.originalSha256,b.original.sha256);assert.deepEqual((await accountingImportOriginal(b.id)).bytes,buffer);
+});

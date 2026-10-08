@@ -2,7 +2,7 @@ import {test,after} from 'node:test';import assert from 'node:assert/strict';
 import {mkdtemp,rm} from 'node:fs/promises';import path from 'node:path';import os from 'node:os';
 const root=await mkdtemp(path.join(os.tmpdir(),'event-lifecycle-'));Object.assign(process.env,{DATA_DIR:root,SEED_DEMO:'false',WORKER_MODE:'true'});
 const {db,get,save,all}=await import('../server/store.mjs');
-const {editEventLifecycle:edit,initializeEventLifecycle:create,migrateEventLifecycle:migrate,eventChecks,scheduleEventCheck:schedule,snoozeEventCheck:snooze,confirmEventCheck:confirm,endEvent:end,commitEventReview:review}=await import('../server/event-lifecycle.mjs');
+const {editEventLifecycle:edit,initializeEventLifecycle:create,migrateEventLifecycle:migrate,eventChecks,scheduleEventCheck:schedule,snoozeEventCheck:snooze,confirmEventCheck:confirm,endEvent:end,commitEventReview:review}=await import('../server/domain/events/event-lifecycle.mjs');
 const past='2020-01-01T00:00:00.000Z',future='2099-01-01T00:00:00.000Z';
 test('migration preserves old confirmation, attachments and IDs without inferring duration or end state',()=>{
  const legacy=save('event',{title:'历史经历',status:'confirmed',priority:'high',dueAt:past,confirmedAt:past,images:[{key:'keep'}],sourceNoteId:'source',reviewText:'历史建议',reviewedDueAt:past});
@@ -52,3 +52,30 @@ test('editing cancels or reschedules only the pending occurrence and preserves e
  assert.throws(()=>edit(event.id,{...changed,dueAt:past},changed.revision),/已结束/);
 });
 after(async()=>{db.close();await rm(root,{recursive:true,force:true});});
+test('occurrence date is optional, calendar-valid and independent from reminder instances',()=>{
+ const event=create({title:'历史经历日期',eventType:'one_off',priority:'high',occurredAt:'2024-02-29',dueAt:''});
+ assert.equal(event.occurredAt,'2024-02-29');assert.equal(event.currentOccurrenceId,null);assert.equal(eventChecks(event.id).length,0);
+ const changed=edit(event.id,{...event,title:'改名',occurredAt:'2024-03-01'},event.revision);assert.equal(changed.occurredAt,'2024-03-01');assert.equal(changed.dueAt,'');
+ const {occurredAt,...legacyPatch}=changed;const kept=edit(changed.id,legacyPatch,changed.revision);assert.equal(kept.occurredAt,occurredAt);
+ const cleared=edit(kept.id,{...kept,occurredAt:null},kept.revision);assert.equal(cleared.occurredAt,null);
+ assert.throws(()=>create({title:'无效日期',eventType:'one_off',priority:'normal',occurredAt:'2025-02-29'}));
+ assert.throws(()=>edit(cleared.id,{...cleared,occurredAt:'2024-13-01'},cleared.revision));assert.equal(get(cleared.id,'event').revision,cleared.revision);
+});
+
+test('resetting a review clears current snapshot while retaining historical provenance',async()=>{
+ const {requestEventReview}=await import('../server/jobs/event-jobs.mjs');
+ for(const action of ['snooze','edit','retry','next']){
+  let event=create({title:'依据归档 '+action,eventType:'long_term',priority:'high',dueAt:past});
+  const check=get(event.currentOccurrenceId,'eventOccurrence');
+  event=review(event.id,{eventRevision:event.revision,occurrenceId:check.id,occurrenceRevision:check.revision,reviewText:'当时建议',reviewNotice:''});
+  const original=get(check.id,'eventOccurrence').reviewSnapshot;assert.ok(original?.signature);
+  if(action==='snooze')event=snooze(event.id,{revision:event.revision,occurrenceId:check.id,dueAt:future});
+  if(action==='edit')event=edit(event.id,{...event,summary:'修改了方案'},event.revision);
+  if(action==='retry')event=requestEventReview(event.id,{revision:event.revision,occurrenceId:check.id});
+  if(action==='next'){event=confirm(event.id,{revision:event.revision,occurrenceId:check.id});event=schedule(event.id,{revision:event.revision,dueAt:future});}
+  assert.equal(event.reviewSnapshot,null);assert.equal(event.reviewText,'');
+  const previous=get(check.id,'eventOccurrence');
+  if(action==='next'){assert.deepEqual(previous.reviewSnapshot,original);assert.equal(previous.status,'confirmed');assert.notEqual(event.currentOccurrenceId,check.id);}
+  else{assert.equal(previous.reviewSnapshot,null);assert.deepEqual(previous.history.at(-1).reviewSnapshot,original);assert.equal(previous.history.at(-1).reviewText,'当时建议');}
+ }
+});

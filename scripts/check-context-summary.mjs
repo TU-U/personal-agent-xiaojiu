@@ -1,14 +1,14 @@
 import {spawn} from 'node:child_process';
 import {mkdtemp,rm,mkdir,open} from 'node:fs/promises';
 import os from 'node:os';import path from 'node:path';
-import {providerConfig} from '../server/engine.mjs';
+import {providerConfig} from '../server/ai/engine.mjs';
 const provider=providerConfig();if(!provider.baseUrl||!provider.model)throw new Error('没有可用模型配置，未执行真实模型验证。');
 const temporary=await mkdtemp(path.join(os.tmpdir(),'shiguang-context-quality-'));await mkdir('.data/logs',{recursive:true});const log=await open('.data/logs/context-quality-check.log','a');
 const code=`
 import {writeFile,mkdir} from 'node:fs/promises';
 import {setSetting,db} from './server/store.mjs';
 let input='';for await(const chunk of process.stdin)input+=chunk;setSetting('provider',JSON.parse(input));
-const {complete}=await import('./server/engine.mjs');const {compressContextBatch}=await import('./server/context-compression.mjs');
+const {complete}=await import('./server/ai/engine.mjs');const {compressContextBatch}=await import('./server/agent/context-compression.mjs');
 const user='我计划周五晚上八点再确认这件事，目前还没开始。预算上限100元，不接受付费订阅。只讨论方案，不要替我执行。';
 const answer='助手建议先整理资料，再列出可选方案；这些只是建议，用户还没有接受。'.repeat(500)+'最后补充：不得把计划写成已经完成，周五晚上八点由用户确认。';
 const result=await compressContextBatch('synthetic-check',{text:''},[{id:'public-synthetic-turn',query:user,body:answer,references:[]}],complete,()=>{}, {maxCalls:5,budgetMs:95000});

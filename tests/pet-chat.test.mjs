@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {mkdtemp,rm} from 'node:fs/promises';
 import os from 'node:os';import path from 'node:path';
 const root=await mkdtemp(path.join(os.tmpdir(),'pet-chat-'));Object.assign(process.env,{DATA_DIR:root,SEED_DEMO:'false',WORKER_MODE:'true'});
-const {db,save,get}=await import('../server/store.mjs');const {petChat}=await import('../server/pet-chat.mjs');
+const {db,save,get}=await import('../server/store.mjs');const {petChat}=await import('../server/pet/pet-chat.mjs');
 const base={content:'用户喜欢安静的地方',title:'安静偏好',status:'active',scopeKind:'global',scope:'通用'};
 const options={available:()=>true,modelAvailable:()=>true,log:()=>{}};
 test('only relevant current general memory is provided; scope, status, source and version are rechecked after retrieval',async()=>{

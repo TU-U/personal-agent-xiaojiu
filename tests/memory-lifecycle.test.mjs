@@ -1,7 +1,7 @@
 import {test,after} from 'node:test';import assert from 'node:assert/strict';import {mkdtemp,rm} from 'node:fs/promises';import os from 'node:os';import path from 'node:path';
 const root=await mkdtemp(path.join(os.tmpdir(),'memory-life-'));Object.assign(process.env,{DATA_DIR:root,SEED_DEMO:'false',WORKER_MODE:'true'});
 const {db,get,save,remove,transaction,getSetting}=await import('../server/store.mjs');
-const {saveMemoryTurn,refreshMemoryCandidates,pendingMemoryBatches}=await import('../server/memory-lifecycle.mjs');const {reviewMemoryBatch}=await import('../server/memory-review.mjs');
+const {saveMemoryTurn,refreshMemoryCandidates,pendingMemoryBatches}=await import('../server/domain/memory/memory-lifecycle.mjs');const {reviewMemoryBatch}=await import('../server/domain/memory/memory-review.mjs');
 const turn=(threadId,pending=false)=>transaction(()=>saveMemoryTurn({threadId,query:'用户',body:'成功回答',memoryReview:pending?'pending':'none',memoryProposals:pending?[{content:'稳定事实'}]:[]}));
 test('same-thread N+4 remains pending; other threads, reads and rolled back turns do not count; N+5 expires',async()=>{
  const candidate=turn('one',true);for(let i=0;i<4;i++)turn('one');for(let i=0;i<8;i++)turn('other');

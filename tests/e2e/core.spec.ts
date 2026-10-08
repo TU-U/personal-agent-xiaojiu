@@ -14,7 +14,7 @@ test('new draft survives close and reopening',async({page})=>{
 test('today refreshes into its own todo list and older days stay readable',async({page})=>{
  const suffix=unique(),oldTitle='昨天未完成 '+suffix,todayTitle='今天处理 '+suffix;
  const date=new Date();date.setDate(date.getDate()-1);const yesterday=`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
- const created=await page.request.post('/api/todos',{data:{title:oldTitle,day:yesterday}});expect(created.ok()).toBe(true);
+ const created=await page.request.post('/api/v1/todos',{data:{title:oldTitle,day:yesterday}});expect(created.ok()).toBe(true);
  await page.reload();await expect(page.locator('.todo-panel')).toContainText('今日待办');await expect(page.locator('.todo-panel')).not.toContainText(oldTitle);
  await page.getByLabel('添加待办事项').fill(todayTitle);await page.getByLabel('添加待办',{exact:true}).click();await expect(page.locator('.todo-panel')).toContainText(todayTitle);
  await page.getByLabel('查看日期').selectOption(yesterday);await expect(page.locator('.todo-panel')).toContainText(oldTitle);await expect(page.locator('.todo-panel')).not.toContainText(todayTitle);await expect(page.getByLabel('添加待办事项')).toHaveCount(0);

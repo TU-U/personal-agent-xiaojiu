@@ -1,5 +1,5 @@
 import {DatabaseSync} from 'node:sqlite';
-import {createBackgroundQueue,createJobRepository} from '../../server/background-jobs.mjs';
+import {createBackgroundQueue,createJobRepository} from '../../server/core/background-jobs.mjs';
 const db=new DatabaseSync(process.env.JOB_DB);db.exec('PRAGMA busy_timeout=5000');
 const repository=createJobRepository(db);
 const service=createBackgroundQueue({repository,connection:{host:'127.0.0.1',port:Number(process.env.TEST_REDIS_PORT),maxRetriesPerRequest:null},leaseMs:800,lockDuration:800,stalledInterval:500,handlers:{parse:{

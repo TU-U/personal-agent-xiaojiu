@@ -6,7 +6,7 @@ import path from 'node:path';
 const root=await mkdtemp(path.join(os.tmpdir(),'pet-reminders-'));
 Object.assign(process.env,{DATA_DIR:root,SEED_DEMO:'false',WORKER_MODE:'true'});
 const {db,save,get,remove,setSetting}=await import('../server/store.mjs');
-const {petReminders}=await import('../server/pet-reminders.mjs');
+const {petReminders}=await import('../server/pet/pet-reminders.mjs');
 const at=Date.parse('2026-09-29T04:00:00Z');
 const read=(time=at)=>petReminders({clock:()=>time});
 const change=(kind,value,patch)=>save(kind,{...get(value.id,kind),...patch},get(value.id,kind).revision);

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {mkdtemp,writeFile,rm} from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import {parseLibraryCopy} from '../server/library-parser.mjs';
+import {parseLibraryCopy} from '../server/domain/library/library-parser.mjs';
 const root=await mkdtemp(path.join(os.tmpdir(),'library-parser-'));
 test('isolated parser preserves full body and reports decoding errors',async()=>{
  const file=path.join(root,'long.md'),text='完整正文\n'.repeat(40000)+'末尾凭据';await writeFile(file,text);

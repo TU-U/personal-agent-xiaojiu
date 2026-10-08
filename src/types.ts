@@ -1,19 +1,22 @@
-export interface Attachment {id:string;name:string;size:number;mime:string}
-export interface Note {categoryId?:string;projectId?:string;id:string;revision:number;title:string;content:string;summary:string;summaryMode?:'ai'|'rule';type:'text'|'document'|'image'|'audio';tags:string[];project:string;pinned:boolean;createdAt:string;updatedAt:string;sample?:boolean;status:string;notice?:string;attachments:Attachment[];sourcePath?:string;score?:number}
-export interface Source {scopeKind?:string;scopeId?:string;purpose?:string;id:string;kind?:'note'|'memory'|'event'|'web'|'libraryFile';title:string;quote:string;url?:string;revision:number;createdAt:string}
-export interface ConversationReference {id:string;kind:'note'|'event'|'libraryFile';title:string;revision:number}
-export interface Memory {sourceConversationId?:string;sourceRevision?:number;sourceRef?:{kind:"note"|"event"|"libraryFile"|"conversation";id:string;revision?:number};scopeKind?:'global'|'project'|'thread';scopeId?:string;sourceIssue?:string;id:string;revision:number;title:string;content:string;scope:string;status:'candidate'|'active'|'paused'|'rejected'|'invalid';sourceId?:string;createdAt:string;sample?:boolean}
-export interface EventRecord {relatedTaskIds?:string[];reviewStale?:boolean;reviewSnapshot?:{sources:{kind:string;id:string;revision:number|null;title:string;missing:boolean}[];createdAt:string};reviewJob?:{id:string;state:string;error?:string}|null;eventType?:"long_term"|"one_off"|null;lifecycleStatus?:"ongoing"|"ended";currentOccurrenceId?:string|null;id:string;revision:number;title:string;summary:string;tags:string[];project:string;priority:'normal'|'high';dueAt:string;status:'open'|'confirmed'|'ended';sourceNoteId?:string|null;relatedEventIds?:string[];images?:(Attachment&{sourceAttachmentId?:string})[];reviewText?:string;reviewNotice?:string;reviewedDueAt?:string;createdAt:string;confirmedAt?:string}
-export interface Todo {supervisionTaskId?:string;supervisionRunId?:string;upgradedAt?:string;timeZone?:string;carriedFromId?:string;carriedRootId?:string;carriedFromDay?:string;carriedSourceRevision?:number;id:string;revision:number;title:string;done:boolean;day?:string;completedAt?:string|null;createdAt:string;updatedAt:string}
-export interface LedgerTransaction {id:string;revision:number;type:'income'|'expense';amountCents:number;category:string;date:string;note:string;sourceRef?:string;source?:'manual'|'wechat'|'ocr';createdAt:string;updatedAt:string}
-export interface AccountingBudget {id:string;revision?:number;amountCents:number;updatedAt?:string}
-export interface PetChatMessage {role:'user'|'assistant';content:string}
-export interface PetChatReply {reply:string;memoryUsage?:{id:string;revision:number;title:string}[];memoryNotice?:string;callId?:string}
-export interface Artifact {qualityNotice?:string;id:string;revision:number;title:string;body:string;sources:Source[];mode:'local'|'model'|'human';originMode?:'local'|'model';editedAt?:string;template:string;project:string;createdAt:string;memories?:{id:string;content:string}[]}
-export interface MemoryProposal {scopeKind?:'global'|'project'|'thread';scopeId?:string;scope?:string;conflictRefs?:{id:string;revision:number;content:string;reason:string}[];content:string;conflictId?:string;conflictRevision?:number;conflictContent?:string}
-export interface Conversation {projectId?:string;qualityNotice?:string;id:string;revision:number;threadId?:string;threadTitle?:string;project?:string;query:string;body:string;sources:Source[];references?:ConversationReference[];webSearch?:boolean;mode:'local'|'model';createdAt:string;memoryProposals?:MemoryProposal[];memoryNotice?:string;memoryReview?:'pending'|'none'|'reviewed'|'expired'}
-export interface Task {id:string;title:string;status:string;error?:string;createdAt:string}
-export interface PendingMemoryBatch {id:string;threadId:string;title:string;count:number;revision:number}
-export interface Bootstrap {pendingMemoryBatches?:PendingMemoryBatch[];notes:Note[];events:EventRecord[];todos:Todo[];transactions:LedgerTransaction[];accountingBudget:AccountingBudget;memories:Memory[];artifacts:Artifact[];tasks:Task[];conversations:Conversation[];cursor:number;settings:{name:string;modelEnabled:boolean;model:string;hybridEnabled?:boolean;webSearchEnabled?:boolean;demoAccess:boolean};serverTime:string}
-export interface Settings {name:string;provider:{baseUrl:string;model:string;hasKey:boolean;environmentManaged:boolean};webSearch:{provider:'brave';hasKey:boolean;environmentManaged:boolean};demoAccess:boolean}
+// Public wire types are generated from the pinned xiaojiu-contracts protocol.
+import type {components} from '../contracts/generated/types';
+export type Attachment = components['schemas']['Attachment'];
+export type Transcript = components['schemas']['Transcript'];
+export type Note = components['schemas']['Note'];
+export type Source = components['schemas']['Source'];
+export type ConversationReference = components['schemas']['ConversationReference'];
+export type Memory = components['schemas']['Memory'];
+export type EventRecord = components['schemas']['EventRecord'];
+export type Todo = components['schemas']['Todo'];
+export type LedgerTransaction = components['schemas']['LedgerTransaction'];
+export type AccountingBudget = components['schemas']['AccountingBudget'];
+export type PetChatMessage = components['schemas']['PetChatMessage'];
+export type PetChatReply = components['schemas']['PetChatReply'];
+export type Artifact = components['schemas']['Artifact'];
+export type MemoryProposal = components['schemas']['MemoryProposal'];
+export type Conversation = components['schemas']['Conversation'];
+export type Task = components['schemas']['Task'];
+export type PendingMemoryBatch = components['schemas']['PendingMemoryBatch'];
+export type Bootstrap = components['schemas']['Bootstrap'];
+export type Settings = components['schemas']['Settings'];
 export type Page='workTasks'|'library'|'assistant'|'events'|'artifacts'|'memories'|'settings'|'accounting';

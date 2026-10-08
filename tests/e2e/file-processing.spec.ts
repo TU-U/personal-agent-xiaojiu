@@ -7,6 +7,6 @@ test('PDF import shows processing and later the parsed original without reopenin
  await expect(page.getByRole('dialog').getByRole('heading',{name:'sample.pdf',exact:true})).toBeVisible();
  await expect(page.getByLabel('原件解析状态')).toContainText('原件解析已完成。',{timeout:20000});
  await expect(page.locator('.note-detail .markdown')).toContainText('支付接口');
- const boot=await (await page.request.get('/api/bootstrap')).json();const note=boot.notes.find((n:{title:string})=>n.title==='sample.pdf');expect(note.categoryId).toBe('category-work');expect(note.classification.state).toBe('manual');
+ const boot=await (await page.request.get('/api/v1/bootstrap')).json();const note=boot.notes.find((n:{title:string})=>n.title==='sample.pdf');expect(note.categoryId).toBe('category-work');expect(note.classification.state).toBe('manual');
  await page.getByRole('button',{name:'编辑',exact:true}).click();await expect(page.getByLabel('记录内容')).toHaveValue(/支付接口/);
 });

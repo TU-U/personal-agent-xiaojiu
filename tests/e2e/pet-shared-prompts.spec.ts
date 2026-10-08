@@ -5,10 +5,10 @@ test('home, source pages and pet reuse the same prompt and remove it together af
  let run={id:'shared-run',taskId:task.id,day:today,status:'open',seconds:0,timerAt:null,evidence:'',artifactId:'',reminded:true,notice:'过期的独立催促',snoozedUntil:''};
  const event={id:'shared-event',revision:1,title:'统一要事测试',summary:'测试',tags:[],project:'',priority:'normal',eventType:'one_off',lifecycleStatus:'ongoing',status:'open',dueAt:'2020-01-01T00:00:00Z',currentOccurrenceId:'check',createdAt:'2020-01-01T00:00:00Z',images:[],relatedEventIds:[]};
  const prompts=[{id:'event:shared-event:check',sourceKind:'event',sourceId:event.id,title:event.title,message:'统一要事检查消息',count:1,actionTarget:{page:'events',id:event.id,occurrenceId:'check'}},{id:'workRun:shared-run:due',sourceKind:'workRun',sourceId:run.id,title:task.title,message:'统一任务检查消息',count:1,actionTarget:{page:'workTasks',id:task.id,runId:run.id}}];
- await page.route('**/api/bootstrap',async route=>{const response=await route.fetch();return route.fulfill({json:{...await response.json(),events:[event]}});});
- await page.route('**/api/work-tasks',route=>route.fulfill({json:{tasks:[task],runs:[run]}}));
- await page.route('**/api/pet/reminders',route=>{const items=run.snoozedUntil?prompts.slice(0,1):prompts;return route.fulfill({json:{snapshot:run.snoozedUntil||'first',cursor:1,total:items.length,items}});});
- await page.route('**/api/work-runs/shared-run/action',route=>{const body=route.request().postDataJSON();expect(body.action).toBe('snooze');run={...run,snoozedUntil:body.until,reminded:false,notice:'已安排稍后检查'};return route.fulfill({json:run});});
+ await page.route('**/api/v1/bootstrap',async route=>{const response=await route.fetch();return route.fulfill({json:{...await response.json(),events:[event]}});});
+ await page.route('**/api/v1/work-tasks',route=>route.fulfill({json:{tasks:[task],runs:[run]}}));
+ await page.route('**/api/v1/pet/reminders',route=>{const items=run.snoozedUntil?prompts.slice(0,1):prompts;return route.fulfill({json:{snapshot:run.snoozedUntil||'first',cursor:1,total:items.length,items}});});
+ await page.route('**/api/v1/work-runs/shared-run/action',route=>{const body=route.request().postDataJSON();expect(body.action).toBe('snooze');run={...run,snoozedUntil:body.until,reminded:false,notice:'已安排稍后检查'};return route.fulfill({json:run});});
  await page.goto('/');await page.getByRole('button',{name:'进入演示空间'}).click();await expect(page.locator('.app-shell')).toBeVisible();
  const home=page.getByLabel('小九的要事提示'),todayTasks=page.getByRole('region',{name:'今日任务'}),pet=page.getByRole('button',{name:/小九现在/});
  await expect(home).toContainText('小九：统一要事检查消息');await expect(todayTasks).toContainText('小九：统一任务检查消息');await expect(page.getByText('过期的独立催促',{exact:true})).toHaveCount(0);

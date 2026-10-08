@@ -1,6 +1,6 @@
 import {mkdir,writeFile,readFile} from 'node:fs/promises';
 import {performance} from 'node:perf_hooks';
-import {embeddingInput,checkedVector,indexDescriptor,indexCollection,qwenProfile} from '../../server/embedding-contract.mjs';
+import {embeddingInput,checkedVector,indexDescriptor,indexCollection,qwenProfile} from '../../server/ai/embedding-contract.mjs';
 const config={model:'qwen3-embedding-0.6b',indexProfile:qwenProfile};
 const base='http://127.0.0.1:4320';
 const timings=[];

@@ -2,7 +2,7 @@ import {test} from 'node:test';import assert from 'node:assert/strict';
 import {mkdtemp,rm,mkdir,writeFile} from 'node:fs/promises';import path from 'node:path';import os from 'node:os';import express from 'express';
 test('task output download uses current saved revision instead of legacy file and rejects stale revision',async()=>{
  const dir=await mkdtemp(path.join(os.tmpdir(),'shiguang-output-'));process.env.DATA_DIR=dir;process.env.SEED_DEMO='false';process.env.WORKER_MODE='true';
- const {save,db,remove}=await import('../server/store.mjs');const {installWorkTasks}=await import('../server/work-tasks.mjs');
+ const {save,db,remove}=await import('../server/store.mjs');const {installWorkTasks}=await import('../server/pet/supervision/work-tasks.mjs');
  const task=save('workTask',{title:'报告任务',status:'draft',outputs:[],logs:[]});const original=save('artifact',{title:'最初报告',body:'旧正文',mode:'model',taskId:task.id,sources:[]});
  await mkdir(path.join(dir,'task-artifacts'));await writeFile(path.join(dir,'task-artifacts',original.id+'.md'),'旧正文');
  const current=save('artifact',{...original,title:'人工修订报告',body:'# 当前保存版本\n\n待办仍未完成。',mode:'human',originMode:'model'},original.revision);

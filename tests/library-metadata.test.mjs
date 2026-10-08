@@ -6,7 +6,7 @@ import os from 'node:os';
 const directory=mkdtempSync(path.join(os.tmpdir(),'library-metadata-'));
 Object.assign(process.env,{DATA_DIR:directory,SEED_DEMO:'false',WORKER_MODE:'true'});
 const {db,save,get,remove}=await import('../server/store.mjs');
-const {editLibraryMetadata}=await import('../server/library-metadata.mjs');
+const {editLibraryMetadata}=await import('../server/domain/library/library-metadata.mjs');
 test('metadata edits preserve source identity and snapshots, enqueue current revision, and distinguish same-name projects',()=>{
  const pa=save('project',{name:'同名'}),pb=save('project',{name:'同名'});
  const file=save('libraryFile',{title:'原名.md',sourcePath:'文档/原名.md',copyName:'hash.md',hash:'same-hash',canonicalId:'sha256:same-hash',content:'# 原文',status:'ready',project:'旧标签',projectId:pa.id,tags:['旧']});

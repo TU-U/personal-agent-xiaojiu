@@ -7,8 +7,8 @@ import {spawnSync} from 'node:child_process';
 const root=await mkdtemp(path.join(os.tmpdir(),'library-recovery-')),source=path.join(root,'source');await mkdir(source);
 Object.assign(process.env,{DATA_DIR:path.join(root,'data'),COMPUTER_FILES_ROOT:source,SEED_DEMO:'false',WORKER_MODE:'true'});
 const {db,getSetting,setSetting,save,all}=await import('../server/store.mjs');
-const {controlledLibraryJob,scannedDirectoryJob}=await import('../server/library-job-state.mjs');
-const {runLibrary,libraryControl,scanLibrary}=await import('../server/library.mjs');
+const {controlledLibraryJob,scannedDirectoryJob}=await import('../server/domain/library/library-job-state.mjs');
+const {runLibrary,libraryControl,scanLibrary}=await import('../server/domain/library/library.mjs');
 async function finished(){for(let i=0;i<300;i++){const job=getSetting('libraryJob');if(job.status==='done')return;if(job.status==='failed')throw new Error(job.error);await new Promise(r=>setTimeout(r,10));}throw new Error('recovery timeout');}
 test('pause is idempotent; directory checkpoint preserves pause and resumes the correct phase',()=>{
  const paused=controlledLibraryJob({status:'scanning',queue:['one'],path:'original'},'pause');
@@ -60,7 +60,7 @@ test('pause during live scanning keeps unvisited directories; pause during copyi
 test('a fresh process recovers a persisted in-flight copy without creating a new source or duplicate file',()=>{
  const file=all('libraryFile').find(f=>f.sourcePath==='copy-a.md');save('libraryFile',{...file,status:'copying'},file.revision);
  setSetting('libraryJob',{status:'copying',queue:[],path:''});
- const child=spawnSync(process.execPath,['--input-type=module','-e',"const {recoverLibraryCopies,runLibrary}=await import('./server/library.mjs');const {getSetting,db}=await import('./server/store.mjs');const recovered=recoverLibraryCopies();await runLibrary();console.log(JSON.stringify({recovered,status:getSetting('libraryJob').status}));db.close();"],{cwd:process.cwd(),env:{...process.env},encoding:'utf8',timeout:15000});
+ const child=spawnSync(process.execPath,['--input-type=module','-e',"const {recoverLibraryCopies,runLibrary}=await import('./server/domain/library/library.mjs');const {getSetting,db}=await import('./server/store.mjs');const recovered=recoverLibraryCopies();await runLibrary();console.log(JSON.stringify({recovered,status:getSetting('libraryJob').status}));db.close();"],{cwd:process.cwd(),env:{...process.env},encoding:'utf8',timeout:15000});
  assert.equal(child.status,0,child.stderr);assert.deepEqual(JSON.parse(child.stdout.trim()),{recovered:1,status:'done'});
  const current=all('libraryFile').filter(f=>f.sourcePath==='copy-a.md');assert.equal(current.length,1);assert.equal(current[0].id,file.id);assert.equal(current[0].copyName,file.copyName);assert.equal(current[0].status,'ready');
 });

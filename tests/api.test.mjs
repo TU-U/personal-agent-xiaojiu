@@ -359,7 +359,7 @@ test('capabilities separate vision failures from text success and use independen
   assert.equal((await request('/settings/capabilities/text/test','POST',{})).data.ok,true);
   assert.equal((await request('/settings/capabilities/vision/test','POST',{})).data.ok,false);
   assert.equal((await request('/settings/capabilities/embedding/test','POST',{})).data.detail.dimensions,3);
-  const list=(await request('/settings/capabilities')).data.items;assert.equal(list.find(x=>x.id==='text').test.ok,true);assert.equal(list.find(x=>x.id==='vision').test.ok,false);assert.equal(list.find(x=>x.id==='asr').configured,false);
+  const list=(await request('/settings/capabilities')).data.items;assert.equal(list.find(x=>x.id==='text').test.ok,true);assert.equal(list.find(x=>x.id==='vision').test.ok,false);assert.equal(list.find(x=>x.id==='asr').configured,(await import('../server/ai/local-asr.mjs')).localAsrConfig().available);
   assert.equal(calls[0].model,'text-only');assert.equal(calls[1].model,'image-only');assert.ok(Array.isArray(calls[1].messages[1].content));
   const png=Buffer.from(calls[1].messages[1].content[1].image_url.url.split(',')[1],'base64');assert.equal(png.readUInt32BE(16),32);for(let offset=8;offset<png.length;){const size=png.readUInt32BE(offset);assert.equal(crc32(png.subarray(offset+4,offset+8+size)),png.readUInt32BE(offset+8+size));offset+=size+12;}
   assert.equal(JSON.stringify(list).includes('vision-secret'),false);assert.equal(JSON.stringify(list).includes('embedding-secret'),false);

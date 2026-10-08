@@ -8,7 +8,7 @@ test('file parser refuses edited and deleted sources, and cancellation fences it
  const directory=await mkdtemp(path.join(os.tmpdir(),'shiguang-file-jobs-'));
  process.env.DATA_DIR=directory;process.env.SEED_DEMO='false';process.env.WORKER_MODE='true';
  const {db,save,get,remove,transaction}=await import('../server/store.mjs');
- const {fileJobs,enqueueFileParse,fileHandlers}=await import('../server/file-jobs.mjs');
+ const {fileJobs,enqueueFileParse,fileHandlers}=await import('../server/jobs/file-jobs.mjs');
  try{
   await copyFile('tests/fixtures/sample.pdf',path.join(directory,'uploads','fixture.pdf'));
   const note=save('note',{title:'原件',content:'',tags:[],attachments:[{id:'attachment',key:'fixture.pdf',name:'sample.pdf'}]});

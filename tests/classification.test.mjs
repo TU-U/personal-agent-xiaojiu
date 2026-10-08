@@ -1,7 +1,7 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import {mkdtemp,rm} from 'node:fs/promises';import {createServer} from 'node:http';import os from 'node:os';import path from 'node:path';
 test('AI classification accepts only existing categories and cannot override manual choices or newer sources',async()=>{
  const dir=await mkdtemp(path.join(os.tmpdir(),'shiguang-classifier-'));process.env.DATA_DIR=dir;process.env.SEED_DEMO='false';process.env.WORKER_MODE='true';
- const {db,save,get,setSetting,all}=await import('../server/store.mjs');const {ensureCategories,setCategories}=await import('../server/categories.mjs');const {fileJobs}=await import('../server/file-jobs.mjs');const {enqueueClassification,classificationHandlers}=await import('../server/classification.mjs');ensureCategories();
+ const {db,save,get,setSetting,all}=await import('../server/store.mjs');const {ensureCategories,setCategories}=await import('../server/domain/notes/categories.mjs');const {fileJobs}=await import('../server/jobs/file-jobs.mjs');const {enqueueClassification,classificationHandlers}=await import('../server/domain/notes/classification.mjs');ensureCategories();
  let output=JSON.stringify({categoryId:'category-idea',reason:'新的产品灵感'});
  const server=createServer(async(req,res)=>{for await(const chunk of req){}res.setHeader('Content-Type','application/json');res.end(JSON.stringify({choices:[{message:{content:output},finish_reason:'stop'}]}));});await new Promise(r=>server.listen(0,'127.0.0.1',r));setSetting('provider',{baseUrl:`http://127.0.0.1:${server.address().port}`,model:'fixture-classifier'});
  const create=()=>save('note',{title:'新的想法',content:'设计一个方便记录的工具',attachments:[]});const handler=classificationHandlers['classify-note'];

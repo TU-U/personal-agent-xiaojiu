@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { createBackup, verifyBackup, restoreBackup } from '../server/backups.mjs';
+import { createBackup, verifyBackup, restoreBackup } from '../server/core/backups/backups.mjs';
 const [command, source, destination, ...flags] = process.argv.slice(2);
 if (!['create','verify','restore'].includes(command) || !source || (command !== 'verify' && !destination) || flags.some(flag=>flag!=='--include-secrets')) {
  console.error('用法：node scripts/backup-data.mjs create <数据目录> <新备份目录> [--include-secrets]\n      node scripts/backup-data.mjs verify <备份目录>\n      node scripts/backup-data.mjs restore <备份目录> <不存在的新目录>');

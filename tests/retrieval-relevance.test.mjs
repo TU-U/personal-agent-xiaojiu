@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {cosineSimilarity,relevancePolicy} from '../server/retrieval-relevance.mjs';
-import {qwenProfile} from '../server/embedding-contract.mjs';
+import {cosineSimilarity,relevancePolicy} from '../server/retrieval/retrieval-relevance.mjs';
+import {qwenProfile} from '../server/ai/embedding-contract.mjs';
 test('Qwen relevance uses cosine rather than fusion rank or vector magnitude and rejects missing evidence',()=>{
  const c={indexProfile:qwenProfile};assert.equal(relevancePolicy(c).minimumCosine,0.45);
  assert.equal(relevancePolicy({model:'bge-m3'}),null);
