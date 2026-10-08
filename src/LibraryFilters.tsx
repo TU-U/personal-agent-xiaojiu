@@ -1,12 +1,13 @@
+import {contractGet} from './api';
 import {useEffect,useState} from 'react';
-import {api} from './api';
+
 import {ErrorBanner} from './components';
 
 export function LibraryFilters({onApply}:{onApply:(filters:Record<string,string>)=>void}){
  const [projects,setProjects]=useState<{id:string;title?:string;name?:string}[]>([]),[error,setError]=useState('');
  const [draft,setDraft]=useState({projectId:'',directory:'',extension:'',dateFrom:'',dateTo:''});
  const [applied,setApplied]=useState(JSON.stringify(draft));
- async function load(){try{const result=await api<{items:typeof projects}>('/projects');setProjects(result.items);setError('');}catch(e){setError((e as Error).message);}}
+ async function load(){try{const result=await contractGet('getProjects','/projects');setProjects(result.items);setError('');}catch(e){setError((e as Error).message);}}
  useEffect(()=>{void load();},[]);
  const field=(name:keyof typeof draft,value:string)=>setDraft(old=>({...old,[name]:value}));
  return <details><summary>项目、目录、文件类型与入库日期筛选</summary>

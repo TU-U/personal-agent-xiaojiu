@@ -1,17 +1,18 @@
+import {contractGet} from './api';
 import {usePetTarget,focusPetSource} from './usePetTarget';
 import MemoryOrigin from './MemoryOrigin';
 import {memoryRequest,pendingMemoryRequest,retryMemoryRequest} from './memoryRequest';
 import MemoryScopeFields,{type MemoryScopeKind} from './MemoryScopeFields';
 import {useRef,useState} from 'react';
 import {Plus,Check,Pause,Play,Trash2,Brain,Pencil,ShieldCheck} from 'lucide-react';
-import {api,del,ApiError} from './api';
+import {del,ApiError} from './api';
 import {Modal,ErrorBanner,Spinner,Empty} from './components';
 import type {Bootstrap,Memory,Note} from './types';
 export default function Memories({data,onRefresh,onOpen,onToast}:{data:Bootstrap;onRefresh:()=>Promise<void>;onOpen:(n:Note)=>void;onToast:(s:string)=>void}){
  const [filter,setFilter]=useState('all'),[editor,setEditor]=useState<Memory|'new'|null>(null),[content,setContent]=useState(''),[scope,setScope]=useState('通用'),[error,setError]=useState(''),[busy,setBusy]=useState(false);
  const [reviewedSource,setReviewedSource]=useState<{memoryId:string;memoryRevision:number;kind:string;id:string;revision:number;title:string;text:string;truncated:boolean;totalCharacters:number}|null>(null),[sourceConfirmed,setSourceConfirmed]=useState(false);
  const sourceEpoch=useRef(0);const [sourceLoading,setSourceLoading]=useState(false);
- async function loadSource(){if(!editor||editor==='new')return;const current=editor,epoch=++sourceEpoch.current;setSourceLoading(true);setSourceConfirmed(false);setError('');try{const source=await api<NonNullable<typeof reviewedSource>>(`/memories/${current.id}/source-review`);if(epoch!==sourceEpoch.current)return;if(source.memoryRevision!==current.revision)throw new Error('记忆已变化，请关闭编辑并刷新后再核对。');setReviewedSource(source);}catch(e){if(epoch===sourceEpoch.current)setError((e as Error).message);}finally{if(epoch===sourceEpoch.current)setSourceLoading(false);}}
+ async function loadSource(){if(!editor||editor==='new')return;const current=editor,epoch=++sourceEpoch.current;setSourceLoading(true);setSourceConfirmed(false);setError('');try{const source=await contractGet('getMemoriesByIdSourceReview',`/memories/${current.id}/source-review`);if(epoch!==sourceEpoch.current)return;if(source.memoryRevision!==current.revision)throw new Error('记忆已变化，请关闭编辑并刷新后再核对。');setReviewedSource(source);}catch(e){if(epoch===sourceEpoch.current)setError((e as Error).message);}finally{if(epoch===sourceEpoch.current)setSourceLoading(false);}}
  const [pending,setPending]=useState(pendingMemoryRequest);
  const [conflict,setConflict]=useState<{memory:Memory;conflicts:{id:string;revision:number;content:string;reason:string}[]}|null>(null);
  function failure(e:unknown){setError((e as Error).message);if(e instanceof ApiError&&e.current&&typeof e.current==='object'&&'conflicts' in e.current)setConflict(e.current as NonNullable<typeof conflict>);}

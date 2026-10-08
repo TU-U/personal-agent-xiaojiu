@@ -1,9 +1,11 @@
+import {contractGet} from './api';
+import type {components} from '../contracts/generated/types';
 import {useCallback,useEffect,useRef,useState} from 'react';
-import {api} from './api';
 
-export type PetReminder={id:string;sourceKind:string;sourceId:string;sourceRevision:number;occurrenceKey:string;title:string;message:string;count:number;dueAt:string|null;actionTarget:{page:string;id:string;threadId?:string;runId?:string;history?:boolean;day?:string;occurrenceId?:string}};
-export type PetFeedback={id:string;kind:'completed'|'concern';at:string;message:string;taskId:string;runId:string};
-type Snapshot={feedback?:PetFeedback[];snapshot:string;cursor:number;total:number;items:PetReminder[]};
+
+export type PetReminder = components['schemas']['PetReminder'];
+export type PetFeedback = components['schemas']['PetFeedback'];
+type Snapshot = components['schemas']['PetReminderSnapshot'];
 export function usePetReminders(cursor:number){
  const [data,setData]=useState<Snapshot|null>(null),[error,setError]=useState(''),[loading,setLoading]=useState(true);
  const epoch=useRef(0),controller=useRef<AbortController|null>(null),inFlight=useRef(false);
@@ -12,7 +14,7 @@ export function usePetReminders(cursor:number){
   inFlight.current=true;
   const version=++epoch.current;controller.current?.abort();controller.current=new AbortController();
   if(invalidate)setData(null);setLoading(true);
-  try{const result=await api<Snapshot>('/pet/reminders',{signal:AbortSignal.any([controller.current.signal,AbortSignal.timeout(15000)])});if(version!==epoch.current)return;setData(result);setError('');}
+  try{const result=await contractGet('getPetReminders','/pet/reminders',{signal:AbortSignal.any([controller.current.signal,AbortSignal.timeout(15000)])});if(version!==epoch.current)return;setData(result);setError('');}
   catch(cause){if(version===epoch.current)setError((cause as Error).message);}
   finally{if(version===epoch.current){inFlight.current=false;setLoading(false);}}
  },[]);

@@ -1,4 +1,5 @@
-export type TimingRecord={timerSessions?:{id:string;startedAt:string;endedAt?:string;seconds:number;endReason?:string;basis?:string}[];manualAdjustments?:{id:string;minutes:number;reason:string;at:string;startedAt?:string;endedAt?:string;basis?:string}[];adjustments?:{minutes:number;reason:string;at:string;startedAt?:string;endedAt?:string}[]};
+import type {components} from '../contracts/generated/types';
+export type TimingRecord = components['schemas']['TimingRecord'];
 const date=(value:string)=>Number.isFinite(Date.parse(value))?new Date(value).toLocaleString('zh-CN'):'时间未记录';
 export default function RunTimingHistory({run}:{run:TimingRecord}){
  const sessions=run.timerSessions||[],manual=[...(run.adjustments||[]),...(run.manualAdjustments||[])];

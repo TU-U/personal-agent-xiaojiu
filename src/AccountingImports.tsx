@@ -1,13 +1,15 @@
+import {contractGet} from './api';
+import type {components} from '../contracts/generated/types';
 import {useEffect,useRef,useState} from 'react';
 import {api,ApiError,post} from './api';
 import {Modal,Spinner} from './components';
 const expenses=['美食','日用','花呗','交通','房租/还款','其他支出','医疗','演出/漫展','旅游','衣物/化妆品','护肤品'],incomes=['工资','奖金','兼职','投资','其他'];
 type Draft={type:string;amount:string;category:string;date:string;note:string;channel:string;merchant:string;sourceRef:string};
-type Row={rowId:string;rowNumber:number;sheetName?:string;decision:string;decisionReason?:string;status:string;reason:string;issues:string[];rawCells:(string|null)[];values:{merchant?:string};draft:{type:string;amountCents:number|null;category:string;date:string;note:string;source:string;sourceRef:string};transactionId?:string};
-type Batch={id:string;revision:number;status:string;notice:string;error:string;original:{name:string;url:string;mime:string};rows:Row[];offset:number;totalRows:number;notices?:string[];parsingStartedAt?:number;summary?:{dataRows:number;needsReview:number;excluded:number;duplicateRows:number}};
+type Row = components['schemas']['AccountingImportRow'];
+type Batch = components['schemas']['AccountingImportPage'];
 type Edit={rowId:string;rowNumber:number;sheetName?:string;decision:string;draft:Draft;reason:string;acceptWarnings:boolean;exclusionOverride:string;issues:string[];excluded:boolean};
-type Review={reviewId:string;revision:number;reviewToken:string;choices:{rowId:string;decision:string;reason?:string;draft?:{date:string;category:string;amountCents:number;note:string}}[];duplicates:{rowId:string;matches:{kind:string;id:string;rowNumber?:number;sheetName?:string;date?:string;amountCents?:number;note?:string;basis:string[]}[]}[]};
-type Classification={id:string;batchId:string;batchRevision:number;status:string;notice:string;inputs:{rowId:string;type:string;note:string}[];suggestions:{rowId:string;type:string;note:string;category:string}[]};
+type Review = components['schemas']['AccountingReviewPreview'];
+type Classification = components['schemas']['AccountingClassification'];
 type Pending={path:string;body:Record<string,unknown>};
 const storage='shiguang-accounting-import',pendingKey=storage+'-pending',uploadKey=storage+'-upload';
 const id=()=>Array.from(crypto.getRandomValues(new Uint8Array(16)),n=>n.toString(16).padStart(2,'0')).join('');
@@ -16,19 +18,19 @@ const money=(n:number|null|undefined)=>n==null?'待核对':(n/100).toFixed(2);
 const labels:Record<string,string>={review:'待核对',completed:'已核对',parse_failed:'解析失败',parsing:'解析中'};
 export default function AccountingImports({onClose,onRefresh,onToast}:{onClose:()=>void;onRefresh:()=>Promise<void>;onToast:(s:string)=>void}){
  const saved=useRef(read<{batchId?:string;edits?:Record<string,Edit>;review?:Review}>(storage,{}));
- const [batches,setBatches]=useState<Batch[]>([]),[next,setNext]=useState<number|null>(null),[batch,setBatch]=useState<Batch|null>(null),[edits,setEdits]=useState<Record<string,Edit>>(saved.current.edits||{}),[review,setReview]=useState<Review|null>(saved.current.review||null),[ack,setAck]=useState<string[]>([]),[busy,setBusy]=useState(false),[error,setError]=useState(''),[fieldErrors,setFieldErrors]=useState<Record<string,string>>({}),[pending,setPending]=useState<Pending|null>(()=>read(pendingKey,null));
+ const [batches,setBatches]=useState<components['schemas']['AccountingImportSummary'][]>([]),[next,setNext]=useState<number|null>(null),[batch,setBatch]=useState<Batch|null>(null),[edits,setEdits]=useState<Record<string,Edit>>(saved.current.edits||{}),[review,setReview]=useState<Review|null>(saved.current.review||null),[ack,setAck]=useState<string[]>([]),[busy,setBusy]=useState(false),[error,setError]=useState(''),[fieldErrors,setFieldErrors]=useState<Record<string,string>>({}),[pending,setPending]=useState<Pending|null>(()=>read(pendingKey,null));
  const [classifications,setClassifications]=useState<Classification[]>([]);
  const [uploadPending,setUploadPending]=useState<{opId:string;name:string;size:number}|null>(()=>read(uploadKey,null));
  const input=useRef<HTMLInputElement>(null),errorBox=useRef<HTMLDivElement>(null),batchRef=useRef<Batch|null>(null),running=useRef(false);
  useEffect(()=>{if(error)errorBox.current?.focus();},[error]);
  function persist(nextEdits=edits,nextReview=review,batchId=batchRef.current?.id){try{sessionStorage.setItem(storage,JSON.stringify({batchId,edits:nextEdits,review:nextReview}));}catch{setError('浏览器无法保存草稿，请保持此页面打开。');}}
- async function list(offset=0){const result=await api<{imports:Batch[];nextOffset:number|null}>('/accounting/imports?offset='+offset+'&limit=20');setBatches(old=>offset?[...old,...result.imports]:result.imports);setNext(result.nextOffset);}
- async function load(batchId:string,offset=0){const result=await api<Batch>(`/accounting/imports/${batchId}?offset=${offset}&limit=10`);batchRef.current=result;setBatch(result);await loadClassifications(batchId);return result;}
- async function loadClassifications(batchId:string){const result=await api<{classifications:Classification[]}>(`/accounting/imports/${batchId}/classifications`);setClassifications(result.classifications);}
+ async function list(offset=0){const result=await contractGet('getAccountingImports','/accounting/imports?offset='+offset+'&limit=20');setBatches(old=>offset?[...old,...result.imports]:result.imports);setNext(result.nextOffset);}
+ async function load(batchId:string,offset=0){const result=await contractGet('getAccountingImportsById',`/accounting/imports/${batchId}?offset=${offset}&limit=10`);batchRef.current=result;setBatch(result);await loadClassifications(batchId);return result;}
+ async function loadClassifications(batchId:string){const result=await contractGet('getAccountingImportsByIdClassifications',`/accounting/imports/${batchId}/classifications`);setClassifications(result.classifications);}
  async function classify(){if(!batch)return;const rows=batch.rows.filter(r=>r.decision==='pending'&&edits[r.rowId]?.decision!=='skip').map(r=>({rowId:r.rowId,type:edits[r.rowId]?.draft.type||r.draft.type,note:edits[r.rowId]?.draft.note??r.draft.note}));if(!rows.length)throw new Error('当前页没有待核对账单。');if(rows.some(r=>!['income','expense'].includes(r.type)||r.note.length>1000))throw new Error('请先修正本页账单的收支方向和超长备注，再请求分类。');await send<Classification>(`/accounting/imports/${batch.id}/classify`,{revision:batch.revision,rows});await loadClassifications(batch.id);}
  async function run(action:()=>Promise<void>){if(running.current)return;running.current=true;setBusy(true);setError('');try{await action();}catch(e){setError((e as Error).message);}finally{running.current=false;setBusy(false);}}
  useEffect(()=>{void run(async()=>{await list();if(saved.current.batchId)await load(saved.current.batchId);});},[]);
- async function select(b:Batch){if(batch?.id===b.id){await load(b.id,batch.offset);return;}if(pending)throw new Error('请先恢复未收到确认的操作。');if(batch?.id!==b.id&&Object.keys(edits).length&&!window.confirm('切换批次会放下当前未提交的编辑，是否继续？'))return;await load(b.id);setEdits({});setReview(null);setAck([]);persist({},null,b.id);}
+ async function select(b:components['schemas']['AccountingImportSummary']){if(batch?.id===b.id){await load(b.id,batch.offset);return;}if(pending)throw new Error('请先恢复未收到确认的操作。');if(batch?.id!==b.id&&Object.keys(edits).length&&!window.confirm('切换批次会放下当前未提交的编辑，是否继续？'))return;await load(b.id);setEdits({});setReview(null);setAck([]);persist({},null,b.id);}
  function edit(row:Row,patch:Partial<Edit>){const current=edits[row.rowId]||{rowId:row.rowId,rowNumber:row.rowNumber,sheetName:row.sheetName,decision:'pending',draft:{...row.draft,amount:row.draft.amountCents==null?'':money(row.draft.amountCents),channel:row.draft.source,merchant:row.values.merchant||''},reason:'',acceptWarnings:false,exclusionOverride:'',issues:row.issues,excluded:row.status==='excluded'};const updated={...edits,[row.rowId]:{...current,...patch}};setEdits(updated);setReview(null);setAck([]);persist(updated,null);}
  async function send<T>(path:string,body:Record<string,unknown>):Promise<T>{if(pending)throw new Error('上一项操作还未收到确认，请先恢复。');const operation={path,body:{...body,opId:id()}};sessionStorage.setItem(pendingKey,JSON.stringify(operation));setPending(operation);return execute<T>(operation);}
  async function execute<T>(operation:Pending):Promise<T>{try{const result=await post<T>(operation.path,operation.body);if(!result||typeof result!=='object'||!('reviewId' in result||'batchId' in result||'id' in result))throw new ApiError('服务器确认内容不完整，请恢复同一操作。',502);sessionStorage.removeItem(pendingKey);setPending(null);return result;}catch(e){if(e instanceof ApiError&&e.status>=400&&e.status<500){sessionStorage.removeItem(pendingKey);setPending(null);}throw e;}}

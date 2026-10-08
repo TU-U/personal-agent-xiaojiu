@@ -1,9 +1,10 @@
+import {contractGet} from './api';
 import {API_BASE} from './api';
 import LibraryTaskPicker from './LibraryTaskPicker';
 import LibraryMetadataEditor from './LibraryMetadataEditor';
 import LibraryIndexStatus from './LibraryIndexStatus';
 import {useEffect,useRef,useState} from 'react';
-import {api} from './api';
+
 import {Modal,ErrorBanner,Markdown} from './components';
 import type {LibraryFileRow} from './useLibraryFiles';
 export type LibraryLocation={id:string;title:string;revision?:number;start?:number;end?:number;text?:string};
@@ -11,7 +12,7 @@ export default function LibraryDetail({source,onClose,onDiscuss,onUpdated}:{onUp
  const [file,setFile]=useState<LibraryFileRow|null>(null),[error,setError]=useState(''),[attempt,setAttempt]=useState(0),[raw,setRaw]=useState(source.start!==undefined);
  const [editing,setEditing]=useState(false),[notice,setNotice]=useState('');
  const marker=useRef<HTMLElement>(null);
- useEffect(()=>{let active=true;setFile(null);setError('');void api<LibraryFileRow>('/library/'+encodeURIComponent(source.id)).then(value=>{if(active)setFile(value);}).catch(cause=>{if(active)setError(cause.message);});return()=>{active=false;};},[source.id,attempt]);
+ useEffect(()=>{let active=true;setFile(null);setError('');void contractGet('getLibraryById','/library/'+encodeURIComponent(source.id)).then(value=>{if(active)setFile(value);}).catch(cause=>{if(active)setError(cause.message);});return()=>{active=false;};},[source.id,attempt]);
  const content=file?.content||'',requested=source.start!==undefined;
  const sameVersion=!!file&&source.revision===file.revision;
  const located=sameVersion&&Number.isInteger(source.start)&&Number.isInteger(source.end)&&source.start!>=0&&source.end!>source.start!&&source.end!<=content.length&&content.slice(source.start,source.end)===source.text;

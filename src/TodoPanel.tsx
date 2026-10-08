@@ -1,9 +1,10 @@
+import {contractPost,contractPatch} from './api';
 import TodoUpgrade,{pendingTodoUpgrade} from './TodoUpgrade';
 import {openPetSource} from './PetReminderTable';
 import {usePetTarget,focusPetSource} from './usePetTarget';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Check, ListTodo, Plus, Trash2, CopyPlus } from 'lucide-react';
-import { del, patch, post } from './api';
+import {del} from './api';
 import type { Todo } from './types';
 
 const dayOf = (value: Date | string) => new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(value));
@@ -43,7 +44,7 @@ export default function TodoPanel({ todos, onRefresh, onToast }: { todos: Todo[]
     if (!value || busy) return;
     setBusy(true); setError('');
     try {
-      await post('/todos', { title: value, day: dayOf(new Date()) });
+      await contractPost('postTodos','/todos',{ title: value, day: dayOf(new Date()) });
       setTitle('');
       await onRefresh();
     } catch (cause) { setError((cause as Error).message); }
@@ -54,7 +55,7 @@ export default function TodoPanel({ todos, onRefresh, onToast }: { todos: Todo[]
     if (busy || !viewingToday) return;
     setBusy(true); setError('');
     try {
-      await patch('/todos/' + todo.id, { done: !todo.done, day: selectedDay, revision: todo.revision });
+      await contractPatch('patchTodosById','/todos/' + todo.id,{ done: !todo.done, day: selectedDay, revision: todo.revision });
       await onRefresh();
     } catch (cause) { setError((cause as Error).message); }
     finally { setBusy(false); }
@@ -75,7 +76,7 @@ export default function TodoPanel({ todos, onRefresh, onToast }: { todos: Todo[]
     if (busy || viewingToday) return;
     setBusy(true); setError('');
     try {
-      await post('/todos/'+todo.id+'/carry', { revision:todo.revision,targetDay:dayOf(new Date()) });
+      await contractPost('postTodosByIdCarry','/todos/'+todo.id+'/carry',{ revision:todo.revision,targetDay:dayOf(new Date()) });
       await onRefresh();
       onToast('已加入今天的待办，历史记录仍保留');
     } catch (cause) { setError((cause as Error).message); }

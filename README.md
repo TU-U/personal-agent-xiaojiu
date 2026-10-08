@@ -137,13 +137,13 @@ Agent 链路的核心是**上下文与证据驱动**：回答不是"模型直接
 已确定的技术演进决策（部分进行中）：
 
 - **Pi接入层（方案已确认，待实施）**：采用 pi-ai + pi-agent-core，随应用升级，为搭子接入模型调用与Agent循环；不做页面安装通用插件。Qwen embedding与本地ASR适配器继续保留，不声称Pi已覆盖这两项能力；
-- **多端协议共享（首批已实施）**：Web与后端已消费本地独立仓库 `xiaojiu-contracts` 的协议，Submodule固定在 `v0.1.0`。57个操作已抽取本轮形状，92个仍待完整迁移，3个保持已退役；协议远端已发布，Android接入尚未完成；
-- **API版本兼容（首批已实施）**：152个操作已建立逐项路径映射，Web使用 `/api/v1/...`，旧入口保留；新旧路径复用业务校验、数据、事务和幂等回执；
+- **多端协议共享（服务端/Web完成）**：独立仓库 `xiaojiu-contracts`，Submodule固定协议0.2.0；149个现行操作已抽取字段，3个保持退役。Android消费协议后续单独接入；
+- **API版本兼容（已实施）**：152个操作已建立逐项路径映射，Web使用 `/api/v1/...`，旧入口保留；新旧路径复用业务校验、数据、事务和幂等回执；
 - **小九常驻桌面（规划）**：基于 Electron 将现有 Web 前端包装为桌面壳，透明窗口 + 系统托盘，小九常驻桌面——关掉浏览器后她仍在，情绪状态机与业务引擎保持解耦。
 
 
 ## 协议开发与 Submodule
 
-Web与服务端开始共用 `contracts/`（独立仓库 `xiaojiu-contracts`）中的OpenAPI协议。当前协议0.1.0、API入口 `/api/v1`；旧入口继续兼容。公共类型从协议生成，修改协议后运行 `npm run contracts:generate`、`npm run contracts:check`，更新迁移清单用 `npm run contracts:inventory`。
+Web与服务端共用 `contracts/`（独立仓库 `xiaojiu-contracts`）中的OpenAPI协议。当前协议0.2.0、API入口 `/api/v1`；旧入口继续兼容。公共类型从协议生成，修改协议后运行 `npm run contracts:generate`、`npm run contracts:check`，更新迁移清单用 `npm run contracts:inventory`。
 
-当前仅完成首批抽取，协议已发布到 [TU-U/xiaojiu-contracts](https://github.com/TU-U/xiaojiu-contracts)。新电脑可通过 `git clone --recurse-submodules https://github.com/TU-U/personal-agent-xiaojiu.git` 拉取应用与固定协议版本；初始化方法、剩余92个未完整抽取协议的操作及验证范围见[协议治理实施记录](docs/26-contract-governance-implementation.md)。
+服务端/Web的复杂字段迁移已完成，协议发布到 [TU-U/xiaojiu-contracts](https://github.com/TU-U/xiaojiu-contracts)。新电脑可通过 `git clone --recurse-submodules https://github.com/TU-U/personal-agent-xiaojiu.git` 拉取应用与固定协议版本；初始化方法、逐接口迁移状态及验证范围见[协议治理实施记录](docs/26-contract-governance-implementation.md)。

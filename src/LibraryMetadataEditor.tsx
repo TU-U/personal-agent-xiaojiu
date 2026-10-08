@@ -1,17 +1,19 @@
+import {contractPatch} from './api';
+import {contractGet} from './api';
 import {useEffect,useRef,useState} from 'react';
-import {api,patch,ApiError} from './api';
+import {ApiError} from './api';
 import {ErrorBanner} from './components';
 import type {LibraryFileRow} from './useLibraryFiles';
 export default function LibraryMetadataEditor({file,onSaved,onCancel}:{file:LibraryFileRow;onSaved:(file:LibraryFileRow)=>void;onCancel:()=>void}){
  const [title,setTitle]=useState(file.title),[tags,setTags]=useState((file.tags||[]).join('\n')),[projectId,setProjectId]=useState(file.projectId||'');
  const [projects,setProjects]=useState<{id:string;name:string}[]>([]),[projectError,setProjectError]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false),[uncertain,setUncertain]=useState(false);
  const request=useRef<{opId:string;revision:number;title:string;tags:string[];projectId:string}|null>(null),lock=useRef(false);
- const loadProjects=async()=>{try{setProjects((await api<{items:{id:string;name:string}[]}>('/projects')).items);setProjectError('');}catch(e){setProjectError((e as Error).message);}};
+ const loadProjects=async()=>{try{setProjects((await contractGet('getProjects','/projects')).items);setProjectError('');}catch(e){setProjectError((e as Error).message);}};
  useEffect(()=>{void loadProjects();},[]);
  async function submit(){
   if(lock.current)return;lock.current=true;setBusy(true);setError('');
   const body=request.current||{opId:Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join(''),revision:file.revision,title,tags:tags.split('\n').map(tag=>tag.trim()).filter(Boolean),projectId};request.current=body;
-  try{const result=await patch<{file:LibraryFileRow;savedRevision:number}>('/library/'+encodeURIComponent(file.id)+'/metadata',body);setUncertain(false);onSaved(result.file);}
+  try{const result=await contractPatch('patchLibraryByIdMetadata','/library/'+encodeURIComponent(file.id)+'/metadata',body);setUncertain(false);onSaved(result.file);}
   catch(e){const failure=e as ApiError;setError(failure.message);if(!failure.status||failure.status>=500)setUncertain(true);else{request.current=null;setUncertain(false);}}
   finally{lock.current=false;setBusy(false);}
  }

@@ -1,9 +1,10 @@
+import type {components} from '../contracts/generated/types';
 import {useState} from 'react';
 import {ErrorBanner,Spinner} from './components';
 import {pendingResearch,researchRequest} from './researchRequest';
 import {openPetSource} from './PetReminderTable';
-export type CandidateDecision={targetId:string;targetKind:'event'|'workTask';title:string;available?:boolean};
-type Candidate={title:string;description:string;kind:string};
+export type CandidateDecision = components['schemas']['ResearchCandidateDecision'];
+type Candidate = components['schemas']['ResearchActionCandidate'];
 export default function ResearchCandidates({taskId,revision,artifact,decisions,onSaved}:{taskId:string;revision:number;artifact:{id:string;revision:number;actionCandidates:Candidate[]};decisions:Record<string,CandidateDecision>;onSaved:()=>Promise<void>}){
  return <details><summary>后续建议（由你选择保存）</summary><p>建议不会自动执行。要事等级由你选择；行动任务保存为待确认草稿，由你执行，确认计划后才开始监督。</p>{artifact.actionCandidates.map((candidate,index)=><CandidateForm key={artifact.id+':'+index} {...{taskId,revision,artifact,index,candidate,onSaved}} decision={decisions[artifact.id+':'+index]}/>)}</details>;
 }

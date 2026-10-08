@@ -1,6 +1,7 @@
+import {contractPost} from './api';
 import MemoryProposalEditor from './MemoryProposalEditor';
 import {useEffect,useState} from 'react';
-import {post} from './api';
+
 import {ErrorBanner,Spinner} from './components';
 import type {Conversation} from './types';
 
@@ -14,7 +15,7 @@ export default function MemoryReview({turn,onRefresh,onToast}:{turn:Conversation
  if(turn.memoryReview!=='pending'||!proposals.length)return turn.memoryNotice?<p className="memory-review-note">{turn.memoryNotice}</p>:null;
  const ready=selected.every(index=>!!proposals[index]&&(!proposals[index].conflictId||!!choices[index]));
  async function submit(){setBusy(true);setError('');try{
-  await post('/conversations/'+turn.id+'/memory-review',{revision:turn.revision,selected:selected.map(index=>({index,keep:choices[index]||'new'}))});
+  await contractPost('postConversationsByIdMemoryReview','/conversations/'+turn.id+'/memory-review',{revision:turn.revision,selected:selected.map(index=>({index,keep:choices[index]||'new'}))});
   await onRefresh();onToast(selected.length?'已按你的选择更新记忆':'本轮记忆建议已丢弃');
  }catch(e){setError((e as Error).message);await onRefresh().catch(()=>{});}finally{setBusy(false);}}
  return <section className="memory-review"><h3>这轮可以记住什么？</h3><p>只保存你选中的内容；确认后其余建议会丢弃。</p><ErrorBanner message={error}/>

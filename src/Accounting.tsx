@@ -1,8 +1,11 @@
+import {contractPost} from './api';
+import {contractGet} from './api';
+import type {components} from '../contracts/generated/types';
 import {API_BASE} from './api';
 import {accountingRequest,pendingAccountingRequest,retryAccountingRequest} from './accountingRequest';
 import {useEffect,useRef,useState,type FormEvent} from 'react';
 import {ArrowDownLeft,ArrowUpRight,Check,ChevronDown,ChevronLeft,ChevronRight,FileSpreadsheet,Filter,Plus,Receipt,Save,Search,Trash2,X,Utensils,Edit3} from 'lucide-react';
-import {api,post,patch as patchApi,del} from './api';
+import {patch as patchApi,del} from './api';
 import {Empty,ErrorBanner,Modal,Spinner} from './components';
 import type {AccountingBudget,LedgerTransaction} from './types';
 import AccountingImports from './AccountingImports';
@@ -11,8 +14,8 @@ const expenseCategories=['美食','日用','花呗','交通','房租/还款','�
 const incomeCategories=['工资','奖金','兼职','投资','其他'];
 const palette=['#637c55','#c17a53','#759a98','#bf9c51','#937da5','#71917a','#c36c5d','#6993ab','#92945e','#bc806e','#65716d'];
 type TxForm={type:'income'|'expense';amount:string;category:string;date:string;note:string;source:NonNullable<LedgerTransaction['source']>};
-type AccountingView={day:string;filtered:LedgerTransaction[];filteredTotals:{income:string;expense:string};monthTotals:{income:string;expense:string};livingSpent:string;budgetCents:string;budgetRemaining:string;monthlySpend:string;categories:{name:string;i:number;value:string}[];chartYears:string[];monthOptions:string[];monthChart:{month:string;label:string;income:string;expense:string}[];recentMonthChart:{month:string;label:string;income:string;expense:string}[];ranking:LedgerTransaction[]};
-type Check={day:string;title:string;status:string};
+type AccountingView = components['schemas']['AccountingView'];
+type Check = components['schemas']['AccountingCheck'];
 type Props={transactions:LedgerTransaction[];budget:AccountingBudget;modelEnabled:boolean;onRefresh:()=>Promise<void>;onToast:(message:string)=>void};
 const today=()=>new Date().toLocaleDateString('sv-SE');
 const formatCents=(value:bigint|number)=>{const cents=typeof value==='bigint'?value:BigInt(Math.trunc(value));const negative=cents<0n,abs=negative?-cents:cents,whole=(abs/100n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,','),fraction=String(abs%100n).padStart(2,'0');return `${negative?'-':''}¥${whole}.${fraction}`;};
@@ -27,8 +30,8 @@ export default function Accounting({transactions,budget,onRefresh,onToast}:Props
  const [budgetRevision,setBudgetRevision]=useState(budget.revision||0);
  const [checkHistory,setCheckHistory]=useState<Check[]>([]);
  const [check,setCheck]=useState<Check|null>(null),[checkBusy,setCheckBusy]=useState(false);
- useEffect(()=>{const refresh=()=>void api<{current:typeof check;history:Check[]}>('/accounting/checks').then(r=>{setCheck(r.current);setCheckHistory(r.history);}).catch(e=>setError(e.message));refresh();const timer=window.setInterval(refresh,60000);return()=>clearInterval(timer);},[]);
- async function confirmCheck(){if(!check||checkBusy)return;setCheckBusy(true);try{await post('/accounting/checks/confirm',{day:check.day,confirmed:true});setCheck({...check,status:'completed'});setCheckHistory(old=>[{...check,status:'completed'},...old.filter(c=>c.day!==check.day)]);onToast('本次账单检查已确认');}catch(e){setError((e as Error).message);}finally{setCheckBusy(false);}}
+ useEffect(()=>{const refresh=()=>void contractGet('getAccountingChecks','/accounting/checks').then(r=>{setCheck(r.current);setCheckHistory(r.history);}).catch(e=>setError(e.message));refresh();const timer=window.setInterval(refresh,60000);return()=>clearInterval(timer);},[]);
+ async function confirmCheck(){if(!check||checkBusy)return;setCheckBusy(true);try{await contractPost('postAccountingChecksConfirm','/accounting/checks/confirm',{day:check.day,confirmed:true});setCheck({...check,status:'completed'});setCheckHistory(old=>[{...check,status:'completed'},...old.filter(c=>c.day!==check.day)]);onToast('本次账单检查已确认');}catch(e){setError((e as Error).message);}finally{setCheckBusy(false);}}
  const [budgetDraft,setBudgetDraft]=useState((budget.amountCents/100).toFixed(2)),[budgetEditing,setBudgetEditing]=useState(false),[budgetBusy,setBudgetBusy]=useState(false);
  const [importOpen,setImportOpen]=useState(false),[rankMonth,setRankMonth]=useState(today().slice(0,7)),[chartYear,setChartYear]=useState(today().slice(0,4));
  const [rankingLimit,setRankingLimit]=useState(10);
@@ -36,7 +39,7 @@ export default function Accounting({transactions,budget,onRefresh,onToast}:Props
  const [search,setSearch]=useState(''),[limit,setLimit]=useState(50);
  const query=new URLSearchParams({period,kind,category,start,end,search,rankMonth,chartYear}).toString();
  const [view,setView]=useState<AccountingView|null>(null),[viewKey,setViewKey]=useState(''),[viewError,setViewError]=useState(''),[viewLoading,setViewLoading]=useState(true),[retry,setRetry]=useState(0);
- useEffect(()=>{const controller=new AbortController();setViewLoading(true);setViewError('');const timer=setTimeout(()=>{void api<AccountingView>('/accounting/view?'+query,{signal:AbortSignal.any([controller.signal,AbortSignal.timeout(15000)])}).then(data=>{if(controller.signal.aborted)return;setView(data);setViewKey(query);setViewLoading(false);}).catch(e=>{if(!controller.signal.aborted){setViewError(e.message);setViewLoading(false);}});},150);return()=>{clearTimeout(timer);controller.abort();};},[query,transactions,budget.amountCents,retry]);
+ useEffect(()=>{const controller=new AbortController();setViewLoading(true);setViewError('');const timer=setTimeout(()=>{void contractGet('getAccountingView','/accounting/view?'+query,{signal:AbortSignal.any([controller.signal,AbortSignal.timeout(15000)])}).then(data=>{if(controller.signal.aborted)return;setView(data);setViewKey(query);setViewLoading(false);}).catch(e=>{if(!controller.signal.aborted){setViewError(e.message);setViewLoading(false);}});},150);return()=>{clearTimeout(timer);controller.abort();};},[query,transactions,budget.amountCents,retry]);
  const summaryReady=!!view&&!viewLoading&&!viewError&&viewKey===query;
  const filtered=view?.filtered||[],filteredIncome=BigInt(view?.filteredTotals.income||0),filteredExpense=BigInt(view?.filteredTotals.expense||0),monthIncome=BigInt(view?.monthTotals.income||0),monthExpense=BigInt(view?.monthTotals.expense||0),livingSpent=BigInt(view?.livingSpent||0),budgetRemaining=BigInt(view?.budgetRemaining||0),monthlySpend=BigInt(view?.monthlySpend||0);
  const pieData=(view?.categories||[]).map(c=>({...c,value:BigInt(c.value)})),rankCategories=pieData;

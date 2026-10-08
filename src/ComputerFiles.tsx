@@ -1,13 +1,16 @@
+import {contractPost} from './api';
+import {contractGet} from './api';
+import type {components} from '../contracts/generated/types';
 import {randomId} from './randomId';
 import ImportCategory from './ImportCategory';
 import {useEffect,useState,useRef} from 'react';
 import {ArrowLeft,FileText,Folder,FolderOpen,Search} from 'lucide-react';
-import {api,post,ApiError} from './api';
+import {ApiError} from './api';
 import {Modal,ErrorBanner,Spinner} from './components';
 import type {Note} from './types';
 
-type ComputerItem={name:string;path:string;kind:'directory'|'file'};
-type ComputerListing={root:string;path:string;items:ComputerItem[];truncated:boolean};
+type ComputerItem = components['schemas']['ComputerFileItem'];
+type ComputerListing = components['schemas']['ComputerFileListing'];
 
 export default function ComputerFiles({onClose,onImported}:{onClose:()=>void;onImported:(note:Note)=>Promise<void>}){
  const importOperations=useRef(new Map<string,string>());
@@ -16,14 +19,14 @@ export default function ComputerFiles({onClose,onImported}:{onClose:()=>void;onI
  const [busy,setBusy]=useState(false),[importing,setImporting]=useState(''),[error,setError]=useState('');
  async function load(path:string,search=''){
   setBusy(true);setError('');
-  try{const result=await api<ComputerListing>('/computer-files?path='+encodeURIComponent(path)+(search?'&q='+encodeURIComponent(search):''));setFolder(path);setListing(result);}
+  try{const result=await contractGet('getComputerFiles','/computer-files?path='+encodeURIComponent(path)+(search?'&q='+encodeURIComponent(search):''));setFolder(path);setListing(result);}
   catch(cause){setError((cause as Error).message);}
   finally{setBusy(false);}
  }
  useEffect(()=>{void load('');},[]);
  async function importItem(item:ComputerItem){
   setImporting(item.path);setCategoryLocked(true);setError('');
-  try{const opId=importOperations.current.get(item.path)||randomId();importOperations.current.set(item.path,opId);const note=await post<Note>('/computer-files/import',{path:item.path,opId,...(category?{categoryId:category}:{})});await onImported(note);onClose();}
+  try{const opId=importOperations.current.get(item.path)||randomId();importOperations.current.set(item.path,opId);const note=await contractPost('postComputerFilesImport','/computer-files/import',{path:item.path,opId,...(category?{categoryId:category}:{})});await onImported(note);onClose();}
   catch(cause){setError((cause as Error).message);if(cause instanceof ApiError&&[400,404,413,415,422].includes(cause.status))setCategoryLocked(false);}
   finally{setImporting('');}
  }

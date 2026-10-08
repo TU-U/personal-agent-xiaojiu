@@ -1,5 +1,6 @@
+import {contractGet} from './api';
 import {useEffect,useState} from 'react';
-import {api} from './api';
+
 import {PetSourcePrompt} from './PetReminderContext';
 import {openPetSource} from './PetReminderTable';
 type Item={id:string;taskId:string;title:string;status:string};
@@ -8,7 +9,7 @@ export default function TodayTasks(){
  useEffect(()=>{
   let alive=true,epoch=0;
   async function load(){const request=++epoch;try{
-   const d=await api<{tasks:{id:string;title:string;status:string}[];runs:{id:string;taskId:string;day:string;status:string}[]}>('/work-tasks');
+   const d=await contractGet('getWorkTasks','/work-tasks');
    const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
    if(alive&&request===epoch){setItems(d.runs.filter(r=>r.day===today&&!['completed','skipped'].includes(r.status)&&d.tasks.some(t=>t.id===r.taskId&&t.status!=='cancelled')).map(r=>({id:r.id,taskId:r.taskId,title:d.tasks.find(t=>t.id===r.taskId)?.title||'',status:r.status})));setError('');}
   }catch(cause){if(alive&&request===epoch)setError((cause as Error).message);}}

@@ -1,6 +1,7 @@
+import {contractPost} from './api';
 import { useEffect, useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent, type FocusEvent } from 'react';
 import { Circle, Bell, FileText, Heart, MessageCircle, Moon, Send, Sparkles, X } from 'lucide-react';
-import { post } from './api';
+
 import {useSharedPetReminders} from './PetReminderContext';
 import PetReminderTable,{openPetReminder} from './PetReminderTable';
 import type { PetChatMessage, PetChatReply } from './types';
@@ -238,7 +239,7 @@ export default function PetBuddy() {
     keepHerAwake();
     const history = messages.slice(-6);
     try {
-      const result = await post<PetChatReply>('/pet/chat', { message: content, history });
+      const result = await contractPost('postPetChat','/pet/chat',{ message: content, history });
       setMessages(current => [...current, { role: 'user' as const, content }, { role: 'assistant' as const, content: result.reply }].slice(-12));
       setDraft('');
       setReply(result.reply);

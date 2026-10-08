@@ -1,17 +1,20 @@
+import {contractPost,contractPatch} from './api';
+import {contractGet} from './api';
+import type {components} from '../contracts/generated/types';
 import WorkerStatus from './WorkerStatus';
 import {useEffect,useState} from 'react';
 import {Plug,Save} from 'lucide-react';
-import {api,post,patch} from './api';
+
 import {ErrorBanner,Spinner} from './components';
-type Capability={id:string;label:string;configured:boolean;source:string;notice:string;config:{baseUrl:string;model:string;hasKey:boolean};test:null|{ok:boolean;checkedAt:string;error?:string;detail?:Record<string,unknown>}};
+type Capability = components['schemas']['Capability'];
 export default function CapabilitiesPanel(){
  const [items,setItems]=useState<Capability[]>([]),[busy,setBusy]=useState(''),[error,setError]=useState('');
  const [visionUrl,setVisionUrl]=useState(''),[visionModel,setVisionModel]=useState(''),[visionKey,setVisionKey]=useState('');
  const [embeddingUrl,setEmbeddingUrl]=useState(''),[embeddingModel,setEmbeddingModel]=useState(''),[embeddingKey,setEmbeddingKey]=useState(''),[qdrantUrl,setQdrantUrl]=useState('');
- async function load(initial=false){const result=await api<{items:Capability[]}>('/settings/capabilities');setItems(result.items);if(initial){const v=result.items.find(c=>c.id==='vision'),e=result.items.find(c=>c.id==='embedding'),q=result.items.find(c=>c.id==='qdrant');setVisionUrl(v?.config.baseUrl||'');setVisionModel(v?.config.model||'');setEmbeddingUrl(e?.config.baseUrl||'');setEmbeddingModel(e?.config.model||'');setQdrantUrl(q?.config.baseUrl||'');}}
+ async function load(initial=false){const result=await contractGet('getSettingsCapabilities','/settings/capabilities');setItems(result.items);if(initial){const v=result.items.find(c=>c.id==='vision'),e=result.items.find(c=>c.id==='embedding'),q=result.items.find(c=>c.id==='qdrant');setVisionUrl(v?.config.baseUrl||'');setVisionModel(v?.config.model||'');setEmbeddingUrl(e?.config.baseUrl||'');setEmbeddingModel(e?.config.model||'');setQdrantUrl(q?.config.baseUrl||'');}}
  useEffect(()=>{void load(true).catch(e=>setError(e.message));},[]);
- async function test(id:string){setBusy(id);setError('');try{await post(`/settings/capabilities/${id}/test`,{});await load();}catch(e){setError((e as Error).message);await load().catch(()=>{});}finally{setBusy('');}}
- async function save(kind:string,shared=false){setBusy('save-'+kind);setError('');try{await patch('/settings',kind==='vision'?{visionProvider:shared?null:{baseUrl:visionUrl,model:visionModel,apiKey:visionKey}}:{retrieval:{embedding:embeddingUrl,model:embeddingModel,qdrant:qdrantUrl,apiKey:embeddingKey}});setVisionKey('');setEmbeddingKey('');await load(shared);}catch(e){setError((e as Error).message);}finally{setBusy('');}}
+ async function test(id:string){setBusy(id);setError('');try{await contractPost('postSettingsCapabilitiesByIdTest',`/settings/capabilities/${id}/test`,{});await load();}catch(e){setError((e as Error).message);await load().catch(()=>{});}finally{setBusy('');}}
+ async function save(kind:string,shared=false){setBusy('save-'+kind);setError('');try{await contractPatch('patchSettings','/settings',kind==='vision'?{visionProvider:shared?null:{baseUrl:visionUrl,model:visionModel,apiKey:visionKey}}:{retrieval:{embedding:embeddingUrl,model:embeddingModel,qdrant:qdrantUrl,apiKey:embeddingKey}});setVisionKey('');setEmbeddingKey('');await load(shared);}catch(e){setError((e as Error).message);}finally{setBusy('');}}
  return <section className="settings-panel" aria-busy={!!busy}>
  <h2><Plug size={20}/>分别检查每项能力</h2><p className="panel-description">测试使用已保存的配置。每项单独显示结果，连接成功不代表识别或检索质量已经通过验收。</p><ErrorBanner message={error}/>
  <WorkerStatus/>

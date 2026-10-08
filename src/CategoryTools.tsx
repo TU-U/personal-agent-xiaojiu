@@ -1,6 +1,8 @@
+import {contractPost,contractPatch} from './api';
+import {contractGet} from './api';
 import {randomId} from './randomId';
 import {useEffect,useRef,useState} from 'react';
-import {api,post,patch} from './api';
+
 import {Modal,ErrorBanner} from './components';
 import type {Note} from './types';
 export type NoteCategory={id:string;revision:number;name:string;kind:string;projectId?:string};
@@ -8,12 +10,12 @@ type Project={id:string;name:string};
 export default function CategoryTools({notes,filter,onFilter,onRefresh}:{notes:Note[];filter:string;onFilter:(id:string)=>void;onRefresh:()=>Promise<void>}){
  const [items,setItems]=useState<NoteCategory[]>([]),[error,setError]=useState(''),[open,setOpen]=useState(false),[projects,setProjects]=useState<Project[]>([]),[categoryId,setCategoryId]=useState(''),[selected,setSelected]=useState<{id:string;revision:number;title:string}[]>([]),[reason,setReason]=useState(''),[busy,setBusy]=useState(false),[name,setName]=useState(''),[projectId,setProjectId]=useState(''),[projectName,setProjectName]=useState(''),[rename,setRename]=useState(''),[message,setMessage]=useState('');
  const operation=useRef(randomId()),projectOperation=useRef(randomId());
- async function load(){try{const [categories,projects]=await Promise.all([api<{items:NoteCategory[]}>('/categories'),api<{items:Project[]}>('/projects')]);setItems(categories.items);setProjects(projects.items);setError('');}catch(e){setError((e as Error).message);}}
+ async function load(){try{const [categories,projects]=await Promise.all([contractGet('getCategories','/categories'),contractGet('getProjects','/projects')]);setItems(categories.items);setProjects(projects.items);setError('');}catch(e){setError((e as Error).message);}}
  useEffect(()=>{void load();},[]);
  function change(){operation.current=randomId();setMessage('');}
- async function assign(){setBusy(true);setError('');try{await post('/notes/categories',{opId:operation.current,categoryId,notes:selected.map(({id,revision})=>({id,revision})),reason});setSelected([]);change();setMessage('分类已保存，纠错记录已登记。');await onRefresh();}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
- async function create(){setBusy(true);setError('');try{let parent=projectId;if(parent==='new'){const created=await post<Project>('/projects',{name:projectName,opId:projectOperation.current});parent=created.id;setProjectId(parent);setProjects(old=>[...old.filter(p=>p.id!==parent),created]);}const category=await post<NoteCategory>('/categories',{name,projectId:parent});setCategoryId(category.id);change();setName('');await load();setMessage('项目类别已创建。记录与项目的关联仍需明确选择。');}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
- async function renameCategory(){const category=items.find(c=>c.id===categoryId);if(!category)return;setBusy(true);setError('');try{await patch('/categories/'+category.id,{name:rename,revision:category.revision});setRename('');await load();setMessage('类别已改名，记录关联保持不变。');}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
+ async function assign(){setBusy(true);setError('');try{await contractPost('postNotesCategories','/notes/categories',{opId:operation.current,categoryId,notes:selected.map(({id,revision})=>({id,revision})),reason});setSelected([]);change();setMessage('分类已保存，纠错记录已登记。');await onRefresh();}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
+ async function create(){setBusy(true);setError('');try{let parent=projectId;if(parent==='new'){const created=await contractPost('postProjects','/projects',{name:projectName,opId:projectOperation.current});parent=created.id;setProjectId(parent);setProjects(old=>[...old.filter(p=>p.id!==parent),created]);}const category=await contractPost('postCategories','/categories',{name,projectId:parent});setCategoryId(category.id);change();setName('');await load();setMessage('项目类别已创建。记录与项目的关联仍需明确选择。');}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
+ async function renameCategory(){const category=items.find(c=>c.id===categoryId);if(!category)return;setBusy(true);setError('');try{await contractPatch('patchCategoriesById','/categories/'+category.id,{name:rename,revision:category.revision});setRename('');await load();setMessage('类别已改名，记录关联保持不变。');}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
  const choices=<><option value="">请选择类别</option>{categoryId&&!items.some(c=>c.id===categoryId)&&<option value={categoryId}>所选类别暂不可用，请重新选择</option>}{items.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</>;
  return <section className="category-tools" aria-label="记录分类"><label>记录类别<select aria-label="筛选记录类别" value={filter} onChange={e=>onFilter(e.target.value)}><option value="">全部类别</option><option value="unclassified">待分类</option>{items.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label><button className="btn secondary" onClick={()=>{setOpen(true);void load();}}>整理记录分类</button>{!open&&error&&<><ErrorBanner message={error}/><button className="btn secondary" onClick={()=>void load()}>重试加载类别</button></>}
  {open&&<Modal title="整理记录分类" wide closeDisabled={busy} onClose={()=>{if(!busy)setOpen(false);}}><ErrorBanner message={error}/>{message&&<p role="status">{message}</p>}<p>每条记录归入一个类别。人工调整会登记纠错反馈，不会改变正文、附件或聊天。</p><fieldset className="category-edit-fields" disabled={busy}>

@@ -1,3 +1,4 @@
+import {CONTRACT_VERSION} from '../../contracts/generated/routes.mjs';
 import {test,expect} from '@playwright/test';
 
 test('web uses v1 for login, save and reload while old reads see the same note',async({page})=>{
@@ -11,7 +12,7 @@ test('web uses v1 for login, save and reload while old reads see the same note',
  await page.getByLabel('记录内容',{exact:true}).fill('# 完整内容\n\n1. 先记录\n2. 再讨论');
  const saved=page.waitForResponse(response=>response.url().endsWith('/api/v1/notes')&&response.request().method()==='POST');
  await page.getByRole('button',{name:'保存记录',exact:true}).click();
- const response=await saved;expect(response.status()).toBe(201);expect(response.headers()['x-contract-version']).toBe('0.1.0');const note=await response.json();
+ const response=await saved;expect(response.status()).toBe(201);expect(response.headers()['x-contract-version']).toBe(CONTRACT_VERSION);const note=await response.json();
  await page.reload();await expect(page.locator('.app-shell')).toBeVisible();
  const old=await (await page.request.get('/api/bootstrap')).json();const current=await (await page.request.get('/api/v1/bootstrap')).json();
  expect(old.notes.find((item:{id:string})=>item.id===note.id)).toEqual(current.notes.find((item:{id:string})=>item.id===note.id));

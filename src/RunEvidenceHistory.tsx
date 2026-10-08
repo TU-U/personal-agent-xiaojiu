@@ -1,9 +1,10 @@
+import {contractGet} from './api';
+import type {components} from '../contracts/generated/types';
 import {useEffect,useRef,useState} from 'react';
 import {api} from './api';
 import {ErrorBanner} from './components';
-type Entry={id:string;state:string;finishedAt:string|null;inputEvidenceRevision:number;status?:string;error:string;notice:string};
-type Page={items:Entry[];nextBefore:number|null};
-type Detail=Entry&{evidence:string;requirements?:{minimumSeconds:number;conditions:{id:string;description:string}[]};sources:{id:string;title?:string;revision?:number;content:string;sourceState?:string}[];assessment?:{reason:string;results?:{conditionId:string;status:string;reason:string;evidence:{sourceId:string;quote:string;start:number;end:number}[]}[]}};
+type Page = components['schemas']['EvidenceHistoryPage'];
+type Detail = components['schemas']['EvidenceHistoryDetail'];
 const labels:Record<string,string>={accepted:'检查结果已保存',failed:'检查失败',superseded:'结果已失效，未采用',legacy:'升级前检查结果',satisfied:'满足',missing:'缺少',unclear:'无法判断'};
 export default function RunEvidenceHistory({runId}:{runId:string}){
  const [open,setOpen]=useState(false),[page,setPage]=useState<Page|null>(null),[detail,setDetail]=useState<Detail|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState('');
@@ -14,7 +15,7 @@ export default function RunEvidenceHistory({runId}:{runId:string}){
   catch(e){if(request===generation.current)setError((e as Error).message);}finally{if(request===generation.current)setBusy(false);}
  }
  async function inspect(id:string){const request=++generation.current;setBusy(true);setError('');setDetail(null);
-  try{const value=await api<Detail>(`/work-runs/${runId}/evidence-history/${id}`);if(request===generation.current)setDetail(value);}
+  try{const value=await contractGet('getWorkRunsByIdEvidenceHistoryByCheckId',`/work-runs/${runId}/evidence-history/${id}`);if(request===generation.current)setDetail(value);}
   catch(e){if(request===generation.current)setError((e as Error).message);}finally{if(request===generation.current)setBusy(false);}
  }
  return <details onToggle={e=>{const expanded=e.currentTarget.open;setOpen(expanded);if(expanded&&!page&&!busy)void load();}}><summary>证据检查历史</summary>{open&&<div aria-label="证据检查历史">

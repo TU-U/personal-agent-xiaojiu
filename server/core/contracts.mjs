@@ -38,10 +38,26 @@ export function installContractRoutes(app){
     }
     const operation=contractOperation(definition);
     const bodySchema=operation.requestBody?.content?.['application/json']?.schema;
-    const validateBody=operation['x-field-coverage']==='reviewed'&&bodySchema?contractValidator(bodySchema):null;
+    const validateBody=bodySchema?contractValidator(bodySchema):null;
+    const parameterValidator=location=>{
+     const parameters=(operation.parameters||[]).filter(p=>p.in===location);
+     return contractValidator({type:'object',properties:Object.fromEntries(parameters.map(p=>[p.name,p.schema])),required:parameters.filter(p=>p.required).map(p=>p.name)});
+    };
+    const validatePath=parameterValidator('path'),validateQuery=parameterValidator('query');
+    const responseValidators=Object.fromEntries(Object.entries(operation.responses).filter(([code])=>/^2/.test(code)).flatMap(([code,r])=>r.content?.['application/json']?.schema?[[code,contractValidator(r.content['application/json'].schema)]]:[]));
     const guard=(req,res,next)=>{
      res.setHeader('X-Contract-Version',CONTRACT_VERSION);
-     if(validateBody&&!validateBody(req.body))return next(Object.assign(new Error('提交内容格式无效，请检查字段类型和必填内容。'),{status:400}));
+     if(!validatePath(req.params)||!validateQuery(req.query))return next(Object.assign(new Error('路径或查询参数格式无效。'),{status:400}));
+     if(validateBody&&!validateBody(req.body===undefined&&!operation.requestBody.required?{}:req.body))return next(Object.assign(new Error('提交内容格式无效，请检查字段类型和必填内容。'),{status:400}));
+     // Diagnostic only: never turn an already committed write into an apparent failure.
+     // Log schema positions, never request/response values (credentials and private content).
+     if(process.env.CONTRACT_RESPONSE_DIAGNOSTICS==='true'){
+      const json=res.json.bind(res);res.json=value=>{
+       const validate=responseValidators[res.statusCode];
+       if(validate&&!validate(value))console.error('[contract-response]',JSON.stringify({operationId:definition.operationId,status:res.statusCode,issues:validate.errors.map(({instancePath,schemaPath,keyword})=>({instancePath,schemaPath,keyword}))}));
+       return json(value);
+      };
+     }
      next();
     };
     original(definition.path,guard,...handlers);

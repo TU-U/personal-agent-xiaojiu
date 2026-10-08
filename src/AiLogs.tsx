@@ -1,14 +1,16 @@
+import {contractGet} from './api';
+import type {components} from '../contracts/generated/types';
 import { useCallback, useEffect, useState } from 'react';
 import { RefreshCw, Terminal } from 'lucide-react';
-import { api } from './api';
 
-type AiEvent = {at:string;stage?:string;kind?:string;callId?:string;model?:string;error?:string;finishReason?:string;[key:string]:unknown};
+
+type AiEvent = components['schemas']['AiLogEvent'];
 
 export default function AiLogs(){
  const [items,setItems]=useState<AiEvent[]>([]),[file,setFile]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false);
  const load=useCallback(async()=>{
   setBusy(true);
-  try{const result=await api<{items:AiEvent[];file:string}>('/ai/logs');setItems(result.items);setFile(result.file);setError('');}
+  try{const result=await contractGet('getAiLogs','/ai/logs');setItems(result.items);setFile(result.file);setError('');}
   catch(e){setError((e as Error).message);}finally{setBusy(false);}
  },[]);
  useEffect(()=>{void load();const timer=setInterval(()=>void load(),5000);return()=>clearInterval(timer);},[load]);

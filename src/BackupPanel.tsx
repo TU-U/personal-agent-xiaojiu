@@ -1,15 +1,16 @@
+import {contractPost} from './api';
 import {API_BASE} from './api';
 import StorageStatus from './StorageStatus';
 import {useState} from 'react';
 import {Download,Database,ShieldCheck} from 'lucide-react';
-import {post} from './api';
+
 import {ErrorBanner,Spinner} from './components';
 
 type Backup = {id:string;files:number;bytes:number;createdAt:string;downloadUrl:string};
 export default function BackupPanel(){
  const [backup,setBackup]=useState<Backup|null>(null),[busy,setBusy]=useState(''),[error,setError]=useState(''),[verified,setVerified]=useState('');
- async function create(){setBusy('create');setError('');setVerified('');try{setBackup(await post<Backup>('/backups',{}));}catch(e){setError((e as Error).message);}finally{setBusy('');}}
- async function verify(){if(!backup)return;setBusy('verify');setError('');setVerified('');try{const result=await post<{message:string}>(`/backups/${backup.id}/verify-restore`,{});setVerified(result.message);}catch(e){setError((e as Error).message);}finally{setBusy('');}}
+ async function create(){setBusy('create');setError('');setVerified('');try{setBackup(await contractPost('postBackups','/backups',{}));}catch(e){setError((e as Error).message);}finally{setBusy('');}}
+ async function verify(){if(!backup)return;setBusy('verify');setError('');setVerified('');try{const result=await contractPost('postBackupsByIdVerifyRestore',`/backups/${backup.id}/verify-restore`,{});setVerified(result.message);}catch(e){setError((e as Error).message);}finally{setBusy('');}}
  return <section className="settings-panel" aria-busy={!!busy}>
   <h2><Database size={20}/>你的数据，随时带走</h2>
   <p className="panel-description">完整备份包含记录、记忆、要事、资料副本和原始附件；不含接口密钥和登录凭据。恢复后需要重新配置密钥。</p>

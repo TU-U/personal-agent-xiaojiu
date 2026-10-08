@@ -1,15 +1,15 @@
+import {contractGet} from './api';
+import type {components} from '../contracts/generated/types';
 import {API_BASE} from './api';
-import ResearchCandidates,{type CandidateDecision} from './ResearchCandidates';
+import ResearchCandidates from './ResearchCandidates';
 import {useEffect,useRef,useState} from 'react';
-import {api} from './api';
+
 import {ErrorBanner,Markdown,Modal,Spinner} from './components';
 import {PetSourcePrompt} from './PetReminderContext';
 import {pendingResearch,researchRequest,retryResearch} from './researchRequest';
-type Ref={id:string;kind:'note'|'event'|'libraryFile';revision:number;title:string};
-type Brief={topic:string;background:string;questions:string[];constraints:string;type:'learning'|'comparison'|'feasibility'|'custom';asOf:string;expectedOutput:string;web:boolean};
-type Plan={version:number;goal:string;conditions:string;steps:string[];known:string[];unknown:string[];deliverable:string};
-type Evidence={id:string;kind?:string;url?:string;retrievedAt?:string;evidenceId:string;title:string;revision:number;quote:string;start:number;end:number;total:number;truncated:boolean;evidenceType?:string;providedAt?:string;urls?:string[]};
-type Research={reportAcknowledgement?:{artifactId:string;artifactRevision:number;at:string};id:string;revision:number;candidateDecisions?:Record<string,CandidateDecision>;title:string;status:string;notice?:string;researchApproval?:{planVersion:number};handoff?:{id:string;text:string;state:string};externalMaterials?:{id:string;revision:number;title:string;providedAt:string|null;available:boolean}[];handoffBrief:string;researchBrief:Brief;plan:Plan|null;planHash:string|null;references:Ref[];job:{state:string;attempts:number;error:string|null};budget:{spentTimeMs:number;reservedTimeMs:number;chargedMicros:number;reservedMicros:number;uncertainMicros:number};artifacts:{id:string;revision:number;researchReportVersion?:number;body:string;mode:string;sources:Evidence[];actionCandidates:{title:string;description:string;kind:string}[]}[]};
+type Ref = components['schemas']['ResearchReference'];
+type Brief = components['schemas']['ResearchBrief'];
+type Research = components['schemas']['ResearchDetail'];
 function seed(){try{return JSON.parse(sessionStorage.getItem('taskDraft')||'{}');}catch{return {};}}
 export function ResearchCreate({onCreated}:{onCreated:(id:string)=>void}){
  const [initial,setInitial]=useState(seed),[topic,setTopic]=useState<string>((initial.goal||'').length<=500?initial.goal||'':''),[background,setBackground]=useState<string>((initial.goal||'').length>500?initial.goal:''),[questions,setQuestions]=useState<string>((initial.goal||'').length<=500?initial.goal||'':''),[constraints,setConstraints]=useState(''),[type,setType]=useState<Brief['type']>('learning'),[output,setOutput]=useState('结论、概念、学习路径、小练习及待核实项'),[web,setWeb]=useState(true),[asOf,setAsOf]=useState(''),[refs,setRefs]=useState<Ref[]>(initial.references||[]),[busy,setBusy]=useState(false),[error,setError]=useState(''),[pending,setPending]=useState(pendingResearch);
@@ -24,13 +24,13 @@ export function ResearchCreate({onCreated}:{onCreated:(id:string)=>void}){
 }
 export function ResearchSources({refs,setRefs,maxRefs=8}:{refs:Ref[];setRefs:(refs:Ref[])=>void;maxRefs?:number}){
  const [kind,setKind]=useState<Ref['kind']>('note'),[q,setQ]=useState(''),[items,setItems]=useState<Ref[]>([]),[cursor,setCursor]=useState<string|null>(null),[error,setError]=useState(''),[loading,setLoading]=useState(false),[attempt,setAttempt]=useState(0);const epoch=useRef(0);
- async function load(next:string|null=null){const current=++epoch.current;setLoading(true);setError('');try{const data=await api<{items:Ref[];nextCursor:string|null}>('/research-sources?'+new URLSearchParams({kind,q,...(next?{cursor:next}:{})}));if(current===epoch.current){setItems(old=>next?[...old,...data.items]:data.items);setCursor(data.nextCursor);}}catch(e){if(current===epoch.current)setError((e as Error).message);}finally{if(current===epoch.current)setLoading(false);}}
+ async function load(next:string|null=null){const current=++epoch.current;setLoading(true);setError('');try{const data=await contractGet('getResearchSources','/research-sources?'+new URLSearchParams({kind,q,...(next?{cursor:next}:{})}));if(current===epoch.current){setItems(old=>next?[...old,...data.items]:data.items);setCursor(data.nextCursor);}}catch(e){if(current===epoch.current)setError((e as Error).message);}finally{if(current===epoch.current)setLoading(false);}}
  useEffect(()=>{setItems([]);setCursor(null);void load();return()=>{epoch.current++;};},[kind,q,attempt]);
  return <details><summary>引用记录、要事或已导入的文件（{refs.length}/{maxRefs}）</summary><p>当前读取文字正文。所选版本在生成、确认及发布前都会核对。</p><div aria-label="已选调研材料">{refs.map(ref=><p key={ref.kind+ref.id}>{ref.title} · 版本 {ref.revision}<button type="button" className="btn text" onClick={()=>setRefs(refs.filter(r=>r.id!==ref.id||r.kind!==ref.kind))}>移除 {ref.title}</button></p>)}</div><label>材料类型<select value={kind} onChange={e=>setKind(e.target.value as Ref['kind'])}><option value="note">记录</option><option value="event">要事</option><option value="libraryFile">文件副本</option></select></label><label>查找调研材料<input value={q} maxLength={200} onChange={e=>setQ(e.target.value)}/></label><ErrorBanner message={error}/><button type="button" className="btn text" onClick={()=>setAttempt(n=>n+1)}>刷新材料列表</button><div>{items.map(item=>{const selected=refs.find(r=>r.id===item.id&&r.kind===item.kind);return <label className="check-row" key={item.id}><input type="checkbox" checked={!!selected} disabled={!selected&&refs.length>=maxRefs} onChange={e=>setRefs(e.target.checked?[...refs,item]:refs.filter(r=>r.id!==item.id||r.kind!==item.kind))}/><span>{item.title} · 版本 {item.revision}{selected&&selected.revision!==item.revision?'（已选旧版本，请移除后重选）':''}</span></label>;})}</div>{loading&&<Spinner label="正在读取材料…"/>}{cursor&&<button type="button" className="btn secondary" disabled={loading} onClick={()=>void load(cursor)}>更多调研材料</button>}</details>;
 }
 export function ResearchDetail({id,onClose,onChanged}:{id:string;onClose:()=>void;onChanged:()=>void}){
  const [data,setData]=useState<Research|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[selectedReport,setSelectedReport]=useState('');const epoch=useRef(0);
- async function load(){const current=++epoch.current;try{const value=await api<Research>('/research-tasks/'+id);if(current===epoch.current)setData(value);}catch(e){if(current===epoch.current)setError((e as Error).message);}}
+ async function load(){const current=++epoch.current;try{const value=await contractGet('getResearchTasksById','/research-tasks/'+id);if(current===epoch.current)setData(value);}catch(e){if(current===epoch.current)setError((e as Error).message);}}
  useEffect(()=>{void load();const timer=setInterval(()=>void load(),2000);return()=>{epoch.current++;clearInterval(timer);};},[id]);
  async function action(action:'acknowledge_report'|'confirm'|'retry'|'retry_web'|'cancel'|'handoff'|'external'|'end_handoff',extra:Record<string,unknown>={}){if(!data)return;setBusy(true);setError('');try{await researchRequest('/research-tasks/'+id+'/action',{...extra,action,revision:data.revision,...(action==='confirm'?{approved:true,planVersion:data.plan!.version,planHash:data.planHash}:{})});await load();onChanged();return true;}catch(e){setError((e as Error).message);return false;}finally{setBusy(false);}}
  const labels:Record<string,string>={planning:'正在生成计划',draft:'计划待你确认',running:'正在调研',review:'成果待核对',failed:'执行失败',waiting:'等待网页回填（等待不计时）',cancelled:'已停止'};
@@ -53,5 +53,5 @@ function ResearchHandoff({data,busy,act}:{data:Research;busy:boolean;act:(action
 }
 function ResearchExternal({taskId,sourceId}:{taskId:string;sourceId:string}){
  const [text,setText]=useState<string|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState('');
- return <div><button className="btn text" disabled={busy} onClick={async()=>{setBusy(true);setError('');try{const source=await api<{text:string}>('/research-tasks/'+taskId+'/external/'+sourceId);setText(source.text);}catch(e){setError((e as Error).message);}finally{setBusy(false);}}}>读取完整回填内容</button><ErrorBanner message={error}/>{text!==null&&<pre className="preserve-text">{text}</pre>}</div>;
+ return <div><button className="btn text" disabled={busy} onClick={async()=>{setBusy(true);setError('');try{const source=await contractGet('getResearchTasksByIdExternalBySourceId','/research-tasks/'+taskId+'/external/'+sourceId);setText(source.text);}catch(e){setError((e as Error).message);}finally{setBusy(false);}}}>读取完整回填内容</button><ErrorBanner message={error}/>{text!==null&&<pre className="preserve-text">{text}</pre>}</div>;
 }

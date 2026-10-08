@@ -1,5 +1,6 @@
+import {contractPost} from './api';
 import {useRef,useState} from 'react';
-import {ApiError,post} from './api';
+import {ApiError} from './api';
 import {ErrorBanner} from './components';
 import type {LibraryFileRow} from './useLibraryFiles';
 type Action='copy'|'skip';
@@ -27,7 +28,7 @@ export function useLibraryBatch(files:LibraryFileRow[],onDone:()=>Promise<void>)
   try{sessionStorage.setItem(storage,JSON.stringify({selected,pending:request}));}catch{setError('浏览器无法保存重试信息，请检查存储空间后重试；本批尚未提交。');return;}
   lock.current=true;setBusy(true);setError('');setNotice('');setPending(request);
   try{
-   await post('/library/decisions',request);setSelected([]);setPending(null);setInvalid({});sessionStorage.removeItem(storage);
+   await contractPost('postLibraryDecisions','/library/decisions',request);setSelected([]);setPending(null);setInvalid({});sessionStorage.removeItem(storage);
    setNotice(request.action==='copy'?`已保留${request.items.length}份资料，等待复制与解析。`:`已跳过${request.items.length}份资料。`);
    await onDone();
   }catch(cause){

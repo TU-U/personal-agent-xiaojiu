@@ -1,47 +1,42 @@
 # 9.3 协议治理实施记录
 
-2026-10-08。当前为**首批迁移已落地，9.3 尚未全部完成**。本轮只实施协议治理，不包含 Pi、Electron、skill 或 Android 接入。
+2026-10-08。**服务端与 Web 的协议迁移已完成；Android 消费协议、Electron 桌面壳仍属于后续阶段。** 本轮没有接入 Pi、skill 或手机端。
 
-## 已完成
+## 本轮交付
 
-1. 本地独立仓库：`/mnt/d/OpenResource/xiaojiu-contracts.git`（bare Git 仓库），消费位置 `contracts/` 为真实 Git Submodule；固定提交 `df04648d9953fdc712d20975bacf70f3a3034047`，标签 `v0.1.0`。`.gitmodules` 和 Submodule 指针随本次主项目发布提交，协议已发布至 `TU-U/xiaojiu-contracts`。
-2. `contracts/openapi.json` 为唯一协议编辑源；格式 OpenAPI 3.1.1，协议版本 0.1.0，API 主版本路径 `/api/v1`。字段仍在逐步抽取，因此暂不发布声称全量稳定的 1.0.0。
-3. 152 个既有 HTTP 操作逐项映射到新入口。设备认证明确映射到 `/api/v1/devices/*`，保留 `/api/mobile/v1/*`。旧接口继续服务旧客户端。
-4. 后端从协议派生请求形状校验，使用 Ajv 8.20.0 / JSON Schema 2020-12。禁止强制类型转换、删除字段或填默认值。校验不改变请求指纹；业务事务、权限、opId、revision、自关联检查和记忆人工确认仍归原业务模块。
-5. openapi-typescript 7.13.0 生成共享 TypeScript 类型及路由清单。Web 的 `src/types.ts` 改为引用生成类型；统一请求、图片和下载入口使用协议的 API 前缀。页面专有类型仍留在 Web。
-6. 57 个操作已抽取本轮公共形状；92 个复杂操作仍标记 `legacy-owned`，3 个操作保留既有 410 退役行为。具体请求、响应、消费者与处理位置见 [逐接口清单](25-contract-migration-inventory.md)。不把空 Schema 算作完成。
+- 独立仓库：[TU-U/xiaojiu-contracts](https://github.com/TU-U/xiaojiu-contracts)。主项目的 `contracts/` 是真实 Submodule，锁定协议提交；发布版本 **0.2.0**（标签 `v0.2.0`，提交 `991d0aa`，已推送 GitHub），API 主路径仍为 `/api/v1`，OpenAPI 格式为 3.1.1。
+- 全部 **152 个 HTTP 操作**：149 个现行操作已有明确请求、响应及适用查询参数，3 个退役操作保持 410。原先 92 个 `legacy-owned` 已清零。155 个具名 Schema，见[逐接口清单](25-contract-migration-inventory.md)。这表示字段迁移完成，不表示所有业务场景都做过端到端验收。
+- 覆盖资料库、调研、监督、记账导入、分类/项目、音频转写、记忆审核、话题上下文、设置与诊断。调研任务本体和详情、账单批次摘要和详情分别建模；复杂 `action` 请求按动作分支定义。
+- `src/types.ts` 及页面公共传输类型引用生成类型。67 处具体读取请求、49 处具体写入请求按 operationId 推导输入/输出，避免任意手写响应泛型；上传和持久化重试队列继续使用公共传输函数，后端执行相同协议校验。UI 草稿、React 状态、导航类型留在页面。
+- 首批协议补充了要事 AI 草稿的 `removedSuggestions`、输入来源回执、下载参数以及可空/历史状态字段；原有业务规则保留。
 
-## 新旧入口如何共存
+## 新旧入口与校验职责
 
-`server/core/contracts.mjs` 在每个旧路由原来的注册位置增设对应 v1 路由，两者直接调用同一处理函数。没有通用前缀改写或写请求重定向。
+`server/core/contracts.mjs` 在旧路由原注册位置添加 v1 路由，调用同一业务处理函数。没有重定向写请求，也没有更换数据库或重置游标。
 
-- 保留公开登录/健康检查与后续鉴权中间件的原顺序，Cookie、Bearer、Origin 检查继续生效。
-- 旧入口保留原校验及报错；v1 对已抽取的 JSON 请求先做共享形状检查，再做原业务检查。multipart 仍由上传处理器及业务代码解析、校验和清理文件。
-- 路由登记与协议不一致时，启动/检查会报错，避免新增接口漏进协议清单。
-- 图片、原文件、Markdown 及 ZIP 流保持原传输方式。当前搭子回答是一次 JSON 响应，没有虚构 SSE 支持。
-- 不在写入已提交后通过响应校验阻断成功回执。代表性响应在定向测试中验证；其余字段继续按迁移清单抽取。
+- Cookie、设备 Bearer、Origin 与公开登录的鉴权顺序不变。旧 `/api/...` 和 `/api/mobile/v1/...` 保留；设备新入口是 `/api/v1/devices/*`。
+- v1 JSON 请求先按协议检查形状，路径/查询参数检查原始 URL 值；原 Zod 继续处理默认值、规范化、数值范围、日期和状态规则。Ajv 不强转类型、不插入默认值、不删字段，不改 opId 指纹。
+- 关联是否存在、是否关联自身、revision 是否过期、记忆冲突与人工确认仍在业务事务内检查。Schema 不代替这些检查。
+- multipart 仍由 Multer 和原业务处理器校验、落盘及失败清理。图片、原文件、Markdown、ZIP 保持字节/流传输。当前 `/ask` 返回一次 JSON，不声称已实现 SSE。
+- 响应不在数据库提交后阻断返回。可设置 `CONTRACT_RESPONSE_DIAGNOSTICS=true` 在后端终端输出 `[contract-response]` 诊断，只记录 operationId、状态与 Schema 路径，不记录正文或密钥。诊断不改变返回结果。
+- 能力探测和 AI 日志中有明确标注的供应商诊断扩展字段；业务导出包含历史实体，不把历史未知字段自动删除。
 
-## 日常开发命令
+## 开发与发布
 
-修改 `contracts/openapi.json` 后执行：
+唯一协议编辑源为 `contracts/openapi.json`，生成物禁止手改：
 
 ```bash
 npm run contracts:generate
 npm run contracts:check
 npm run contracts:inventory
+npm run build
 ```
 
-生成文件不能手工改；`contracts:check` 检查生成物、路由覆盖及 Schema 编译。独立仓库也能通过自己的 `npm ci`、`npm run generate`、`npm run check` 工作。
+检查包含：生成物是否过期、实际路由是否齐全、具名及内联 Schema 是否可编译、是否仍有 `legacy-owned` 或空成功响应。独立协议仓库也可以自行 `npm ci` / `npm run generate` / `npm run check`。
 
-变更发布顺序：先提交独立仓库并打新版本标签，再显式更新消费仓库指针。新旧路径共享业务版本号与游标，不能把协议升级当成数据重置。
+发布顺序：**先推送协议提交与新版本标签，再更新并推送主项目 Submodule 指针**。不重写已发布的 v0.1.0，不使用 `submodule update --remote` 偷换消费版本。0.x 期间仍须逐项审查破坏性变化；字段迁移完成不自动升级成稳定的 1.0.0。删除字段、增加必填输入、收紧合法值或改变鉴权必须另列兼容方案。
 
-## 远端状态与取回方式
-
-独立协议仓库已发布到 [TU-U/xiaojiu-contracts](https://github.com/TU-U/xiaojiu-contracts)，`main` 和 `v0.1.0` 均指向上述固定提交。主项目仍发布到 [TU-U/personal-agent-xiaojiu](https://github.com/TU-U/personal-agent-xiaojiu)，两者用途不变。
-
-`.gitmodules` 使用相对地址 `../xiaojiu-contracts.git`；本机消费仓库已取消本地路径覆写并同步为GitHub远端。本地 bare 仓库可作为备份，不再是正常拉取所必需的来源。
-
-首次拉取项目：
+首次拉取：
 
 ```bash
 git clone --recurse-submodules https://github.com/TU-U/personal-agent-xiaojiu.git
@@ -57,21 +52,17 @@ git submodule sync -- contracts
 git submodule update --init --recursive
 ```
 
-若仓库权限有要求，使用有读取权限的GitHub身份。Submodule更新仍以主项目固定提交为准，不使用 `--remote` 自动追踪最新分支。以后发布新协议时，仍先推送协议提交与标签，再推送主项目引用。
+## 验证范围
 
-## 验证与运行
+`node --test tests/contracts.test.mjs` 的 10 项定向 HTTP 测试通过。响应按对应 operation 的 Schema 校验，覆盖：鉴权、新旧幂等与版本冲突、原始请求不被改写、带图要事、自关联拒绝、上传下载与 ZIP、记忆候选、复杂模块读取、类别/项目关联、待办升级监督、调研创建/取消、真实 Excel 导入/核对/确认入账和业务导出。
 
-- `node --test tests/contracts.test.mjs`：6 项通过。覆盖旧/新鉴权边界、设备令牌与 Cookie、跨路径幂等、版本冲突、游标一致、设置拒绝错误类型、带图要事及自关联校验、原文件与 ZIP 流、记忆候选保留。
-- `npm run build`：通过。存在既有风格的包体积提示，不是构建失败。
-- `bash scripts/test-browser.sh tests/e2e/contracts-web.spec.ts --project=desktop`：1 项通过，实测 v1 登录、记录保存、刷新及旧入口读取相同记录。
-- 浏览器用例的路径匹配随网页入口更新；没有运行全量浏览器套件，没有做手机测试或打包，也没有调用真实付费模型。
-- 当前 4317 服务已使用原环境和 `/mnt/d/OpenResource/PersonalAgent/.data` 重启，新旧健康检查均返回成功。后端日志仍在 `.data/logs/server.log`。
+网页仅运行协议冒烟：登录 → 保存记录 → 刷新 → 新旧接口读取一致。另运行类型/生产构建和协议一致性检查。没有跑全套浏览器测试，没有付费模型调用，没有操作真实用户数据进行测试。
 
-## 剩余迁移与后续发布约束
+本机 4317 服务已保留原环境和 `.data` 目录重启，新接口健康检查返回 `X-Contract-Version: 0.2.0`。网页刷新即可加载本次构建；日志仍为 `.data/logs/server.log`。
 
-1. 92 个 `legacy-owned` 操作的完整请求 / 响应 / 查询参数抽取及对应局部前端类型迁移，主要分布在资料库、调研、监督、记账导入、上下文和诊断等业务。
-2. 首批已抽取接口的更细查询参数、嵌套动态字段和全量响应契约覆盖仍要按业务继续补齐，不能把当前代表性验证当作全量接口验收。
-3. 当前远端发布已完成；新版本仍须先发布协议再更新主项目指针，并验证全新目录可以拉取该提交。
-4. Android 独立消费、Kotlin 工具兼容性与客户端升级证据；桌面阶段复用 Web。本轮不启动这两端。
+## 后续边界
 
-这些范围未完成前，架构第 9.3 节保持“部分实施”，不标记多端治理完成。
+- Android 在独立仓库接入固定协议版本并验证 Kotlin 消费方式；本轮不测试或打包手机。
+- Electron 复用同源 Web 与后端，本轮未创建桌面壳。
+- Pi 与 skill 属于独立架构阶段。不能用本次协议迁移声称已完成这些能力。
+- 后续新增接口、状态或响应字段，先更新协议与版本，再更新消费者；本次代表性测试不能替代未来业务验收。

@@ -1,8 +1,9 @@
-import type {FileIndexState} from './LibraryIndexStatus';
+import {contractGet} from './api';
+import type {components} from '../contracts/generated/types';
 import {useCallback,useEffect,useRef,useState} from 'react';
-import {api} from './api';
-export type LibraryFileRow={id:string;revision:number;title:string;sourcePath:string;status:string;tags?:string[];projectId?:string;project?:string;reason:string;parse?:{state:string;encoding?:string;notice?:string;error?:string;pages?:number};index?:FileIndexState;availableActions?:('copy'|'skip')[];error?:string;chunks?:number;copyName?:string;content?:string};
-type Page={items:LibraryFileRow[];total:number;nextCursor:string|null};
+
+export type LibraryFileRow = components['schemas']['LibraryFile'];
+
 export function useLibraryFiles(filters:string){
  const [files,setFiles]=useState<LibraryFileRow[]>([]),[total,setTotal]=useState(0),[nextCursor,setNextCursor]=useState<string|null>(null),[loading,setLoading]=useState(false),[error,setError]=useState('');
  const epoch=useRef(0),busy=useRef(false),currentFilters=useRef(filters);currentFilters.current=filters;
@@ -12,7 +13,7 @@ export function useLibraryFiles(filters:string){
   busy.current=true;setLoading(true);setError('');
   try{
    const query=new URLSearchParams(filters);query.set('limit','30');if(cursor)query.set('cursor',cursor);
-   const page=await api<Page>('/library/files?'+query);
+   const page=await contractGet('getLibraryFiles','/library/files?'+query);
    if(ticket!==epoch.current)return;
    setFiles(old=>cursor?[...new Map([...old,...page.items].map(item=>[item.id,item])).values()]:page.items);
    setTotal(page.total);setNextCursor(page.nextCursor);

@@ -222,15 +222,15 @@
 
 本节Pi与搭子相关产品选择及9.3的六项协议治理方案均已确认，实施尚未全部完成；9.3的首批代码与迁移清单见下节。服务归属识别及界面同步等工程细节按已确认要求设计，skill相关范围继续暂缓。
 
-### 9.3 多端协议治理：独立 Schema + Submodule + 语义化版本（首批已实施，尚未全部完成）
+### 9.3 多端协议治理：独立 Schema + Submodule + 语义化版本（服务端/Web迁移完成，Android后续接入）
 
-**方案确认（2026-10-08）**：用户已确认以下六项方案，独立协议仓库命名为 `xiaojiu-contracts`。当前状态为“首批已实施，尚未全部完成”：152个接口已逐项映射并保留旧入口，57个操作已抽取本轮形状，92个复杂操作待继续抽取，3个保持已退役。协议远端已发布，Android接入尚未完成，见[实施记录](26-contract-governance-implementation.md)和[迁移清单](25-contract-migration-inventory.md)。
+**方案确认（2026-10-08）**：用户已确认以下六项方案，独立协议仓库命名为 `xiaojiu-contracts`。当前状态为“服务端/Web迁移完成，Android后续接入”：152个接口已逐项映射并保留旧入口，149个现行操作已抽取请求/响应与适用查询参数，0个待抽取，3个保持已退役。协议远端已发布，Android接入尚未完成，见[实施记录](26-contract-governance-implementation.md)和[迁移清单](25-contract-migration-inventory.md)。
 
 #### 当前代码事实
 
-- 主项目已有 `.gitmodules` 与真实 `contracts/` Submodule，锁定本地独立 `xiaojiu-contracts.git` 仓库的 `v0.1.0`；协议与v0.1.0标签已发布至GitHub `TU-U/xiaojiu-contracts`。
+- 主项目已有 `.gitmodules` 与真实 `contracts/` Submodule，固定 `TU-U/xiaojiu-contracts` 的明确提交，当前协议版本为 `0.2.0`；发布顺序为先协议、后消费指针。
 - Web请求、图片与下载入口已切到 `/api/v1`；后端依照协议逐项登记别名，保留旧 `/api/...` 和 `/api/mobile/v1/...`。设备新入口为 `/api/v1/devices/*`，不会与Web会话混用。
-- `contracts/openapi.json` 已生成公共TS类型，`src/types.ts` 消费生成物，后端Ajv校验首批JSON请求；原Zod和业务校验保留。复杂业务局部类型与Android尚未完成共享协议接入。
+- `contracts/openapi.json` 已生成公共TS类型，`src/types.ts` 消费生成物，后端Ajv校验JSON请求和路径/查询参数形状；原Zod和业务校验保留。复杂业务传输类型已引用生成物，67处读取/49处写入按operationId推导类型；Android尚未接入。
 - Android已独立仓库；桌面壳将复用Web前端和同一后端，不需要第三套手写模型。尚未改动Android工程或运行手机测试。
 
 #### 已确认的实施方案
@@ -238,13 +238,13 @@
 | 项目 | 已确认方案 |
 | --- | --- |
 | 协议源格式 | 用OpenAPI 3.1系列描述HTTP接口，使用其JSON Schema能力定义请求、响应和公共数据结构，作为跨语言协议的唯一来源；首批已锁定OpenAPI 3.1.1、openapi-typescript 7.13.0及Ajv 8.20.0。 |
-| 独立仓库 | 仓库名称已按用户要求确定为 `xiaojiu-contracts`，各消费仓库以 `contracts/` Submodule引用明确提交。协议使用版本标签发布，更新Submodule指针是显式升级，不自动跟随最新分支。本地仓库与Submodule已创建，协议提交与v0.1.0标签已发布。 |
+| 独立仓库 | 仓库名称已按用户要求确定为 `xiaojiu-contracts`，各消费仓库以 `contracts/` Submodule引用明确提交。协议使用版本标签发布，更新Submodule指针是显式升级，不自动跟随最新分支。独立仓库与Submodule已创建，协议按版本标签发布，当前为0.2.0。 |
 | 共享范围 | 共享路径、方法、请求/响应字段、公共实体视图、错误、分页/游标、revision与opId语义、上传下载及流式事件约定；数据库SQL、业务状态机、权限判断、模型提示词留在后端。 |
 | 版本口径 | 协议包采用 `1.0.0` 等SemVer；新统一路由以 `/api/v1/...` 为主版本前缀，未来不兼容演进使用 `/api/v2/...`。OpenAPI格式版本、协议包版本、API主版本三者分开。 |
 | 迁移方式 | 新路由与旧 `/api/...`、`/api/mobile/v1/...` 过渡并存，复用同一业务服务和数据；按接口清单映射，不用整站路径替换或重定向写请求。旧接口移除需另有明确退役计划和客户端升级证据。 |
 | 实施顺序 | 协议盘点与抽取 → 独立仓库/Submodule → 服务端v1兼容入口与校验 → Web消费 → 未来桌面壳复用 → Android单独阶段接入。当前阶段不打包或测试手机；Android未接入前不能宣称多端治理全部完成。 |
 
-选用OpenAPI的依据是其跨语言HTTP描述能力及JSON Schema支持，见 [OpenAPI官方规范](https://spec.openapis.org/oas/v3.1.1.html)。Submodule记录特定提交，不会让所有客户端自动同步升级，见 [Git官方文档](https://git-scm.com/book/en/v2/Git-Tools-Submodules)。协议版本规则依据 [SemVer](https://semver.org/)。以上路线已获用户确认，首批本地接入已实施，完整进度以本节实施记录为准。
+选用OpenAPI的依据是其跨语言HTTP描述能力及JSON Schema支持，见 [OpenAPI官方规范](https://spec.openapis.org/oas/v3.1.1.html)。Submodule记录特定提交，不会让所有客户端自动同步升级，见 [Git官方文档](https://git-scm.com/book/en/v2/Git-Tools-Submodules)。协议版本规则依据 [SemVer](https://semver.org/)。以上路线已获用户确认，服务端与Web接入已实施，完整进度以本节实施记录为准。
 
 #### 必须保留的业务与兼容边界
 
@@ -257,11 +257,11 @@
 
 #### 分阶段完成条件
 
-1. **实施准备**：六项方案、接口迁移清单和工具版本已落地（OpenAPI 3.1.1、openapi-typescript 7.13.0、Ajv 8.20.0）。动态字段及复杂接口形状仍需按清单继续抽取。
+1. **实施准备**：六项方案、接口迁移清单和工具版本已落地（OpenAPI 3.1.1、openapi-typescript 7.13.0、Ajv 8.20.0）。149个现行接口的具名及内联Schema编译通过，业务扩展字段明确保留。
 2. **主项目落地**：独立仓库可供引用，Submodule固定版本，服务端和Web实际消费，代表性读写、鉴权、错误、幂等及上传/流式路径的定向验证通过；旧入口兼容可用。这里只能报告服务端/Web阶段完成。
 3. **多端闭环**：Android在其独立仓库升级到明确协议版本，并完成对应接入验收；桌面壳复用同源Web接口。当前不做手机工作，此项明确留待后续，不能用Web通过替代。
 
-2026-10-08首批实施：已接入本地独立仓库/Submodule、生成公共类型和校验、增加v1入口并迁移Web；6项接口测试、1项桌面网页测试及构建通过。已沿用原环境和数据目录重启4317服务。本地协议使用0.1.0，协议远端已发布；完整字段抽取和Android接入未完成，不能将本节标为完成。
+2026-10-08续批实施：原92个复杂操作已迁移，当前149个现行操作与3个退役操作均有协议；10项定向HTTP验证及网页冒烟、构建和协议检查记录见[26](26-contract-governance-implementation.md)。协议0.2.0继续保留旧入口和业务校验。这里只报告服务端/Web阶段完成，Android与桌面闭环仍待后续。
 
 ### 9.4 小九桌面常驻：Electron 桌面壳（规划）
 
