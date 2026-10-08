@@ -16,6 +16,9 @@ export function createDesktopRuntime({db,dataDir,root,port,stop,owner=process.en
   res.setHeader('X-Xiaojiu-Instance',instance);
   if(!req.path.startsWith('/api'))return next();
   const client=req.headers['x-xiaojiu-client'];
+  // A provenance nonce survives backend restarts. It never grants login or local control;
+  // authenticated API middleware and the separate control credential still authorize those.
+  if(typeof client==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(client))clients.add(client);
   if(!clients.has(client)){shared=true;return next();}
   if(closing.has(client))return res.status(503).json({error:'桌面正在退出，已保存的内容会保留。'});
   if(['GET','HEAD','OPTIONS'].includes(req.method))return next();

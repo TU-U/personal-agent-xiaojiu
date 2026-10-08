@@ -40,6 +40,9 @@ test('quit aborts its request and fences only its due jobs; late output cannot c
   future=f.jobs.enqueue({key:'future',kind:'reminder',entityId:'future',revision:1,dueAt:Date.now()+86400000});
   signal.addEventListener('abort',()=>response.emit('finish'),{once:true});
  });
+ const resumed='aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
+ const resumedResponse=new EventEmitter();resumedResponse.setHeader=()=>{};let restored=false;
+ f.service.middleware({path:'/api/notes',method:'POST',headers:{'x-xiaojiu-client':resumed}},resumedResponse,()=>{restored=executionContext().client===resumed;});resumedResponse.emit('finish');assert.equal(restored,true,'existing desktop provenance survives backend restart');
  const other=f.jobs.enqueue({key:'other',kind:'parse',entityId:'other',revision:1});f.jobs.claim(mine.id,'lease',30000);
  const result=await f.call('quit');assert.equal(result.retained,true);assert.equal(signal.aborted,true);
  assert.equal(f.jobs.get(mine.id).state,'failed');assert.equal(f.jobs.finish(mine.id,'lease',{},()=>assert.fail('late commit')),false);
